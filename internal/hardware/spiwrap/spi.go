@@ -1,6 +1,7 @@
 package spiwrap
 
 ***REMOVED***
+	"errors"
 ***REMOVED***
 	"io"
 
@@ -56,7 +57,8 @@ func (s *SPIDevice***REMOVED*** Close(***REMOVED*** error {
 
 func (s *SPIDevice***REMOVED*** Tx(w, r []byte***REMOVED*** error {
 	if s.conn == nil {
-		fmt.Errorf("Not opened"***REMOVED***
+		fmt.Errorf("Not open"***REMOVED***
+		return errors.New("Not open"***REMOVED***
 ***REMOVED***
 	return s.conn.Tx(w, r***REMOVED***
 ***REMOVED***
