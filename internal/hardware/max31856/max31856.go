@@ -1,35 +1,30 @@
-package hardware
+//go:generate go-enum -fmax31856.go
+
+package max31856
 
 ***REMOVED***
 	"errors"
+
+	"github.com/yanagiis/GoTuringCoffee/internal/hardware/spiwrap"
 ***REMOVED***
 
 // TC Type
-const (
-	TypeB byte = 0x0
-	TypeE      = 0x1
-	TypeJ      = 0x2
-	TypeK      = 0x3
-	TypeN      = 0x4
-	TypeR      = 0x5
-	TypeS      = 0x6
-	TypeT      = 0x7
-***REMOVED***
+// ENUM(
+// B, E, J, K, N, R, S, T
+// ***REMOVED***
+type Type byte
 
 // MAX31856 mode
-const (
-	MAX31856ModeManual    byte = 0x0
-	MAX31856ModeAutomatic      = 0x1
-***REMOVED***
+// ENUM(
+// Manual, Automatic
+// ***REMOVED***
+type Mode byte
 
 // Sample average
-const (
-	SampleAvg1  byte = 0x0
-	SampleAvg2       = 0x1
-	SampleAvg4       = 0x2
-	SampleAvg8       = 0x3
-	SampleAvg16      = 0x4
-***REMOVED***
+// ENUM(
+// Avg1, Avg2, Avg4, Avg8, Avg16
+// ***REMOVED***
+type Sample byte
 
 const (
 	addrWriteMAX31856 byte = 0x80
@@ -58,19 +53,19 @@ const (
 
 // MAX31856 TC sensor
 type MAX31856 struct {
-	spi       SPI
-	conf      MAX31856Config
+	spi       spiwrap.SPI
+	conf      Config
 	connected bool
 ***REMOVED***
 
-// MAX31856Config is used to setting max31856 sensor
-type MAX31856Config struct {
-	TC   byte `mapstructure:"tc"`
-	Avg  byte `mapstructure:"avg"`
-	Mode byte `mapstructure:"mode"`
+// Config is used to setting max31856 sensor
+type Config struct {
+	TC   Type   `mapstructure:"tc"`
+	Avg  Sample `mapstructure:"avg"`
+	Mode Mode   `mapstructure:"mode"`
 ***REMOVED***
 
-func NewMAX31856(spi SPI, conf MAX31856Config***REMOVED*** *MAX31856 {
+func NewMAX31856(spi spiwrap.SPI, conf Config***REMOVED*** *MAX31856 {
 	return &MAX31856{
 		spi:       spi,
 		conf:      conf,
@@ -80,7 +75,9 @@ func NewMAX31856(spi SPI, conf MAX31856Config***REMOVED*** *MAX31856 {
 
 func (m *MAX31856***REMOVED*** Connect(***REMOVED*** error {
 	var err error
-	var value byte
+	var mode Mode
+	var t Type
+	var sample Sample
 
 	if m.connected {
 		return nil
@@ -102,27 +99,27 @@ func (m *MAX31856***REMOVED*** Connect(***REMOVED*** error {
 		return err
 ***REMOVED***
 
-	value, err = m.getMode(***REMOVED***
+	mode, err = m.getMode(***REMOVED***
 ***REMOVED***
 		return err
 ***REMOVED***
-	if value != m.conf.Mode {
+	if mode != m.conf.Mode {
 		return errors.New("set mode failed"***REMOVED***
 ***REMOVED***
 
-	value, err = m.getTCType(***REMOVED***
+	t, err = m.getTCType(***REMOVED***
 ***REMOVED***
 		return err
 ***REMOVED***
-	if value != m.conf.TC {
+	if t != m.conf.TC {
 		return errors.New("set tc-type failed"***REMOVED***
 ***REMOVED***
 
-	value, err = m.getSampleAvg(***REMOVED***
+	sample, err = m.getSampleAvg(***REMOVED***
 ***REMOVED***
 		return err
 ***REMOVED***
-	if value != m.conf.Avg {
+	if sample != m.conf.Avg {
 		return errors.New("set sample avg failed"***REMOVED***
 ***REMOVED***
 
@@ -162,55 +159,57 @@ func (m *MAX31856***REMOVED*** GetTemperature(***REMOVED*** (float64, error***RE
 	return float64(adcValue***REMOVED*** * resolutionTC, nil
 ***REMOVED***
 
-func (m *MAX31856***REMOVED*** getMode(***REMOVED*** (byte, error***REMOVED*** {
+func (m *MAX31856***REMOVED*** getMode(***REMOVED*** (Mode, error***REMOVED*** {
 	buf := make([]byte, 1***REMOVED***
 	err := m.readReg(addrCR0, buf***REMOVED***
-	return buf[0] >> 7, err
+	return Mode(buf[0] >> 7***REMOVED***, err
 ***REMOVED***
 
-func (m *MAX31856***REMOVED*** setMode(mode byte***REMOVED*** error {
+func (m *MAX31856***REMOVED*** setMode(mode Mode***REMOVED*** error {
 	buf := make([]byte, 1***REMOVED***
 	if err := m.readReg(addrCR0, buf***REMOVED***; err != nil {
 		return err
 ***REMOVED***
-	buf[0] = (buf[0] & 0x7f***REMOVED*** | (mode << 7***REMOVED***
+	buf[0] = (buf[0] & 0x7f***REMOVED*** | (byte(mode***REMOVED*** << 7***REMOVED***
 	return m.writeReg(addrCR0, buf***REMOVED***
 ***REMOVED***
 
-func (m *MAX31856***REMOVED*** getSampleAvg(***REMOVED*** (byte, error***REMOVED*** {
+func (m *MAX31856***REMOVED*** getSampleAvg(***REMOVED*** (Sample, error***REMOVED*** {
 	buf := make([]byte, 1***REMOVED***
 	err := m.readReg(addrCR1, buf***REMOVED***
-	return (buf[0] % 0x70***REMOVED*** >> 4, err
+	return Sample((buf[0] % 0x70***REMOVED*** >> 4***REMOVED***, err
 ***REMOVED***
 
-func (m *MAX31856***REMOVED*** setSampleAvg(avg byte***REMOVED*** error {
+func (m *MAX31856***REMOVED*** setSampleAvg(avg Sample***REMOVED*** error {
 	buf := make([]byte, 1***REMOVED***
 	if err := m.readReg(addrCR0, buf***REMOVED***; err != nil {
 		return err
 ***REMOVED***
-	buf[0] = (buf[0] & 0x8f***REMOVED*** | (avg << 4***REMOVED***
+	buf[0] = (buf[0] & 0x8f***REMOVED*** | (byte(avg***REMOVED*** << 4***REMOVED***
 	return m.writeReg(addrCR0, buf***REMOVED***
 ***REMOVED***
 
-func (m *MAX31856***REMOVED*** getTCType(***REMOVED*** (byte, error***REMOVED*** {
+func (m *MAX31856***REMOVED*** getTCType(***REMOVED*** (Type, error***REMOVED*** {
 	buf := make([]byte, 1***REMOVED***
 	err := m.readReg(addrCR1, buf***REMOVED***
-	return (buf[0] & 0x0f***REMOVED***, err
+	return Type((buf[0] & 0x0f***REMOVED******REMOVED***, err
 ***REMOVED***
 
-func (m *MAX31856***REMOVED*** setTCType(t byte***REMOVED*** error {
+func (m *MAX31856***REMOVED*** setTCType(t Type***REMOVED*** error {
 	buf := make([]byte, 1***REMOVED***
 	if err := m.readReg(addrCR1, buf***REMOVED***; err != nil {
 		return err
 ***REMOVED***
-	buf[0] = (buf[0] & 0xf0***REMOVED*** | t
+	buf[0] = (buf[0] & 0xf0***REMOVED*** | byte(t***REMOVED***
 	return m.writeReg(addrCR1, buf***REMOVED***
 ***REMOVED***
 
 func (m *MAX31856***REMOVED*** readReg(addr byte, buf []byte***REMOVED*** error {
-	rbuf := append([]byte{addr***REMOVED***, buf...***REMOVED***
-	wbuf := make([]byte, len(rbuf***REMOVED******REMOVED***
-	return m.spi.Tx(wbuf, rbuf***REMOVED***
+	wbuf := append([]byte{addr***REMOVED***, buf...***REMOVED***
+	rbuf := make([]byte, len(wbuf***REMOVED******REMOVED***
+	err := m.spi.Tx(wbuf, rbuf***REMOVED***
+	copy(buf, rbuf[1:]***REMOVED***
+	return err
 ***REMOVED***
 
 func (m *MAX31856***REMOVED*** writeReg(addr byte, buf []byte***REMOVED*** error {

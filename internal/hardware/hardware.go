@@ -6,6 +6,9 @@ package hardware
 	"log"
 
 	"github.com/spf13/viper"
+	"github.com/yanagiis/GoTuringCoffee/internal/hardware/max31856"
+	"github.com/yanagiis/GoTuringCoffee/internal/hardware/max31865"
+	"github.com/yanagiis/GoTuringCoffee/internal/hardware/spiwrap"
 	"github.com/yanagiis/periph/host"
 ***REMOVED***
 
@@ -36,7 +39,7 @@ func (e *HardwareError***REMOVED*** Error(***REMOVED*** string {
 	return fmt.Sprintf("%s: %s: %s", e.err.Error(***REMOVED***, e.name, e.msg***REMOVED***
 ***REMOVED***
 
-func init(***REMOVED*** {
+func Init(***REMOVED*** {
 	_, err := host.Init(***REMOVED***
 ***REMOVED***
 		log.Fatalf("failed to initialize periph: %v", err***REMOVED***
@@ -97,7 +100,7 @@ func (m *HWManager***REMOVED*** AddDevice(name string, viper *viper.Viper***REMO
 	t := viper.GetString("type"***REMOVED***
 	switch t {
 	case "spi":
-		var spi SPIDevice
+		var spi spiwrap.SPIDevice
 		err := viper.Unmarshal(&spi***REMOVED***
 	***REMOVED***
 			return NewHardwareError(name, err.Error(***REMOVED***, ErrWrongConfig***REMOVED***
@@ -122,9 +125,9 @@ func (m *HWManager***REMOVED*** AddDevice(name string, viper *viper.Viper***REMO
 	***REMOVED***
 		m.hw[name] = &pwm
 	case "max31856":
-		var max31856 MAX31856Config
+		var conf max31856.Config
 
-		if err := viper.Unmarshal(&max31856***REMOVED***; err != nil {
+		if err := viper.Unmarshal(&conf***REMOVED***; err != nil {
 			return NewHardwareError(name, err.Error(***REMOVED***, ErrWrongConfig***REMOVED***
 	***REMOVED***
 
@@ -134,12 +137,12 @@ func (m *HWManager***REMOVED*** AddDevice(name string, viper *viper.Viper***REMO
 			msg := fmt.Sprintf("cannot find %s", devName***REMOVED***
 			return NewHardwareError(name, msg, ErrDevNotFound***REMOVED***
 	***REMOVED***
-		spi := dev.(SPI***REMOVED***
-		m.hw[name] = NewMAX31856(spi, max31856***REMOVED***
+		spi := dev.(spiwrap.SPI***REMOVED***
+		m.hw[name] = max31856.NewMAX31856(spi, conf***REMOVED***
 	case "max31865":
-		var max31865 MAX31865Config
+		var conf max31865.Config
 
-		if err := viper.Unmarshal(&max31865***REMOVED***; err != nil {
+		if err := viper.Unmarshal(&conf***REMOVED***; err != nil {
 			return NewHardwareError(name, err.Error(***REMOVED***, ErrWrongConfig***REMOVED***
 	***REMOVED***
 		devName := viper.GetString("dev"***REMOVED***
@@ -148,8 +151,8 @@ func (m *HWManager***REMOVED*** AddDevice(name string, viper *viper.Viper***REMO
 			msg := fmt.Sprintf("cannot find %s", devName***REMOVED***
 			return NewHardwareError(name, msg, ErrDevNotFound***REMOVED***
 	***REMOVED***
-		spi := dev.(SPI***REMOVED***
-		m.hw[name] = NewMAX31865(spi, max31865***REMOVED***
+		spi := dev.(spiwrap.SPI***REMOVED***
+		m.hw[name] = max31865.NewMAX31865(spi, conf***REMOVED***
 	case "smoothie":
 		var port SmoothiePort
 

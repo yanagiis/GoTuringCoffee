@@ -1,4 +1,4 @@
-package hardware
+package spiwrap
 
 ***REMOVED***
 ***REMOVED***

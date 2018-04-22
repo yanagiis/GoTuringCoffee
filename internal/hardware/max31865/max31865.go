@@ -1,22 +1,25 @@
-package hardware
+//go:generate go-enum -fmax31865.go
+
+package max31865
 
 ***REMOVED***
 	"errors"
 ***REMOVED***
+
+	"github.com/yanagiis/GoTuringCoffee/internal/hardware/spiwrap"
 ***REMOVED***
 
 // RTD wire type
-const (
-	Wire2 = 0x0
-	Wire3 = 0x1
-	Wire4 = 0x0
-***REMOVED***
+// ENUM(
+// 2, 3, 4
+// ***REMOVED***
+type Wire byte
 
 // MAX31865 Mode
-const (
-	MAX31865ModeOneshot   byte = 0x0
-	MAX31865ModeAutomatic      = 0x1
-***REMOVED***
+// ENUM(
+// Manual, Automatic
+// ***REMOVED***
+type Mode byte
 
 const (
 	addrWriteMAX31865 byte = 0x80
@@ -30,20 +33,20 @@ const (
 	addrFault              = 0x7
 ***REMOVED***
 
-// MAX31865Config is used to setting max31865 sensor
-type MAX31865Config struct {
-	Wire byte `mapstructure:"wire"`
-	Mode byte `mapstructure:"mode"`
+// Config is used to setting max31865 sensor
+type Config struct {
+	Wire Wire `mapstructure:"wire"`
+	Mode Mode `mapstructure:"mode"`
 ***REMOVED***
 
 // MAX31865 RTD sensor
 type MAX31865 struct {
-	spi       SPI
-	conf      MAX31865Config
+	spi       spiwrap.SPI
+	conf      Config
 	connected bool
 ***REMOVED***
 
-func NewMAX31865(spi SPI, conf MAX31865Config***REMOVED*** *MAX31865 {
+func NewMAX31865(spi spiwrap.SPI, conf Config***REMOVED*** *MAX31865 {
 	return &MAX31865{
 		spi:       spi,
 		conf:      conf,
@@ -53,7 +56,8 @@ func NewMAX31865(spi SPI, conf MAX31865Config***REMOVED*** *MAX31865 {
 
 func (m *MAX31865***REMOVED*** Connect(***REMOVED*** error {
 	var err error
-	var value byte
+	var mode Mode
+	var wire Wire
 
 	if m.connected {
 		return nil
@@ -68,19 +72,19 @@ func (m *MAX31865***REMOVED*** Connect(***REMOVED*** error {
 		return err
 ***REMOVED***
 
-	value, err = m.getMode(***REMOVED***
+	mode, err = m.getMode(***REMOVED***
 ***REMOVED***
 		return err
 ***REMOVED***
-	if value != m.conf.Mode {
+	if mode != m.conf.Mode {
 		return errors.New("set mode failed"***REMOVED***
 ***REMOVED***
 
-	value, err = m.getWire(***REMOVED***
+	wire, err = m.getWire(***REMOVED***
 ***REMOVED***
 		return err
 ***REMOVED***
-	if value != m.conf.Wire {
+	if wire != m.conf.Wire {
 		return errors.New("set wire failed"***REMOVED***
 ***REMOVED***
 
@@ -100,7 +104,7 @@ func (m *MAX31865***REMOVED*** Connect(***REMOVED*** error {
 	return nil
 ***REMOVED***
 
-func (m *MAX31865***REMOVED*** Close(***REMOVED*** error {
+func (m *MAX31865***REMOVED*** Disconnect(***REMOVED*** error {
 	if err := m.spi.Close(***REMOVED***; err != nil {
 		return err
 ***REMOVED***
@@ -162,35 +166,35 @@ func (m *MAX31865***REMOVED*** GetTemperature(***REMOVED*** (float64, error***RE
 	return float64(adcValue***REMOVED***/32 - 256, nil
 ***REMOVED***
 
-func (m *MAX31865***REMOVED*** getMode(***REMOVED*** (byte, error***REMOVED*** {
+func (m *MAX31865***REMOVED*** getMode(***REMOVED*** (Mode, error***REMOVED*** {
 	buf := make([]byte, 1***REMOVED***
 	err := m.readReg(addrCR, buf***REMOVED***
-	return (buf[0] & 0x40***REMOVED*** >> 6, err
+	return Mode((buf[0] & 0x40***REMOVED*** >> 6***REMOVED***, err
 ***REMOVED***
 
-func (m *MAX31865***REMOVED*** setMode(mode byte***REMOVED*** error {
+func (m *MAX31865***REMOVED*** setMode(mode Mode***REMOVED*** error {
 	buf := make([]byte, 1***REMOVED***
 	err := m.readReg(addrCR, buf***REMOVED***
 ***REMOVED***
 		return err
 ***REMOVED***
-	buf[0] = (buf[0] & 0xbf***REMOVED*** | (mode << 6***REMOVED***
+	buf[0] = (buf[0] & 0xbf***REMOVED*** | (byte(mode***REMOVED*** << 6***REMOVED***
 	return m.writeReg(addrCR, buf***REMOVED***
 ***REMOVED***
 
-func (m *MAX31865***REMOVED*** getWire(***REMOVED*** (byte, error***REMOVED*** {
+func (m *MAX31865***REMOVED*** getWire(***REMOVED*** (Wire, error***REMOVED*** {
 	buf := make([]byte, 1***REMOVED***
 	err := m.readReg(addrCR, buf***REMOVED***
-	return (buf[0] & 0x10***REMOVED*** >> 4, err
+	return Wire((buf[0] & 0x10***REMOVED*** >> 4***REMOVED***, err
 ***REMOVED***
 
-func (m *MAX31865***REMOVED*** setWire(wire byte***REMOVED*** error {
+func (m *MAX31865***REMOVED*** setWire(wire Wire***REMOVED*** error {
 	buf := make([]byte, 1***REMOVED***
 	err := m.readReg(addrCR, buf***REMOVED***
 ***REMOVED***
 		return err
 ***REMOVED***
-	buf[0] = (buf[0] & 0xef***REMOVED*** | (wire << 4***REMOVED***
+	buf[0] = (buf[0] & 0xef***REMOVED*** | (byte(wire***REMOVED*** << 4***REMOVED***
 	return m.writeReg(addrCR, buf***REMOVED***
 ***REMOVED***
 
@@ -211,9 +215,12 @@ func (m *MAX31865***REMOVED*** clearError(***REMOVED*** error {
 ***REMOVED***
 
 func (m *MAX31865***REMOVED*** readReg(addr byte, buf []byte***REMOVED*** error {
-	rbuf := append([]byte{addr***REMOVED***, buf...***REMOVED***
-	wbuf := make([]byte, len(rbuf***REMOVED******REMOVED***
-	return m.spi.Tx(wbuf, rbuf***REMOVED***
+	wbuf := append([]byte{addr***REMOVED***, buf...***REMOVED***
+	rbuf := make([]byte, len(wbuf***REMOVED******REMOVED***
+	fmt.Printf("%p %p", wbuf, rbuf***REMOVED***
+	err := m.spi.Tx(wbuf, rbuf***REMOVED***
+	copy(buf, rbuf[1:]***REMOVED***
+	return err
 ***REMOVED***
 
 func (m *MAX31865***REMOVED*** writeReg(addr byte, buf []byte***REMOVED*** error {
