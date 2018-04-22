@@ -63,6 +63,10 @@ func (m *MAX31865***REMOVED*** Connect(***REMOVED*** error {
 		return nil
 ***REMOVED***
 
+	if err = m.spi.Open(***REMOVED***; err != nil {
+		return err
+***REMOVED***
+
 	err = m.setMode(m.conf.Mode***REMOVED***
 ***REMOVED***
 		return err
