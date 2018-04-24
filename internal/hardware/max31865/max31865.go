@@ -221,9 +221,11 @@ func (m *MAX31865***REMOVED*** clearError(***REMOVED*** error {
 func (m *MAX31865***REMOVED*** readReg(addr byte, buf []byte***REMOVED*** error {
 	wbuf := append([]byte{addr***REMOVED***, buf...***REMOVED***
 	rbuf := make([]byte, len(wbuf***REMOVED******REMOVED***
-	err := m.spi.Tx(wbuf, rbuf***REMOVED***
+	if err := m.spi.Tx(wbuf, rbuf***REMOVED***; err != nil {
+		return err
+***REMOVED***
 	copy(buf, rbuf[1:]***REMOVED***
-	return err
+	return nil
 ***REMOVED***
 
 func (m *MAX31865***REMOVED*** writeReg(addr byte, buf []byte***REMOVED*** error {
