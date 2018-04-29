@@ -1,21 +1,25 @@
+DEST_IP = 192.168.1.78
+
 GENERATE = internal/hardware/max31856/max31856.go\
 		   internal/hardware/max31865/max31865.go
 
 UTILS = max31856 max31865
 
-.PHONY: arm generate clean
+ARCH ?= amd64
 
-all: generate arm arm-utils
+.PHONY: generate clean
+
+all: generate app utils
 
 dep:
 	dep ensure
 
-arm:
-	GOOS=linux GOARCH=arm go build
+app: generate
+	GOOS=linux GOARCH=$(ARCH***REMOVED*** go build -o GoTuringCoffee_$(ARCH***REMOVED***
 
-arm-utils:
-	for util in $(UTILS***REMOVED***; do\
-		GOOS=linux GOARCH=arm go build  -o ./bin/$$util ./utils/$$util.go ;\
+utils: generate
+	for util in $(UTILS***REMOVED***; do \
+		GOOS=linux GOARCH=$(ARCH***REMOVED*** go build -o ./bin/$$util\_$(ARCH***REMOVED*** ./utils/$$util.go ;\
 	done
 
 generate: $(GENERATE***REMOVED***
@@ -28,4 +32,4 @@ clean:
 	rm -rf ./bin
 
 copy:
-	sshpass scp -r bin/ ./GoTuringCoffee root@172.30.200.2:/home/root
+	sshpass scp bin/*_arm ./GoTuringCoffee_arm root@$(DEST_IP***REMOVED***:/home/root
