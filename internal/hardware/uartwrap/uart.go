@@ -1,4 +1,4 @@
-package hardware
+package uartwrap
 
 ***REMOVED***
 	"io"
@@ -14,19 +14,23 @@ type UART interface {
 	IsOpen(***REMOVED*** bool
 ***REMOVED***
 
-type UARTDevice struct {
+type Config struct {
 	Path        string        `mapstructure:"path"`
 	Baudrate    uint32        `mapstructure:"baudrate"`
 	ReadTimeout time.Duration `mapstructure:"read_timeout"`
-	uart        *serial.Port
+***REMOVED***
+
+type UARTDevice struct {
+	Conf Config
+	uart *serial.Port
 ***REMOVED***
 
 func (u *UARTDevice***REMOVED*** Open(***REMOVED*** error {
 	var err error
 	u.uart, err = serial.OpenPort(&serial.Config{
-		Name:        u.Path,
-		Baud:        int(u.Baudrate***REMOVED***,
-		ReadTimeout: time.Second * u.ReadTimeout,
+		Name:        u.Conf.Path,
+		Baud:        int(u.Conf.Baudrate***REMOVED***,
+		ReadTimeout: time.Second * u.Conf.ReadTimeout,
 ***REMOVED******REMOVED***
 
 	return err

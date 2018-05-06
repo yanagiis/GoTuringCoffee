@@ -6,6 +6,7 @@ package tankmeter
 
 	jsoniter "github.com/json-iterator/go"
 	nats "github.com/nats-io/go-nats"
+	"github.com/rs/zerolog/log"
 	"github.com/yanagiis/GoTuringCoffee/internal/hardware"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/lib"
 ***REMOVED***
@@ -65,12 +66,13 @@ func (t *Service***REMOVED*** Run(ctx context.Context, nc *nats.EncodedConn***RE
 		***REMOVED***
 			nc.Publish(msg.Reply, resp***REMOVED***
 		case <-timer.C:
+			timer = time.NewTimer(t.ScanInterval***REMOVED***
 			if sensorErr = t.Sensor.Connect(***REMOVED***; sensorErr != nil {
+				log.Error(***REMOVED***.Msg(sensorErr.Error(***REMOVED******REMOVED***
 				continue
 		***REMOVED***
-			fullRecord.IsFull = t.Sensor.IsWaterFull(***REMOVED***
+			fullRecord.IsFull, sensorErr = t.Sensor.IsWaterFull(***REMOVED***
 			fullRecord.Time = time.Now(***REMOVED***
-			timer = time.NewTimer(t.ScanInterval***REMOVED***
 		case <-ctx.Done(***REMOVED***:
 			err = ctx.Err(***REMOVED***
 			return

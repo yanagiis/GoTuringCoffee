@@ -1,7 +1,8 @@
-DEST_IP = 192.168.1.78
+DEST_IP = 192.168.1.77
 
 GENERATE = internal/hardware/max31856/max31856.go\
-		   internal/hardware/max31865/max31865.go
+		   internal/hardware/max31865/max31865.go\
+		   internal/hardware/hardware.go
 
 UTILS = max31856 max31865
 
@@ -29,7 +30,8 @@ generate: $(GENERATE***REMOVED***
 
 clean:
 	go clean
+	rm GoTuringCoffee_*
 	rm -rf ./bin
 
 copy:
-	sshpass scp bin/*_arm ./GoTuringCoffee_arm root@$(DEST_IP***REMOVED***:/home/root
+	sshpass scp config.yml bin/*_arm ./GoTuringCoffee_arm root@$(DEST_IP***REMOVED***:/home/root

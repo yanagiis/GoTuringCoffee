@@ -6,6 +6,7 @@ package tanktemp
 	"time"
 
 	nats "github.com/nats-io/go-nats"
+	"github.com/rs/zerolog/log"
 	"github.com/yanagiis/GoTuringCoffee/internal/hardware"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/lib"
 ***REMOVED***
@@ -66,7 +67,9 @@ func (t *Service***REMOVED*** Run(ctx context.Context, nc *nats.EncodedConn***RE
 		***REMOVED***
 			nc.Publish(msg.Reply, resp***REMOVED***
 		case <-timer.C:
+			timer = time.NewTimer(t.ScanInterval***REMOVED***
 			if sensorErr = t.Sensor.Connect(***REMOVED***; sensorErr != nil {
+				log.Error(***REMOVED***.Msg(sensorErr.Error(***REMOVED******REMOVED***
 				continue
 		***REMOVED***
 			if temperature.Temp, sensorErr = t.Sensor.GetTemperature(***REMOVED***; err != nil {
@@ -74,7 +77,6 @@ func (t *Service***REMOVED*** Run(ctx context.Context, nc *nats.EncodedConn***RE
 				continue
 		***REMOVED***
 			temperature.Time = time.Now(***REMOVED***
-			timer = time.NewTimer(t.ScanInterval***REMOVED***
 		case <-ctx.Done(***REMOVED***:
 			err = ctx.Err(***REMOVED***
 			return

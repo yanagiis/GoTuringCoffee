@@ -1,3 +1,5 @@
+//go:generate go-enum -fspi.go
+
 package spiwrap
 
 ***REMOVED***
@@ -15,12 +17,15 @@ type SPI interface {
 	Tx(w, r []byte***REMOVED*** error
 ***REMOVED***
 
-// SPI is SPI's configuration
+type Config struct {
+	Path  string   `mapstructure:"path"`
+	Speed int64    `mapstructure:"speed"`
+	Mode  spi.Mode `mapstructure:"mode"`
+	Bits  int      `mapstructure:"bits"`
+***REMOVED***
+
 type SPIDevice struct {
-	Path   string   `mapstructure:"path"`
-	Hz     int64    `mapstructure:"hz"`
-	Mode   spi.Mode `mapstructure:"mode"`
-	Bits   int      `mapstructure:"bits"`
+	Conf   Config
 	closer spi.PortCloser
 	conn   spi.Conn
 ***REMOVED***
@@ -28,13 +33,13 @@ type SPIDevice struct {
 func (s *SPIDevice***REMOVED*** Open(***REMOVED*** error {
 	var err error
 	if s.closer == nil {
-		s.closer, err = spireg.Open(s.Path***REMOVED***
+		s.closer, err = spireg.Open(s.Conf.Path***REMOVED***
 	***REMOVED***
 			return err
 	***REMOVED***
 ***REMOVED***
 	if s.conn == nil {
-		if s.conn, err = s.closer.Connect(s.Hz, s.Mode, s.Bits***REMOVED***; err != nil {
+		if s.conn, err = s.closer.Connect(s.Conf.Speed, s.Conf.Mode, s.Conf.Bits***REMOVED***; err != nil {
 			return err
 	***REMOVED***
 ***REMOVED***

@@ -63,7 +63,6 @@ func (r *Service***REMOVED*** Run(ctx context.Context, nc *nats.EncodedConn***RE
 				resp = lib.ReplenisherResponse{
 					Response: lib.Response{
 						Code: lib.CodeSuccess,
-						Msg:  "",
 				***REMOVED***,
 					Payload: replenishRecord,
 			***REMOVED***

@@ -2,10 +2,34 @@
 
 
 [[projects]]
+  name = "github.com/cenkalti/backoff"
+  packages = ["."]
+  revision = "2ea60e5f094469f9e65adb9cd103795b73ae743e"
+  version = "v2.0.0"
+
+[[projects]]
   name = "github.com/fsnotify/fsnotify"
   packages = ["."]
   revision = "c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9"
   version = "v1.4.7"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/globalsign/mgo"
+  packages = [
+    ".",
+    "bson",
+    "internal/json",
+    "internal/sasl",
+    "internal/scram"
+  ]
+  revision = "efe0945164a7e582241f37ae8983c075f8f2e870"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/grandcat/zeroconf"
+  packages = ["."]
+  revision = "df75bb3ccae13e625e5b60e68d9c9590056dded1"
 
 [[projects]]
   branch = "master"
@@ -31,10 +55,43 @@
   version = "1.1.3"
 
 [[projects]]
+  name = "github.com/labstack/echo"
+  packages = ["."]
+  revision = "6d227dfea4d2e52cb76856120b3c17f758139b4e"
+  version = "3.3.5"
+
+[[projects]]
+  name = "github.com/labstack/gommon"
+  packages = [
+    "color",
+    "log"
+  ]
+  revision = "588f4e8bddc6cb45c27b448e925c7fd6a5545434"
+  version = "0.2.5"
+
+[[projects]]
   name = "github.com/magiconair/properties"
   packages = ["."]
   revision = "c3beff4c2358b44d0493c7dda585e7db7ff28ae6"
   version = "v1.7.6"
+
+[[projects]]
+  name = "github.com/mattn/go-colorable"
+  packages = ["."]
+  revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
+  version = "v0.0.9"
+
+[[projects]]
+  name = "github.com/mattn/go-isatty"
+  packages = ["."]
+  revision = "0360b2af4f38e8d38c7fce2a9f4e702702d73a39"
+  version = "v0.0.3"
+
+[[projects]]
+  name = "github.com/miekg/dns"
+  packages = ["."]
+  revision = "83c435cc65d2862736428b9b4d07d0ab10ad3e4d"
+  version = "v1.0.5"
 
 [[projects]]
   branch = "master"
@@ -77,6 +134,17 @@
   version = "v1.1.0"
 
 [[projects]]
+  name = "github.com/rs/zerolog"
+  packages = [
+    ".",
+    "internal/cbor",
+    "internal/json",
+    "log"
+  ]
+  revision = "05eafee0eb17d0150591a8f30f0fa592cc9b7471"
+  version = "v1.6.0"
+
+[[projects]]
   name = "github.com/spf13/afero"
   packages = [
     ".",
@@ -117,6 +185,18 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/valyala/bytebufferpool"
+  packages = ["."]
+  revision = "e746df99fe4a3986f4d4f79e13c1e0117ce9c2f7"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/valyala/fasttemplate"
+  packages = ["."]
+  revision = "dcecefd839c4193db0d35b88ec65b4c12d360ab0"
+
+[[projects]]
+  branch = "master"
   name = "github.com/yanagiis/periph"
   packages = [
     ".",
@@ -149,6 +229,30 @@
 
 [[projects]]
   branch = "master"
+  name = "golang.org/x/crypto"
+  packages = [
+    "acme",
+    "acme/autocert",
+    "ed25519",
+    "ed25519/internal/edwards25519"
+  ]
+  revision = "b0697eccbea9adec5b7ba8008f4c33d98d733388"
+
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/net"
+  packages = [
+    "bpf",
+    "context",
+    "internal/iana",
+    "internal/socket",
+    "ipv4",
+    "ipv6"
+  ]
+  revision = "5f9ae10d9af5b1c89ae6904293b14b064d4ada23"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/sys"
   packages = ["unix"]
   revision = "378d26f46672a356c46195c28f61bdb4c0a781dd"
@@ -175,6 +279,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b947628a79078469980ac43a260602eadb5718ac1669ab01577e7d9512a2f013"
+  inputs-digest = "f1ca46dc6603977288f909eef6c6dc5ef8f7a749845b1ef87611c89b9e2aaabe"
   solver-name = "gps-cdcl"
   solver-version = 1

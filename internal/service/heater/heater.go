@@ -61,7 +61,6 @@ func (h *Service***REMOVED*** Run(ctx context.Context, nc *nats.EncodedConn***RE
 				resp = lib.HeaterResponse{
 					Response: lib.Response{
 						Code: lib.CodeSuccess,
-						Msg:  sensorErr.Error(***REMOVED***,
 				***REMOVED***,
 					Payload: heaterRecord,
 			***REMOVED***

@@ -46,7 +46,7 @@ type MAX31865 struct {
 	connected bool
 ***REMOVED***
 
-func NewMAX31865(spi spiwrap.SPI, conf Config***REMOVED*** *MAX31865 {
+func New(spi spiwrap.SPI, conf Config***REMOVED*** *MAX31865 {
 	return &MAX31865{
 		spi:       spi,
 		conf:      conf,
@@ -81,7 +81,7 @@ func (m *MAX31865***REMOVED*** Connect(***REMOVED*** error {
 		return err
 ***REMOVED***
 	if mode != m.conf.Mode {
-		return errors.New("set mode failed"***REMOVED***
+		return errors.New("max31865 set mode failed"***REMOVED***
 ***REMOVED***
 
 	wire, err = m.getWire(***REMOVED***
@@ -89,7 +89,7 @@ func (m *MAX31865***REMOVED*** Connect(***REMOVED*** error {
 		return err
 ***REMOVED***
 	if wire != m.conf.Wire {
-		return errors.New("set wire failed"***REMOVED***
+		return errors.New("max31865 set wire failed"***REMOVED***
 ***REMOVED***
 
 	buf := make([]byte, 1***REMOVED***

@@ -18,6 +18,7 @@ func main(***REMOVED*** {
 	var wire max31865.Wire
 	var temp float64
 	var err error
+	var spidev spiwrap.SPIDevice
 
 	pathPtr := flag.String("path", "/dev/spidev0.0", "SPI device path"***REMOVED***
 	speedPtr := flag.Int64("speed", 100000, "SPI speed"***REMOVED***
@@ -31,19 +32,17 @@ func main(***REMOVED*** {
 		panic(err***REMOVED***
 ***REMOVED***
 
-	spi := &spiwrap.SPIDevice{
-		Path: *pathPtr,
-		Hz:   *speedPtr,
-		Mode: spi.Mode(*modePtr***REMOVED***,
-		Bits: *bitsPtr,
-***REMOVED***
+	spidev.Conf.Path = *pathPtr
+	spidev.Conf.Speed = *speedPtr
+	spidev.Conf.Mode = spi.Mode(*modePtr***REMOVED***
+	spidev.Conf.Bits = *bitsPtr
 
 	conf := max31865.Config{
 		Mode: max31865.ModeAutomatic,
 		Wire: wire,
 ***REMOVED***
 
-	sensor := max31865.NewMAX31865(spi, conf***REMOVED***
+	sensor := max31865.New(&spidev, conf***REMOVED***
 	if err := sensor.Connect(***REMOVED***; err != nil {
 		panic(err***REMOVED***
 ***REMOVED***

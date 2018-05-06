@@ -1,9 +1,6 @@
 package lib
 
 ***REMOVED***
-	"bytes"
-	"errors"
-***REMOVED***
 	"math"
 ***REMOVED***
 
@@ -31,41 +28,4 @@ func (p *Point***REMOVED*** CalcDistance(other *Point***REMOVED*** float64 {
 		sum += math.Pow(*p.Z-*other.Z, 2***REMOVED***
 ***REMOVED***
 	return sum
-***REMOVED***
-
-func (p *Point***REMOVED*** ToGCode(***REMOVED*** (string, error***REMOVED*** {
-	if p.X == nil && p.Y == nil && p.Z == nil {
-		return "", errors.New("no x, y, and z"***REMOVED***
-***REMOVED***
-
-	var buffer bytes.Buffer
-	buffer.WriteString("G1"***REMOVED***
-	if p.X != nil {
-		buffer.WriteString(fmt.Sprintf(" X%0.5f", *p.X***REMOVED******REMOVED***
-***REMOVED***
-	if p.Y != nil {
-		buffer.WriteString(fmt.Sprintf(" Y%0.5f", *p.Y***REMOVED******REMOVED***
-***REMOVED***
-	if p.Z != nil {
-		buffer.WriteString(fmt.Sprintf(" Z%0.5f", *p.Z***REMOVED******REMOVED***
-***REMOVED***
-	buffer.WriteString(fmt.Sprintf(" F%0.5f", *p.F***REMOVED******REMOVED***
-	return buffer.String(***REMOVED***, nil
-***REMOVED***
-
-func (p *Point***REMOVED*** ToHCode(***REMOVED*** (string, error***REMOVED*** {
-	if p.Time == nil {
-		return "", errors.New("no time"***REMOVED***
-***REMOVED***
-
-	var buffer bytes.Buffer
-	buffer.WriteString("H"***REMOVED***
-	if p.E1 != nil && *p.E1 != 0 {
-		buffer.WriteString(fmt.Sprintf(" E0 %05f", *p.E1***REMOVED******REMOVED***
-***REMOVED***
-	if p.E2 != nil && *p.E2 != 0 {
-		buffer.WriteString(fmt.Sprintf(" E1 %05f", *p.E2***REMOVED******REMOVED***
-***REMOVED***
-	buffer.WriteString(fmt.Sprintf(" T%0.5f", *p.Time***REMOVED******REMOVED***
-	return buffer.String(***REMOVED***, nil
 ***REMOVED***

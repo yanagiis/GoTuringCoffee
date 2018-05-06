@@ -2,11 +2,9 @@ package barista
 
 ***REMOVED***
 	"context"
-	"strings"
 	"time"
 
 	"github.com/nats-io/go-nats"
-	"github.com/yanagiis/GoTuringCoffee/internal/hardware"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/barista/middleware"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/lib"
 ***REMOVED***
@@ -24,22 +22,20 @@ type BaristaConfig struct {
 ***REMOVED***
 
 type Barista struct {
-	conf     BaristaConfig
-	moving   *hardware.Smoothie
-	extruder *hardware.Extruder
-	middles  []middleware.Middleware
+	conf       BaristaConfig
+	middles    []middleware.Middleware
+	controller Controller
 ***REMOVED***
 
-func NewBarista(conf BaristaConfig, smoothie *hardware.Smoothie, extruder *hardware.Extruder***REMOVED*** *Barista {
+func NewBarista(conf BaristaConfig, controller Controller***REMOVED*** *Barista {
 	middles := []middleware.Middleware{
 		middleware.NewTempMiddleware(&conf.PID, 20***REMOVED***,
 		middleware.NewTimeMiddleware(***REMOVED***,
 ***REMOVED***
 	return &Barista{
-		conf:     conf,
-		moving:   smoothie,
-		extruder: extruder,
-		middles:  middles,
+		conf:       conf,
+		middles:    middles,
+		controller: controller,
 ***REMOVED***
 ***REMOVED***
 
@@ -105,8 +101,6 @@ func (b *Barista***REMOVED*** Run(ctx context.Context, nc *nats.EncodedConn***RE
 ***REMOVED***
 
 func (b *Barista***REMOVED*** cook(ctx context.Context, doneCh chan<- struct{***REMOVED***, points []lib.Point***REMOVED*** {
-	var gcode, hcode, resp string
-	var gerr, herr error
 	for i := range points {
 		if _, ok := <-ctx.Done(***REMOVED***; ok {
 			break
@@ -114,25 +108,7 @@ func (b *Barista***REMOVED*** cook(ctx context.Context, doneCh chan<- struct{***
 		for _, middleware := range b.middles {
 			middleware.Transform(&points[i]***REMOVED***
 	***REMOVED***
-		gcode, gerr = points[i].ToGCode(***REMOVED***
-		if gerr == nil {
-			b.moving.Writeline(gcode***REMOVED***
-	***REMOVED***
-		hcode, herr = points[i].ToHCode(***REMOVED***
-		if herr == nil {
-			b.extruder.Writeline(hcode***REMOVED***
-	***REMOVED***
-
-		if gerr == nil {
-			resp, _ = b.moving.Readline(***REMOVED***
-			for strings.Compare(resp, "ok"***REMOVED*** == 0 {
-		***REMOVED***
-	***REMOVED***
-		if herr == nil {
-			resp, _ = b.extruder.Readline(***REMOVED***
-			for strings.Compare(resp, "ok"***REMOVED*** == 0 {
-		***REMOVED***
-	***REMOVED***
+		b.controller.Do(&points[i]***REMOVED***
 ***REMOVED***
 	doneCh <- struct{***REMOVED***{***REMOVED***
 ***REMOVED***

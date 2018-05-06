@@ -60,12 +60,12 @@ type MAX31856 struct {
 
 // Config is used to setting max31856 sensor
 type Config struct {
-	TC   Type   `mapstructure:"tc"`
-	Avg  Sample `mapstructure:"avg"`
-	Mode Mode   `mapstructure:"mode"`
+	TC   Type
+	Avg  Sample
+	Mode Mode
 ***REMOVED***
 
-func NewMAX31856(spi spiwrap.SPI, conf Config***REMOVED*** *MAX31856 {
+func New(spi spiwrap.SPI, conf Config***REMOVED*** *MAX31856 {
 	return &MAX31856{
 		spi:       spi,
 		conf:      conf,
@@ -104,7 +104,7 @@ func (m *MAX31856***REMOVED*** Connect(***REMOVED*** error {
 		return err
 ***REMOVED***
 	if mode != m.conf.Mode {
-		return errors.New("set mode failed"***REMOVED***
+		return errors.New("max31856 set mode failed"***REMOVED***
 ***REMOVED***
 
 	t, err = m.getTCType(***REMOVED***
@@ -112,7 +112,7 @@ func (m *MAX31856***REMOVED*** Connect(***REMOVED*** error {
 		return err
 ***REMOVED***
 	if t != m.conf.TC {
-		return errors.New("set tc-type failed"***REMOVED***
+		return errors.New("max31856 set tc-type failed"***REMOVED***
 ***REMOVED***
 
 	sample, err = m.getSampleAvg(***REMOVED***
@@ -120,7 +120,7 @@ func (m *MAX31856***REMOVED*** Connect(***REMOVED*** error {
 		return err
 ***REMOVED***
 	if sample != m.conf.Avg {
-		return errors.New("set sample avg failed"***REMOVED***
+		return errors.New("max31856 set sample avg failed"***REMOVED***
 ***REMOVED***
 
 	m.connected = true

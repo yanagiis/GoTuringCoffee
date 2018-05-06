@@ -6,6 +6,7 @@ package outtemp
 	"time"
 
 	nats "github.com/nats-io/go-nats"
+	"github.com/rs/zerolog/log"
 	"github.com/yanagiis/GoTuringCoffee/internal/hardware"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/lib"
 ***REMOVED***
@@ -68,16 +69,18 @@ func (o *Service***REMOVED*** Run(ctx context.Context, nc *nats.EncodedConn***RE
 			nc.Publish(msg.Reply, resp***REMOVED***
 		case <-timer.C:
 			var temp float64
+			timer = time.NewTimer(o.ScanInterval***REMOVED***
 			if sensorErr = o.Sensor.Connect(***REMOVED***; sensorErr != nil {
+				log.Error(***REMOVED***.Msg(sensorErr.Error(***REMOVED******REMOVED***
 				continue
 		***REMOVED***
-			if temp, sensorErr = o.Sensor.GetTemperature(***REMOVED***; err != nil {
+			if temp, sensorErr = o.Sensor.GetTemperature(***REMOVED***; sensorErr != nil {
+				log.Error(***REMOVED***.Msg(sensorErr.Error(***REMOVED******REMOVED***
 				o.Sensor.Disconnect(***REMOVED***
 				continue
 		***REMOVED***
 			temperature.Temp = temp
 			temperature.Time = time.Now(***REMOVED***
-			timer = time.NewTimer(o.ScanInterval***REMOVED***
 		case <-ctx.Done(***REMOVED***:
 			err = ctx.Err(***REMOVED***
 			return

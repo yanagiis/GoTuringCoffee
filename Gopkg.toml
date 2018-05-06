@@ -42,10 +42,6 @@
   name = "github.com/tarm/serial"
 
 [[constraint]]
-  name = "go.uber.org/zap"
-  version = "1.7.1"
-
-[[constraint]]
   branch = "master"
   name = "github.com/yanagiis/periph"
 
@@ -54,5 +50,13 @@
   version = "1.1.3"
 
 [[constraint]]
-  name = "github.com/pkg/errors"
-  version = "0.8.0"
+  name = "github.com/rs/zerolog"
+  version = "1.6.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/grandcat/zeroconf"
+
+[[constraint]]
+  name = "github.com/labstack/echo"
+  version = "3.3.5"
