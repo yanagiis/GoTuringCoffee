@@ -26,9 +26,11 @@ type Service struct {
 ***REMOVED***
 
 func (s *Service***REMOVED*** Run(ctx context.Context, nc *nats.EncodedConn***REMOVED*** (err error***REMOVED*** {
+	model := NewModel(&s.DB***REMOVED***
+
 	e := echo.New(***REMOVED***
-	e.Static("/", s.staticFilePath***REMOVED***
-	if err = e.Start(fmt.Sprintf(":%d", s.port***REMOVED******REMOVED***; err != nil {
+	e.Static("/", s.Web.StaticFilePath***REMOVED***
+	if err = e.Start(fmt.Sprintf(":%d", s.Web.Port***REMOVED******REMOVED***; err != nil {
 		e.Logger.Fatal(err***REMOVED***
 		return
 ***REMOVED***

@@ -252,12 +252,26 @@ func (s *ServiceManager***REMOVED*** parseUARTServer(name string, viper *viper.V
 ***REMOVED***
 
 func (s *ServiceManager***REMOVED*** parseWeb(name string, viper *viper.Viper, hwm *hardware.HWManager, m *mdns.MDNS***REMOVED*** (err error***REMOVED*** {
-	if err = checkFields(viper, []string{"port", "static_files"***REMOVED******REMOVED***; err != nil {
+	if err = checkFields(viper, []string{"port", "static_files", "mongodb"***REMOVED******REMOVED***; err != nil {
 		return
 ***REMOVED***
 	port := viper.GetInt("port"***REMOVED***
 	staticFiles := viper.GetString("static_files"***REMOVED***
-	s.services[name] = web.NewService(port, staticFiles, m***REMOVED***
+	mongodbMap := viper.GetStringMapString("mongodb"***REMOVED***
+
+	service := &web.Service{
+		DB: web.MongoDBConfig{
+			Url:      mongodbMap["url"],
+			User:     mongodbMap["user"],
+			Password: mongodbMap["password"],
+	***REMOVED***,
+		Web: web.WebConfig{
+			StaticFilePath: staticFiles,
+			Port:           port,
+	***REMOVED***,
+***REMOVED***
+
+	s.services[name] = service
 	return
 ***REMOVED***
 
