@@ -2,7 +2,7 @@ package web
 
 ***REMOVED***
 	"github.com/globalsign/mgo"
-	"github.com/globalsign/mgo/bson"
+	"github.com/yanagiis/GoTuringCoffee/internal/service/lib"
 ***REMOVED***
 
 type Model struct {
@@ -17,24 +17,40 @@ func NewModel(dbConf *MongoDBConfig***REMOVED*** *Model {
 ***REMOVED***
 ***REMOVED***
 
-func (m *Model***REMOVED*** ListCookbooks(***REMOVED*** ([]Cookbook, error***REMOVED*** {
-	var cookbooks []bson.D
+func (m *Model***REMOVED*** ListCookbooks(***REMOVED*** ([]lib.Cookbook, error***REMOVED*** {
+	var cookbooks []lib.Cookbook
 	if err := m.Connect(***REMOVED***; err != nil {
 		return nil, err
 ***REMOVED***
 	if err := m.c.Find(nil***REMOVED***.All(&cookbooks***REMOVED***; err != nil {
 		return nil, err
 ***REMOVED***
+	return cookbooks, nil
 ***REMOVED***
 
-func (m *Model***REMOVED*** GetCookbook(id string***REMOVED*** (Cookbook, error***REMOVED*** {
+func (m *Model***REMOVED*** GetCookbook(id string***REMOVED*** (*lib.Cookbook, error***REMOVED*** {
+	var cookbook lib.Cookbook
+	if err := m.Connect(***REMOVED***; err != nil {
+		return nil, err
+***REMOVED***
+	if err := m.c.FindId(id***REMOVED***.One(&cookbook***REMOVED***; err != nil {
+		return nil, err
+***REMOVED***
+	return &cookbook, nil
 ***REMOVED***
 
-func (m *Model***REMOVED*** UpdateCookbook(id string, cookbook *Cookbook***REMOVED*** {
+func (m *Model***REMOVED*** UpdateCookbook(id string, cookbook *lib.Cookbook***REMOVED*** error {
+	if err := m.Connect(***REMOVED***; err != nil {
+		return err
+***REMOVED***
+	return m.c.UpdateId(id, cookbook***REMOVED***
 ***REMOVED***
 
-func (m *Model***REMOVED*** DeleteCookbook(id string***REMOVED*** {
-
+func (m *Model***REMOVED*** DeleteCookbook(id string***REMOVED*** error {
+	if err := m.Connect(***REMOVED***; err != nil {
+		return err
+***REMOVED***
+	return m.c.RemoveId(id***REMOVED***
 ***REMOVED***
 
 func (m *Model***REMOVED*** Connect(***REMOVED*** (err error***REMOVED*** {
@@ -44,7 +60,7 @@ func (m *Model***REMOVED*** Connect(***REMOVED*** (err error***REMOVED*** {
 	***REMOVED***
 ***REMOVED***
 	if m.c == nil {
-		m.c = m.session.DB("turingcoffee"***REMOVED***.C("cookbook"***REMOVED***
+		m.c = m.session.DB("turing-coffee"***REMOVED***.C("cookbooknew"***REMOVED***
 ***REMOVED***
 	return
 ***REMOVED***

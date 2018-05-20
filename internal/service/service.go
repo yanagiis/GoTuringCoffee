@@ -261,9 +261,7 @@ func (s *ServiceManager***REMOVED*** parseWeb(name string, viper *viper.Viper, h
 
 	service := &web.Service{
 		DB: web.MongoDBConfig{
-			Url:      mongodbMap["url"],
-			User:     mongodbMap["user"],
-			Password: mongodbMap["password"],
+			Url: mongodbMap["url"],
 	***REMOVED***,
 		Web: web.WebConfig{
 			StaticFilePath: staticFiles,

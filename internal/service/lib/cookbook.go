@@ -10,7 +10,7 @@ type Process interface{***REMOVED***
 
 type Circle struct {
 	Coords      Coordinate `json:"coordinate"`
-	Z           Range      `json:"z"`
+	ToZ         float32    `json:"toz"`
 	Radius      float32    `json:"radius"`
 	Cylinder    int        `json:"cylinder"`
 	Time        float32    `json:"time"`
@@ -20,7 +20,7 @@ type Circle struct {
 
 type Sprial struct {
 	Coords      Coordinate `json:"coordinate"`
-	Z           Range      `json:"z"`
+	ToZ         float32    `json:"toz"`
 	Radius      Range      `json:"radius"`
 	Cylinder    int        `json:"cylinder"`
 	Time        float32    `json:"time"`
@@ -30,7 +30,7 @@ type Sprial struct {
 
 type Ploygon struct {
 	Coords      Coordinate `json:"coordinate"`
-	Z           Range      `json:"z"`
+	ToZ         float32    `json:"toz"`
 	Radius      Range      `json:"radius"`
 	Polygon     int        `json:"polygon"`
 	Cylinder    int        `json:"cylinder"`
@@ -64,6 +64,7 @@ type Home struct {
 type Coordinate struct {
 	X float32 `json:"x"`
 	Y float32 `json:"y"`
+	Z float32 `json:"z"`
 ***REMOVED***
 
 type Range struct {

@@ -10,9 +10,7 @@ package web
 ***REMOVED***
 
 type MongoDBConfig struct {
-	Url      string
-	User     string
-	Password string
+	Url string
 ***REMOVED***
 
 type WebConfig struct {
