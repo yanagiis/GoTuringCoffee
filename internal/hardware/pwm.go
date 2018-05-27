@@ -15,21 +15,25 @@ type PWM interface {
 	PWM(duty float64, period time.Duration) error
 }
 
-type PWMDevice struct {
-	Pin int32 `mapstructure:"pwm"`
-	pwm gpio.PinPWM
-}
-
 type PWMConfig struct {
 	Duty   float64       `mapstructure:"duty_cycle"`
 	Period time.Duration `mapstructure:"period"`
 }
 
+type PWMDevice struct {
+	Pin int32 `mapstructure:"pwm"`
+	pwm gpio.PinPWM
+}
+
 func (p *PWMDevice) Connect() error {
+	var ok bool
 	if p.pwm != nil {
 		return nil
 	}
-	p.pwm = gpioreg.ByName(fmt.Sprint("PWM%d", p.Pin)).(gpio.PinPWM)
+	p.pwm, ok = gpioreg.ByName(fmt.Sprintf("GPIO%d", p.Pin)).(gpio.PinPWM)
+	if !ok {
+		return fmt.Errorf("Cannot get 'GPIO%d' device", p.Pin)
+	}
 	return nil
 }
 
