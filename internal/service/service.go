@@ -60,7 +60,7 @@ type ServiceManager struct {
 
 func NewServiceManager(***REMOVED*** *ServiceManager {
 	return &ServiceManager{
-		***REMOVED*** make(map[string]services***REMOVED***,
+		services: make(map[string]services***REMOVED***,
 		cancels:  make(map[string]context.CancelFunc***REMOVED***,
 ***REMOVED***
 ***REMOVED***

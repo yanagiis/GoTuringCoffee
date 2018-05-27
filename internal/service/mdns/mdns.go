@@ -35,7 +35,7 @@ type MDNS struct {
 func NewMDNS(conf Config***REMOVED*** *MDNS {
 	return &MDNS{
 		Conf:     conf,
-		***REMOVED*** make(map[string]*zeroconf.Server***REMOVED***,
+		services: make(map[string]*zeroconf.Server***REMOVED***,
 ***REMOVED***
 ***REMOVED***
 

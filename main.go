@@ -111,7 +111,7 @@ func connectNats(conf NatsConfig, m *mdns.MDNS***REMOVED*** *nats.EncodedConn {
 	***REMOVED***
 
 		log.Info(***REMOVED***.Msg("Connect to Nats server ..."***REMOVED***
-		url := fmt.Sprintf("***REMOVED***//%s:%d", addrs[0], port***REMOVED***
+		url := fmt.Sprintf("nats://%s:%d", addrs[0], port***REMOVED***
 		opt := nats.Option(func(opts *nats.Options***REMOVED*** error {
 			opts.ReconnectedCB = func(conn *nats.Conn***REMOVED*** {
 				log.Info(***REMOVED***.Msg("Reconnect to Nats server successfully"***REMOVED***

@@ -1,0 +1,126 @@
+hardwares:
+
+  spi0:
+    type: "spi"
+    path: "/dev/spidev0.0"
+    speed: 100000
+    mode: 1
+    bits: 8
+
+  uart0:
+    type: "uart"
+    path: "/dev/ttyAMA0"
+    baudrate: 57600
+
+  uart1:
+    type: "uart"
+    path: "/dev/ttyUSB0"
+    baudrate: 115200
+
+  tcpuartc:
+    type: "tcpuartclient"
+    mdns_service: "smoothie.uart"
+
+  pwm0:
+    type: "pwm"
+    pwm: 0
+
+  # pwm1:
+  #   type: "soft-pwm"
+  #   gpio: 10
+
+  output_sensor:
+    type: "max31856"
+    dev: "spi0"
+    tc: "T"
+    mode: "Automatic"
+    sample: "Avg1" # 1, 2, 54, 8, 16
+
+  tank_sensor:
+    type: "max31865"
+    dev: "spi0"
+    wire: "3"
+    mode: "Automatic"
+
+  extruder:
+    type: "extruder"
+    dev: "uart0"
+
+  smoothie:
+    type: "smoothie"
+    dev: "tcpuartc"
+
+  water_detector:
+    type: "water_detector"
+    gpio: 11
+
+services:
+
+  output_temp_service:
+    enable: false
+    scan_interval_ms: 1000
+    dev: "output_sensor"
+
+  tank_temp_service:
+    enable: false
+    scan_interval_ms: 1000
+    dev: "tank_sensor"
+
+  tank_meter_service:
+    enable: false
+    scan_interval_ms: 1000
+    dev: "water_detector"
+
+  replenish_service:
+    enable: false
+    scan_interval_ms: 1000
+    dev: "pwm0"
+    duty: 50
+    period: 1
+
+  heater:
+    enable: false
+    scan_interval_ms: 1000
+    pwm_dev: "pwm0"
+    pid:
+      P: 2
+      I: 0.25
+      D: 1
+
+  barista:
+    enable: false
+    smoothie: "smoothie"
+    extruder: "extruder"
+    accumulative_water_volume: 20
+    pid:
+      P: 2
+      I: 0.5
+      D: 2
+    waste_water_position:
+      x: 75
+      y: 35
+      z: 180
+    default_moving_speed: 5000
+
+  uartserver:
+    enable: false
+    mdns_service: "smoothie.uart"
+    port: 22222
+    uartdev: "uart1"
+
+  web:
+    enable: true
+    port: 8080
+    static_files: "static"
+    mongodb:
+      url: "mongodb://<username>:<password>@ds021000.mlab.com:21000/turing-coffee"
+      collection: "cookbooknew"
+
+mdns:
+  instance: "TuringCoffee"
+  domain: "local."
+
+nats:
+  register: true
+  service: "nats.io"
+  port: 4222
