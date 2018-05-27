@@ -1,109 +1,109 @@
 package barista
 
-***REMOVED***
+import (
 	"bytes"
 	"errors"
-***REMOVED***
+	"fmt"
 	"strings"
 
 	"github.com/rs/zerolog/log"
 	"github.com/yanagiis/GoTuringCoffee/internal/hardware"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/lib"
-***REMOVED***
+)
 
 type Controller interface {
-	Connect(***REMOVED*** error
-	Disconnect(***REMOVED*** error
-	Do(p *lib.Point***REMOVED*** error
-***REMOVED***
+	Connect() error
+	Disconnect() error
+	Do(p *lib.Point) error
+}
 
 type SEController struct {
 	Smoothie *hardware.Smoothie
 	Extruder *hardware.Extruder
-***REMOVED***
+}
 
-func (se *SEController***REMOVED*** Connect(***REMOVED*** (err error***REMOVED*** {
-	if err = se.Extruder.Connect(***REMOVED***; err != nil {
+func (se *SEController) Connect() (err error) {
+	if err = se.Extruder.Connect(); err != nil {
 		return err
-***REMOVED***
-	defer func(***REMOVED*** {
-	***REMOVED***
-			se.Extruder.Disconnect(***REMOVED***
-	***REMOVED***
-***REMOVED***(***REMOVED***
+	}
+	defer func() {
+		if err != nil {
+			se.Extruder.Disconnect()
+		}
+	}()
 
-	if err = se.Smoothie.Connect(***REMOVED***; err != nil {
+	if err = se.Smoothie.Connect(); err != nil {
 		return err
-***REMOVED***
+	}
 	return nil
-***REMOVED***
+}
 
-func (se *SEController***REMOVED*** Disconnect(***REMOVED*** error {
-	se.Extruder.Disconnect(***REMOVED***
-	se.Smoothie.Disconnect(***REMOVED***
+func (se *SEController) Disconnect() error {
+	se.Extruder.Disconnect()
+	se.Smoothie.Disconnect()
 	return nil
-***REMOVED***
+}
 
-func (se *SEController***REMOVED*** Do(p *lib.Point***REMOVED*** error {
-	gcode, gerr := pointToGCode(p***REMOVED***
-	hcode, herr := pointToHCode(p***REMOVED***
+func (se *SEController) Do(p *lib.Point) error {
+	gcode, gerr := pointToGCode(p)
+	hcode, herr := pointToHCode(p)
 
 	if gerr == nil {
-		se.Smoothie.Writeline(gcode***REMOVED***
-***REMOVED***
+		se.Smoothie.Writeline(gcode)
+	}
 	if herr == nil {
-		se.Extruder.Writeline(hcode***REMOVED***
-***REMOVED***
+		se.Extruder.Writeline(hcode)
+	}
 
 	if gerr == nil {
-		resp, err := se.Smoothie.Readline(***REMOVED***
-		if strings.Compare(resp, "ok"***REMOVED*** != 0 {
-			log.Error(***REMOVED***.Err(err***REMOVED***
-	***REMOVED***
-***REMOVED***
+		resp, err := se.Smoothie.Readline()
+		if strings.Compare(resp, "ok") != 0 {
+			log.Error().Err(err)
+		}
+	}
 	if herr == nil {
-		resp, err := se.Extruder.Readline(***REMOVED***
-		if strings.Compare(resp, "ok"***REMOVED*** != 0 {
-			log.Error(***REMOVED***.Err(err***REMOVED***
-	***REMOVED***
-***REMOVED***
+		resp, err := se.Extruder.Readline()
+		if strings.Compare(resp, "ok") != 0 {
+			log.Error().Err(err)
+		}
+	}
 
 	return nil
-***REMOVED***
+}
 
-func pointToGCode(p *lib.Point***REMOVED*** (string, error***REMOVED*** {
+func pointToGCode(p *lib.Point) (string, error) {
 	if p.X == nil && p.Y == nil && p.Z == nil {
-		return "", errors.New("no x, y, and z"***REMOVED***
-***REMOVED***
+		return "", errors.New("no x, y, and z")
+	}
 
 	var buffer bytes.Buffer
-	buffer.WriteString("G1"***REMOVED***
+	buffer.WriteString("G1")
 	if p.X != nil {
-		buffer.WriteString(fmt.Sprintf(" X%0.5f", *p.X***REMOVED******REMOVED***
-***REMOVED***
+		buffer.WriteString(fmt.Sprintf(" X%0.5f", *p.X))
+	}
 	if p.Y != nil {
-		buffer.WriteString(fmt.Sprintf(" Y%0.5f", *p.Y***REMOVED******REMOVED***
-***REMOVED***
+		buffer.WriteString(fmt.Sprintf(" Y%0.5f", *p.Y))
+	}
 	if p.Z != nil {
-		buffer.WriteString(fmt.Sprintf(" Z%0.5f", *p.Z***REMOVED******REMOVED***
-***REMOVED***
-	buffer.WriteString(fmt.Sprintf(" F%0.5f", *p.F***REMOVED******REMOVED***
-	return buffer.String(***REMOVED***, nil
-***REMOVED***
+		buffer.WriteString(fmt.Sprintf(" Z%0.5f", *p.Z))
+	}
+	buffer.WriteString(fmt.Sprintf(" F%0.5f", *p.F))
+	return buffer.String(), nil
+}
 
-func pointToHCode(p *lib.Point***REMOVED*** (string, error***REMOVED*** {
+func pointToHCode(p *lib.Point) (string, error) {
 	if p.Time == nil {
-		return "", errors.New("no time"***REMOVED***
-***REMOVED***
+		return "", errors.New("no time")
+	}
 
 	var buffer bytes.Buffer
-	buffer.WriteString("H"***REMOVED***
+	buffer.WriteString("H")
 	if p.E1 != nil && *p.E1 != 0 {
-		buffer.WriteString(fmt.Sprintf(" E0 %05f", *p.E1***REMOVED******REMOVED***
-***REMOVED***
+		buffer.WriteString(fmt.Sprintf(" E0 %05f", *p.E1))
+	}
 	if p.E2 != nil && *p.E2 != 0 {
-		buffer.WriteString(fmt.Sprintf(" E1 %05f", *p.E2***REMOVED******REMOVED***
-***REMOVED***
-	buffer.WriteString(fmt.Sprintf(" T%0.5f", *p.Time***REMOVED******REMOVED***
-	return buffer.String(***REMOVED***, nil
-***REMOVED***
+		buffer.WriteString(fmt.Sprintf(" E1 %05f", *p.E2))
+	}
+	buffer.WriteString(fmt.Sprintf(" T%0.5f", *p.Time))
+	return buffer.String(), nil
+}

@@ -3,43 +3,43 @@
 
 package max31856
 
-***REMOVED***
-***REMOVED***
-***REMOVED***
+import (
+	"fmt"
+)
 
 const (
 	// ModeManual is a Mode of type Manual
 	ModeManual Mode = iota
 	// ModeAutomatic is a Mode of type Automatic
 	ModeAutomatic
-***REMOVED***
+)
 
 const _ModeName = "ManualAutomatic"
 
 var _ModeMap = map[Mode]string{
 	0: _ModeName[0:6],
 	1: _ModeName[6:15],
-***REMOVED***
+}
 
-func (i Mode***REMOVED*** String(***REMOVED*** string {
+func (i Mode) String() string {
 	if str, ok := _ModeMap[i]; ok {
 		return str
-***REMOVED***
-	return fmt.Sprintf("Mode(%d***REMOVED***", i***REMOVED***
-***REMOVED***
+	}
+	return fmt.Sprintf("Mode(%d)", i)
+}
 
 var _ModeValue = map[string]Mode{
 	_ModeName[0:6]:  0,
 	_ModeName[6:15]: 1,
-***REMOVED***
+}
 
 // ParseMode attempts to convert a string to a Mode
-func ParseMode(name string***REMOVED*** (Mode, error***REMOVED*** {
+func ParseMode(name string) (Mode, error) {
 	if x, ok := _ModeValue[name]; ok {
-		return Mode(x***REMOVED***, nil
-***REMOVED***
-	return Mode(0***REMOVED***, fmt.Errorf("%s is not a valid Mode", name***REMOVED***
-***REMOVED***
+		return Mode(x), nil
+	}
+	return Mode(0), fmt.Errorf("%s is not a valid Mode", name)
+}
 
 const (
 	// SampleAvg1 is a Sample of type Avg1
@@ -52,7 +52,7 @@ const (
 	SampleAvg8
 	// SampleAvg16 is a Sample of type Avg16
 	SampleAvg16
-***REMOVED***
+)
 
 const _SampleName = "Avg1Avg2Avg4Avg8Avg16"
 
@@ -62,14 +62,14 @@ var _SampleMap = map[Sample]string{
 	2: _SampleName[8:12],
 	3: _SampleName[12:16],
 	4: _SampleName[16:21],
-***REMOVED***
+}
 
-func (i Sample***REMOVED*** String(***REMOVED*** string {
+func (i Sample) String() string {
 	if str, ok := _SampleMap[i]; ok {
 		return str
-***REMOVED***
-	return fmt.Sprintf("Sample(%d***REMOVED***", i***REMOVED***
-***REMOVED***
+	}
+	return fmt.Sprintf("Sample(%d)", i)
+}
 
 var _SampleValue = map[string]Sample{
 	_SampleName[0:4]:   0,
@@ -77,15 +77,15 @@ var _SampleValue = map[string]Sample{
 	_SampleName[8:12]:  2,
 	_SampleName[12:16]: 3,
 	_SampleName[16:21]: 4,
-***REMOVED***
+}
 
 // ParseSample attempts to convert a string to a Sample
-func ParseSample(name string***REMOVED*** (Sample, error***REMOVED*** {
+func ParseSample(name string) (Sample, error) {
 	if x, ok := _SampleValue[name]; ok {
-		return Sample(x***REMOVED***, nil
-***REMOVED***
-	return Sample(0***REMOVED***, fmt.Errorf("%s is not a valid Sample", name***REMOVED***
-***REMOVED***
+		return Sample(x), nil
+	}
+	return Sample(0), fmt.Errorf("%s is not a valid Sample", name)
+}
 
 const (
 	// TypeB is a Type of type B
@@ -104,7 +104,7 @@ const (
 	TypeS
 	// TypeT is a Type of type T
 	TypeT
-***REMOVED***
+)
 
 const _TypeName = "BEJKNRST"
 
@@ -117,14 +117,14 @@ var _TypeMap = map[Type]string{
 	5: _TypeName[5:6],
 	6: _TypeName[6:7],
 	7: _TypeName[7:8],
-***REMOVED***
+}
 
-func (i Type***REMOVED*** String(***REMOVED*** string {
+func (i Type) String() string {
 	if str, ok := _TypeMap[i]; ok {
 		return str
-***REMOVED***
-	return fmt.Sprintf("Type(%d***REMOVED***", i***REMOVED***
-***REMOVED***
+	}
+	return fmt.Sprintf("Type(%d)", i)
+}
 
 var _TypeValue = map[string]Type{
 	_TypeName[0:1]: 0,
@@ -135,12 +135,12 @@ var _TypeValue = map[string]Type{
 	_TypeName[5:6]: 5,
 	_TypeName[6:7]: 6,
 	_TypeName[7:8]: 7,
-***REMOVED***
+}
 
 // ParseType attempts to convert a string to a Type
-func ParseType(name string***REMOVED*** (Type, error***REMOVED*** {
+func ParseType(name string) (Type, error) {
 	if x, ok := _TypeValue[name]; ok {
-		return Type(x***REMOVED***, nil
-***REMOVED***
-	return Type(0***REMOVED***, fmt.Errorf("%s is not a valid Type", name***REMOVED***
-***REMOVED***
+		return Type(x), nil
+	}
+	return Type(0), fmt.Errorf("%s is not a valid Type", name)
+}

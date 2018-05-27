@@ -4,9 +4,9 @@ type Cookbook struct {
 	Name        string
 	Description string
 	Processes   []Process
-***REMOVED***
+}
 
-type Process interface{***REMOVED***
+type Process interface{}
 
 type Circle struct {
 	Coords      Coordinate `json:"coordinate"`
@@ -16,7 +16,7 @@ type Circle struct {
 	Time        float32    `json:"time"`
 	Water       float32    `json:"water"`
 	Temperature float32    `json:"temperature"`
-***REMOVED***
+}
 
 type Sprial struct {
 	Coords      Coordinate `json:"coordinate"`
@@ -26,7 +26,7 @@ type Sprial struct {
 	Time        float32    `json:"time"`
 	Water       float32    `json:"water"`
 	Temperature float32    `json:"temperature"`
-***REMOVED***
+}
 
 type Ploygon struct {
 	Coords      Coordinate `json:"coordinate"`
@@ -37,37 +37,37 @@ type Ploygon struct {
 	Time        float32    `json:"time"`
 	Water       float32    `json:"water"`
 	Temperature float32    `json:"temperature"`
-***REMOVED***
+}
 
 type Fixed struct {
 	Coords      Coordinate `json:"coordinate"`
 	Time        float32    `json:"time"`
 	Water       float32    `json:"water"`
 	Temperature float32    `json:"temperature"`
-***REMOVED***
+}
 
 type Move struct {
 	Coords Coordinate `json:"coordinate"`
-***REMOVED***
+}
 
 type Wait struct {
 	Time float32 `json:"time"`
-***REMOVED***
+}
 
 type Mix struct {
 	Temperature float32 `json:"temperature"`
-***REMOVED***
+}
 
 type Home struct {
-***REMOVED***
+}
 
 type Coordinate struct {
 	X float32 `json:"x"`
 	Y float32 `json:"y"`
 	Z float32 `json:"z"`
-***REMOVED***
+}
 
 type Range struct {
 	From float32 `json:"from"`
 	To   float32 `json:"to"`
-***REMOVED***
+}

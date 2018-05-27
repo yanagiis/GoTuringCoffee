@@ -1,6 +1,6 @@
 package replenisher
 
-***REMOVED***
+import (
 	"context"
 	"time"
 
@@ -8,7 +8,7 @@ package replenisher
 	nats "github.com/nats-io/go-nats"
 	"github.com/yanagiis/GoTuringCoffee/internal/hardware"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/lib"
-***REMOVED***
+)
 
 type Service struct {
 	ScanInterval time.Duration
@@ -16,131 +16,131 @@ type Service struct {
 	PWMConf      hardware.PWMConfig
 	devErr       error
 	stop         bool
-***REMOVED***
+}
 
-func NewService(dev hardware.PWM, scanInterval time.Duration, pwmConf hardware.PWMConfig***REMOVED*** *Service {
+func NewService(dev hardware.PWM, scanInterval time.Duration, pwmConf hardware.PWMConfig) *Service {
 	return &Service{
 		ScanInterval: scanInterval,
 		Dev:          dev,
 		PWMConf:      pwmConf,
-***REMOVED***
-***REMOVED***
+	}
+}
 
-func (r *Service***REMOVED*** Run(ctx context.Context, nc *nats.EncodedConn***REMOVED*** (err error***REMOVED*** {
+func (r *Service) Run(ctx context.Context, nc *nats.EncodedConn) (err error) {
 	var reqSub *nats.Subscription
 	var reqCh chan *nats.Msg
 
-	reqCh = make(chan *nats.Msg***REMOVED***
-	reqSub, err = nc.BindRecvChan("tank.replenisher", reqCh***REMOVED***
-***REMOVED***
+	reqCh = make(chan *nats.Msg)
+	reqSub, err = nc.BindRecvChan("tank.replenisher", reqCh)
+	if err != nil {
 		return err
-***REMOVED***
-	defer func(***REMOVED*** {
-		err = reqSub.Unsubscribe(***REMOVED***
-		close(reqCh***REMOVED***
-***REMOVED***(***REMOVED***
+	}
+	defer func() {
+		err = reqSub.Unsubscribe()
+		close(reqCh)
+	}()
 
-	r.Dev.Connect(***REMOVED***
-	defer r.Dev.Disconnect(***REMOVED***
-	timer := time.NewTimer(r.ScanInterval***REMOVED***
+	r.Dev.Connect()
+	defer r.Dev.Disconnect()
+	timer := time.NewTimer(r.ScanInterval)
 
 	for {
 		select {
 		case msg := <-reqCh:
 			var req lib.ReplenisherRequest
-			if decodeErr := jsoniter.Unmarshal(msg.Data, &req***REMOVED***; decodeErr != nil {
+			if decodeErr := jsoniter.Unmarshal(msg.Data, &req); decodeErr != nil {
 				nc.Publish(msg.Reply, lib.HeaterResponse{
 					Response: lib.Response{
 						Code: lib.CodeFailure,
-						Msg:  decodeErr.Error(***REMOVED***,
-				***REMOVED***,
-			***REMOVED******REMOVED***
-		***REMOVED***
-			if req.IsGet(***REMOVED*** {
-				resp := r.handleReplenishStatus(***REMOVED***
-				nc.Publish(msg.Reply, resp***REMOVED***
-		***REMOVED***
-			if req.IsPut(***REMOVED*** {
-				resp := r.handleControlReplenish(req.Stop***REMOVED***
-				nc.Publish(msg.Reply, resp***REMOVED***
-		***REMOVED***
+						Msg:  decodeErr.Error(),
+					},
+				})
+			}
+			if req.IsGet() {
+				resp := r.handleReplenishStatus()
+				nc.Publish(msg.Reply, resp)
+			}
+			if req.IsPut() {
+				resp := r.handleControlReplenish(req.Stop)
+				nc.Publish(msg.Reply, resp)
+			}
 		case <-timer.C:
-			timer = time.NewTimer(r.ScanInterval***REMOVED***
-			r.scan(***REMOVED***
-		case <-ctx.Done(***REMOVED***:
-			err = ctx.Err(***REMOVED***
+			timer = time.NewTimer(r.ScanInterval)
+			r.scan()
+		case <-ctx.Done():
+			err = ctx.Err()
 			return
-	***REMOVED***
-***REMOVED***
-***REMOVED***
+		}
+	}
+}
 
-func (r *Service***REMOVED*** handleReplenishStatus(***REMOVED*** lib.ReplenisherResponse {
+func (r *Service) handleReplenishStatus() lib.ReplenisherResponse {
 	if r.devErr != nil {
 		return lib.ReplenisherResponse{
 			Response: lib.Response{
 				Code: lib.CodeFailure,
-				Msg:  r.devErr.Error(***REMOVED***,
-		***REMOVED***,
-			Payload: lib.ReplenisherRecord{***REMOVED***,
-	***REMOVED***
-***REMOVED*** else {
+				Msg:  r.devErr.Error(),
+			},
+			Payload: lib.ReplenisherRecord{},
+		}
+	} else {
 		return lib.ReplenisherResponse{
 			Response: lib.Response{
 				Code: lib.CodeSuccess,
-		***REMOVED***,
+			},
 			Payload: lib.ReplenisherRecord{
 				IsReplenishing: !r.stop,
-				Time:           time.Now(***REMOVED***,
-		***REMOVED***,
-	***REMOVED***
-***REMOVED***
-***REMOVED***
+				Time:           time.Now(),
+			},
+		}
+	}
+}
 
-func (r *Service***REMOVED*** handleControlReplenish(stop bool***REMOVED*** lib.ReplenisherResponse {
+func (r *Service) handleControlReplenish(stop bool) lib.ReplenisherResponse {
 	r.stop = stop
 	return lib.ReplenisherResponse{
 		Response: lib.Response{
 			Code: lib.CodeSuccess,
-	***REMOVED***,
-***REMOVED***
-***REMOVED***
+		},
+	}
+}
 
-func (r *Service***REMOVED*** scan(***REMOVED*** {
+func (r *Service) scan() {
 	duty := r.PWMConf.Duty
 	if r.stop {
 		duty = 0
-***REMOVED***
-	r.Dev.PWM(duty, r.PWMConf.Period***REMOVED***
-***REMOVED***
+	}
+	r.Dev.PWM(duty, r.PWMConf.Period)
+}
 
-func GetReplenishInfo(ctx context.Context, nc *nats.EncodedConn***REMOVED*** (resp lib.ReplenisherResponse, err error***REMOVED*** {
+func GetReplenishInfo(ctx context.Context, nc *nats.EncodedConn) (resp lib.ReplenisherResponse, err error) {
 	payload := lib.ReplenisherRequest{
 		Request: lib.Request{
 			Code: lib.CodeGet,
-	***REMOVED***,
-***REMOVED***
-	err = nc.RequestWithContext(ctx, "tank.meter", payload, &resp***REMOVED***
-***REMOVED***
+		},
+	}
+	err = nc.RequestWithContext(ctx, "tank.meter", payload, &resp)
+	if err != nil {
 		return
-***REMOVED***
+	}
 	return
-***REMOVED***
+}
 
-func StopReplenish(ctx context.Context, nc *nats.EncodedConn***REMOVED*** (lib.ReplenisherResponse, error***REMOVED*** {
-	return toggleReplenish(ctx, nc, true***REMOVED***
-***REMOVED***
+func StopReplenish(ctx context.Context, nc *nats.EncodedConn) (lib.ReplenisherResponse, error) {
+	return toggleReplenish(ctx, nc, true)
+}
 
-func StartReplenish(ctx context.Context, nc *nats.EncodedConn***REMOVED*** (lib.ReplenisherResponse, error***REMOVED*** {
-	return toggleReplenish(ctx, nc, false***REMOVED***
-***REMOVED***
+func StartReplenish(ctx context.Context, nc *nats.EncodedConn) (lib.ReplenisherResponse, error) {
+	return toggleReplenish(ctx, nc, false)
+}
 
-func toggleReplenish(ctx context.Context, nc *nats.EncodedConn, stop bool***REMOVED*** (resp lib.ReplenisherResponse, err error***REMOVED*** {
+func toggleReplenish(ctx context.Context, nc *nats.EncodedConn, stop bool) (resp lib.ReplenisherResponse, err error) {
 	payload := lib.ReplenisherRequest{
 		Request: lib.Request{
 			Code: lib.CodeGet,
-	***REMOVED***,
+		},
 		Stop: stop,
-***REMOVED***
-	err = nc.RequestWithContext(ctx, "tank.meter", payload, &resp***REMOVED***
+	}
+	err = nc.RequestWithContext(ctx, "tank.meter", payload, &resp)
 	return
-***REMOVED***
+}

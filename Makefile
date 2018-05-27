@@ -16,15 +16,15 @@ dep:
 	dep ensure
 
 app: generate
-	GOOS=linux GOARCH=$(ARCH***REMOVED*** go build -o GoTuringCoffee_$(ARCH***REMOVED***
+	GOOS=linux GOARCH=$(ARCH) go build -o GoTuringCoffee_$(ARCH)
 
 utils: generate
-	for util in $(UTILS***REMOVED***; do \
-		GOOS=linux GOARCH=$(ARCH***REMOVED*** go build -o ./bin/$$util\_$(ARCH***REMOVED*** ./utils/$$util.go ;\
+	for util in $(UTILS); do \
+		GOOS=linux GOARCH=$(ARCH) go build -o ./bin/$$util\_$(ARCH) ./utils/$$util.go ;\
 	done
 
-generate: $(GENERATE***REMOVED***
-	for file in $(GENERATE***REMOVED*** ; do \
+generate: $(GENERATE)
+	for file in $(GENERATE) ; do \
 		go generate $$file ; \
 	done
 
@@ -34,4 +34,4 @@ clean:
 	rm -rf ./bin
 
 copy:
-	sshpass scp config.yml bin/*_arm ./GoTuringCoffee_arm root@$(DEST_IP***REMOVED***:/home/root
+	sshpass scp config.yml bin/*_arm ./GoTuringCoffee_arm root@$(DEST_IP):/home/root

@@ -1,7 +1,7 @@
-***REMOVED***
+package main
 
-***REMOVED***
-***REMOVED***
+import (
+	"fmt"
 	"net"
 	"os"
 	"os/signal"
@@ -16,117 +16,117 @@
 	"github.com/yanagiis/GoTuringCoffee/internal/hardware"
 	"github.com/yanagiis/GoTuringCoffee/internal/service"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/mdns"
-***REMOVED***
+)
 
 type NatsConfig struct {
 	Register bool   `mapstructure:"register"`
 	Service  string `mapstructure:"service"`
 	Port     int    `mapstructure:"port"`
-***REMOVED***
+}
 
-func init(***REMOVED*** {
-	hardware.Init(***REMOVED***
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr***REMOVED******REMOVED***
-***REMOVED***
+func init() {
+	hardware.Init()
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+}
 
-func main(***REMOVED*** {
+func main() {
 	var err error
 	var configFile string
 	var natsConf NatsConfig
 	var mdnsConf mdns.Config
 	var m *mdns.MDNS
 
-	flag.StringVar(&configFile, "config", "config", "configuration file"***REMOVED***
-	flag.Parse(***REMOVED***
+	flag.StringVar(&configFile, "config", "config", "configuration file")
+	flag.Parse()
 
-	viper.SetConfigName(configFile***REMOVED***
-	viper.AddConfigPath("."***REMOVED***
-	if err := viper.ReadInConfig(***REMOVED***; err != nil {
-		log.Fatal(***REMOVED***.Msg(err.Error(***REMOVED******REMOVED***
-***REMOVED***
+	viper.SetConfigName(configFile)
+	viper.AddConfigPath(".")
+	if err := viper.ReadInConfig(); err != nil {
+		log.Fatal().Msg(err.Error())
+	}
 
-	if err = viper.UnmarshalKey("mdns", &mdnsConf***REMOVED***; err != nil {
-		log.Fatal(***REMOVED***.Msg(err.Error(***REMOVED******REMOVED***
-***REMOVED***
-	if err = viper.UnmarshalKey("nats", &natsConf***REMOVED***; err != nil {
-		log.Fatal(***REMOVED***.Msg(err.Error(***REMOVED******REMOVED***
-***REMOVED***
+	if err = viper.UnmarshalKey("mdns", &mdnsConf); err != nil {
+		log.Fatal().Msg(err.Error())
+	}
+	if err = viper.UnmarshalKey("nats", &natsConf); err != nil {
+		log.Fatal().Msg(err.Error())
+	}
 
-	m = mdns.NewMDNS(mdnsConf***REMOVED***
+	m = mdns.NewMDNS(mdnsConf)
 	if natsConf.Register {
-		if err = m.Register(natsConf.Service, natsConf.Port***REMOVED***; err != nil {
-			log.Fatal(***REMOVED***.Msg(err.Error(***REMOVED******REMOVED***
-	***REMOVED***
-***REMOVED***
+		if err = m.Register(natsConf.Service, natsConf.Port); err != nil {
+			log.Fatal().Msg(err.Error())
+		}
+	}
 
-	log.Info(***REMOVED***.Msg("Load hardware configurations ..."***REMOVED***
-	hwm := hardware.NewHWManager(***REMOVED***
-	err = hwm.Load(viper.GetViper(***REMOVED***, m***REMOVED***
-***REMOVED***
-		log.Fatal(***REMOVED***.Err(err***REMOVED***
-		panic(err***REMOVED***
-***REMOVED***
-	log.Info(***REMOVED***.Msg("Load hardware configurations successfully"***REMOVED***
+	log.Info().Msg("Load hardware configurations ...")
+	hwm := hardware.NewHWManager()
+	err = hwm.Load(viper.GetViper(), m)
+	if err != nil {
+		log.Fatal().Err(err)
+		panic(err)
+	}
+	log.Info().Msg("Load hardware configurations successfully")
 
-	log.Info(***REMOVED***.Msg("Load services configurations ..."***REMOVED***
-	svm := service.NewServiceManager(***REMOVED***
-	err = svm.Load(viper.GetViper(***REMOVED***, hwm, m***REMOVED***
-***REMOVED***
-		log.Fatal(***REMOVED***.Err(err***REMOVED***
-		panic(err***REMOVED***
-***REMOVED***
-	log.Info(***REMOVED***.Msg("Load services configurations successfully"***REMOVED***
+	log.Info().Msg("Load services configurations ...")
+	svm := service.NewServiceManager()
+	err = svm.Load(viper.GetViper(), hwm, m)
+	if err != nil {
+		log.Fatal().Err(err)
+		panic(err)
+	}
+	log.Info().Msg("Load services configurations successfully")
 
-	conn := connectNats(natsConf, m***REMOVED***
-	defer conn.Close(***REMOVED***
+	conn := connectNats(natsConf, m)
+	defer conn.Close()
 
-	log.Info(***REMOVED***.Msg("Run services ..."***REMOVED***
-	svm.RunServices(conn***REMOVED***
-	log.Info(***REMOVED***.Msg("Run services successfully"***REMOVED***
-	defer func(***REMOVED*** {
-		log.Info(***REMOVED***.Msg("Stop services ..."***REMOVED***
-		svm.StopServices(***REMOVED***
-		log.Info(***REMOVED***.Msg("Stop services successfully"***REMOVED***
-***REMOVED***(***REMOVED***
+	log.Info().Msg("Run services ...")
+	svm.RunServices(conn)
+	log.Info().Msg("Run services successfully")
+	defer func() {
+		log.Info().Msg("Stop services ...")
+		svm.StopServices()
+		log.Info().Msg("Stop services successfully")
+	}()
 
-	sigs := make(chan os.Signal, 1***REMOVED***
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM***REMOVED***
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	<-sigs
-***REMOVED***
+}
 
-func connectNats(conf NatsConfig, m *mdns.MDNS***REMOVED*** *nats.EncodedConn {
+func connectNats(conf NatsConfig, m *mdns.MDNS) *nats.EncodedConn {
 	var addrs []net.IP
 	var port int
 	var nc *nats.Conn
 	var err error
 
 	for {
-		if addrs, port, err = m.Lookup(conf.Service, 5*time.Second***REMOVED***; err != nil {
-			log.Info(***REMOVED***.Msgf(err.Error(***REMOVED******REMOVED***
+		if addrs, port, err = m.Lookup(conf.Service, 5*time.Second); err != nil {
+			log.Info().Msgf(err.Error())
 			continue
-	***REMOVED***
-		if len(addrs***REMOVED*** == 0 {
-			log.Info(***REMOVED***.Msgf("Cannot find %q address", conf.Service***REMOVED***
+		}
+		if len(addrs) == 0 {
+			log.Info().Msgf("Cannot find %q address", conf.Service)
 			continue
-	***REMOVED***
+		}
 
-		log.Info(***REMOVED***.Msg("Connect to Nats server ..."***REMOVED***
-		url := fmt.Sprintf("nats://%s:%d", addrs[0], port***REMOVED***
-		opt := nats.Option(func(opts *nats.Options***REMOVED*** error {
-			opts.ReconnectedCB = func(conn *nats.Conn***REMOVED*** {
-				log.Info(***REMOVED***.Msg("Reconnect to Nats server successfully"***REMOVED***
-		***REMOVED***
-			opts.DisconnectedCB = func(conn *nats.Conn***REMOVED*** {
-				log.Info(***REMOVED***.Msg("Nats server is disconnected"***REMOVED***
-		***REMOVED***
+		log.Info().Msg("Connect to Nats server ...")
+		url := fmt.Sprintf("nats://%s:%d", addrs[0], port)
+		opt := nats.Option(func(opts *nats.Options) error {
+			opts.ReconnectedCB = func(conn *nats.Conn) {
+				log.Info().Msg("Reconnect to Nats server successfully")
+			}
+			opts.DisconnectedCB = func(conn *nats.Conn) {
+				log.Info().Msg("Nats server is disconnected")
+			}
 			return nil
-	***REMOVED******REMOVED***
-		if nc, err = nats.Connect(url, opt***REMOVED***; err != nil {
-			log.Info(***REMOVED***.Err(err***REMOVED***
+		})
+		if nc, err = nats.Connect(url, opt); err != nil {
+			log.Info().Err(err)
 			continue
-	***REMOVED***
-		conn, _ := nats.NewEncodedConn(nc, "jsoniter"***REMOVED***
-		log.Info(***REMOVED***.Msg("Connect to Nats server successfully"***REMOVED***
+		}
+		conn, _ := nats.NewEncodedConn(nc, "jsoniter")
+		log.Info().Msg("Connect to Nats server successfully")
 		return conn
-***REMOVED***
-***REMOVED***
+	}
+}

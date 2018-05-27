@@ -1,17 +1,17 @@
 package lib
 
-***REMOVED***
+import (
 	"time"
-***REMOVED***
+)
 
 type PID interface {
-	GetParam(***REMOVED*** (float64, float64, float64***REMOVED***
-	SetParam(p float64, i float64, d float64***REMOVED***
-	SetPoint(point float64***REMOVED***
-	SetBound(lower float64, upper float64***REMOVED***
-	Compute(measure float64, duration time.Duration***REMOVED*** float64
-	Reset(***REMOVED***
-***REMOVED***
+	GetParam() (float64, float64, float64)
+	SetParam(p float64, i float64, d float64)
+	SetPoint(point float64)
+	SetBound(lower float64, upper float64)
+	Compute(measure float64, duration time.Duration) float64
+	Reset()
+}
 
 type NormalPID struct {
 	P           float64 `mapstructure:"p"`
@@ -23,64 +23,64 @@ type NormalPID struct {
 	lower       float64
 	upper       float64
 	reset       bool
-***REMOVED***
+}
 
-func NewNormalPID(p float64, i float64, d float64***REMOVED*** *NormalPID {
+func NewNormalPID(p float64, i float64, d float64) *NormalPID {
 	pid := &NormalPID{
 		P: p, I: i, D: d,
-***REMOVED***
-	pid.Reset(***REMOVED***
+	}
+	pid.Reset()
 	return pid
-***REMOVED***
+}
 
-func (pid *NormalPID***REMOVED*** GetParam(***REMOVED*** (float64, float64, float64***REMOVED*** {
+func (pid *NormalPID) GetParam() (float64, float64, float64) {
 	return pid.P, pid.I, pid.D
-***REMOVED***
+}
 
-func (pid *NormalPID***REMOVED*** SetParam(p float64, i float64, d float64***REMOVED*** {
+func (pid *NormalPID) SetParam(p float64, i float64, d float64) {
 	pid.P = p
 	pid.I = i
 	pid.D = d
-***REMOVED***
+}
 
-func (pid *NormalPID***REMOVED*** SetPoint(point float64***REMOVED*** {
+func (pid *NormalPID) SetPoint(point float64) {
 	pid.setpoint = point
-***REMOVED***
+}
 
-func (pid *NormalPID***REMOVED*** SetBound(lower float64, upper float64***REMOVED*** {
+func (pid *NormalPID) SetBound(lower float64, upper float64) {
 	pid.lower = lower
 	pid.upper = upper
-***REMOVED***
+}
 
-func (pid *NormalPID***REMOVED*** Compute(measure float64, duration time.Duration***REMOVED*** float64 {
+func (pid *NormalPID) Compute(measure float64, duration time.Duration) float64 {
 	if pid.reset {
 		pid.lastMeasure = measure
 		pid.reset = false
-***REMOVED***
+	}
 
-	time := float64(duration.Nanoseconds(***REMOVED******REMOVED*** / 1000000000
+	time := float64(duration.Nanoseconds()) / 1000000000
 	err := pid.setpoint - measure
 	p := pid.P * err
 
 	if time == 0 {
-		return pid.limitValue(p***REMOVED***
-***REMOVED***
+		return pid.limitValue(p)
+	}
 
 	dMeasure := measure - pid.lastMeasure
 	pid.lastMeasure = measure
 	i := pid.I*err*time + pid.iterm
-	d := pid.D * (dMeasure / time***REMOVED***
-	pid.iterm = pid.limitValue(i***REMOVED***
+	d := pid.D * (dMeasure / time)
+	pid.iterm = pid.limitValue(i)
 
-	return pid.limitValue(p + pid.iterm + d***REMOVED***
-***REMOVED***
+	return pid.limitValue(p + pid.iterm + d)
+}
 
-func (pid *NormalPID***REMOVED*** Reset(***REMOVED*** {
+func (pid *NormalPID) Reset() {
 	pid.reset = true
 	pid.iterm = 0
-***REMOVED***
+}
 
-func (pid *NormalPID***REMOVED*** limitValue(value float64***REMOVED*** float64 {
+func (pid *NormalPID) limitValue(value float64) float64 {
 	switch {
 	case value > pid.upper:
 		return pid.upper
@@ -88,5 +88,5 @@ func (pid *NormalPID***REMOVED*** limitValue(value float64***REMOVED*** float64 
 		return pid.lower
 	default:
 		return value
-***REMOVED***
-***REMOVED***
+	}
+}

@@ -1,6 +1,6 @@
 package tankmeter
 
-***REMOVED***
+import (
 	"context"
 	"time"
 
@@ -9,41 +9,41 @@ package tankmeter
 	"github.com/rs/zerolog/log"
 	"github.com/yanagiis/GoTuringCoffee/internal/hardware"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/lib"
-***REMOVED***
+)
 
 type Service struct {
 	ScanInterval time.Duration
 	Sensor       hardware.WaterDetector
-***REMOVED***
+}
 
-func NewService(dev hardware.WaterDetector, scanInterval time.Duration***REMOVED*** *Service {
+func NewService(dev hardware.WaterDetector, scanInterval time.Duration) *Service {
 	return &Service{
 		ScanInterval: scanInterval,
 		Sensor:       dev,
-***REMOVED***
-***REMOVED***
+	}
+}
 
-func (t *Service***REMOVED*** Run(ctx context.Context, nc *nats.EncodedConn***REMOVED*** (err error***REMOVED*** {
+func (t *Service) Run(ctx context.Context, nc *nats.EncodedConn) (err error) {
 	var reqSub *nats.Subscription
 	var reqCh chan *nats.Msg
 
-	reqCh = make(chan *nats.Msg***REMOVED***
-	reqSub, err = nc.BindRecvChan("tank.meter", reqCh***REMOVED***
-***REMOVED***
+	reqCh = make(chan *nats.Msg)
+	reqSub, err = nc.BindRecvChan("tank.meter", reqCh)
+	if err != nil {
 		return err
-***REMOVED***
-	defer func(***REMOVED*** {
-		err = reqSub.Unsubscribe(***REMOVED***
-		close(reqCh***REMOVED***
-***REMOVED***(***REMOVED***
+	}
+	defer func() {
+		err = reqSub.Unsubscribe()
+		close(reqCh)
+	}()
 
 	var sensorErr error
 	fullRecord := lib.FullRecord{
 		IsFull: false,
-		Time:   time.Time{***REMOVED***,
-***REMOVED***
+		Time:   time.Time{},
+	}
 
-	timer := time.NewTimer(t.ScanInterval***REMOVED***
+	timer := time.NewTimer(t.ScanInterval)
 
 	for {
 		select {
@@ -53,37 +53,37 @@ func (t *Service***REMOVED*** Run(ctx context.Context, nc *nats.EncodedConn***RE
 				resp = lib.FullResponse{
 					Response: lib.Response{
 						Code: 1,
-						Msg:  sensorErr.Error(***REMOVED***,
-				***REMOVED***,
-			***REMOVED***
-		***REMOVED*** else {
+						Msg:  sensorErr.Error(),
+					},
+				}
+			} else {
 				resp = lib.FullResponse{
 					Response: lib.Response{
 						Code: 0,
-				***REMOVED***,
+					},
 					Payload: fullRecord,
-			***REMOVED***
-		***REMOVED***
-			nc.Publish(msg.Reply, resp***REMOVED***
+				}
+			}
+			nc.Publish(msg.Reply, resp)
 		case <-timer.C:
-			timer = time.NewTimer(t.ScanInterval***REMOVED***
-			if sensorErr = t.Sensor.Connect(***REMOVED***; sensorErr != nil {
-				log.Error(***REMOVED***.Msg(sensorErr.Error(***REMOVED******REMOVED***
+			timer = time.NewTimer(t.ScanInterval)
+			if sensorErr = t.Sensor.Connect(); sensorErr != nil {
+				log.Error().Msg(sensorErr.Error())
 				continue
-		***REMOVED***
-			fullRecord.IsFull, sensorErr = t.Sensor.IsWaterFull(***REMOVED***
-			fullRecord.Time = time.Now(***REMOVED***
-		case <-ctx.Done(***REMOVED***:
-			err = ctx.Err(***REMOVED***
+			}
+			fullRecord.IsFull, sensorErr = t.Sensor.IsWaterFull()
+			fullRecord.Time = time.Now()
+		case <-ctx.Done():
+			err = ctx.Err()
 			return
-	***REMOVED***
-***REMOVED***
-***REMOVED***
+		}
+	}
+}
 
-func GetMeterInfo(ctx context.Context, nc *nats.EncodedConn***REMOVED*** (resp lib.FullResponse, err error***REMOVED*** {
+func GetMeterInfo(ctx context.Context, nc *nats.EncodedConn) (resp lib.FullResponse, err error) {
 	payload, _ := jsoniter.Marshal(lib.Request{
 		Code: lib.CodeGet,
-***REMOVED******REMOVED***
-	err = nc.RequestWithContext(ctx, "tank.meter", payload, &resp***REMOVED***
+	})
+	err = nc.RequestWithContext(ctx, "tank.meter", payload, &resp)
 	return
-***REMOVED***
+}

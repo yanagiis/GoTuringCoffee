@@ -1,58 +1,58 @@
-***REMOVED***
+package main
 
-***REMOVED***
+import (
 	"flag"
-***REMOVED***
+	"fmt"
 
 	"github.com/yanagiis/GoTuringCoffee/internal/hardware"
 	"github.com/yanagiis/GoTuringCoffee/internal/hardware/max31865"
 	"github.com/yanagiis/GoTuringCoffee/internal/hardware/spiwrap"
 	"github.com/yanagiis/periph/conn/spi"
-***REMOVED***
+)
 
-func init(***REMOVED*** {
-	hardware.Init(***REMOVED***
-***REMOVED***
+func init() {
+	hardware.Init()
+}
 
-func main(***REMOVED*** {
+func main() {
 	var wire max31865.Wire
 	var temp float64
 	var err error
 	var spidev spiwrap.SPIDevice
 
-	pathPtr := flag.String("path", "/dev/spidev0.0", "SPI device path"***REMOVED***
-	speedPtr := flag.Int64("speed", 100000, "SPI speed"***REMOVED***
-	modePtr := flag.Int64("mode", 1, "SPI mode"***REMOVED***
-	bitsPtr := flag.Int("bits", 8, "SPI bits"***REMOVED***
-	wirePtr := flag.String("wire", "3", "PT100 wiring"***REMOVED***
-	flag.Parse(***REMOVED***
+	pathPtr := flag.String("path", "/dev/spidev0.0", "SPI device path")
+	speedPtr := flag.Int64("speed", 100000, "SPI speed")
+	modePtr := flag.Int64("mode", 1, "SPI mode")
+	bitsPtr := flag.Int("bits", 8, "SPI bits")
+	wirePtr := flag.String("wire", "3", "PT100 wiring")
+	flag.Parse()
 
-	wire, err = max31865.ParseWire(*wirePtr***REMOVED***
-***REMOVED***
-		panic(err***REMOVED***
-***REMOVED***
+	wire, err = max31865.ParseWire(*wirePtr)
+	if err != nil {
+		panic(err)
+	}
 
 	spidev.Conf.Path = *pathPtr
 	spidev.Conf.Speed = *speedPtr
-	spidev.Conf.Mode = spi.Mode(*modePtr***REMOVED***
+	spidev.Conf.Mode = spi.Mode(*modePtr)
 	spidev.Conf.Bits = *bitsPtr
 
 	conf := max31865.Config{
 		Mode: max31865.ModeAutomatic,
 		Wire: wire,
-***REMOVED***
+	}
 
-	sensor := max31865.New(&spidev, conf***REMOVED***
-	if err := sensor.Connect(***REMOVED***; err != nil {
-		panic(err***REMOVED***
-***REMOVED***
+	sensor := max31865.New(&spidev, conf)
+	if err := sensor.Connect(); err != nil {
+		panic(err)
+	}
 
-	temp, err = sensor.GetTemperature(***REMOVED***
-***REMOVED***
-		panic(err***REMOVED***
-***REMOVED***
+	temp, err = sensor.GetTemperature()
+	if err != nil {
+		panic(err)
+	}
 
-	fmt.Printf("Temperature: %f\n", temp***REMOVED***
+	fmt.Printf("Temperature: %f\n", temp)
 
-	sensor.Disconnect(***REMOVED***
-***REMOVED***
+	sensor.Disconnect()
+}

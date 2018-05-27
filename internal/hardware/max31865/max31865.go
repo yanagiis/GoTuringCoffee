@@ -2,23 +2,23 @@
 
 package max31865
 
-***REMOVED***
+import (
 	"errors"
-***REMOVED***
+	"fmt"
 
 	"github.com/yanagiis/GoTuringCoffee/internal/hardware/spiwrap"
-***REMOVED***
+)
 
 // RTD wire type
 // ENUM(
 // 2, 3, 4
-// ***REMOVED***
+// )
 type Wire byte
 
 // MAX31865 Mode
 // ENUM(
 // Manual, Automatic
-// ***REMOVED***
+// )
 type Mode byte
 
 const (
@@ -31,98 +31,98 @@ const (
 	addrLFTH               = 0x5
 	addrLFTL               = 0x6
 	addrFault              = 0x7
-***REMOVED***
+)
 
 // Config is used to setting max31865 sensor
 type Config struct {
 	Wire Wire `mapstructure:"wire"`
 	Mode Mode `mapstructure:"mode"`
-***REMOVED***
+}
 
 // MAX31865 RTD sensor
 type MAX31865 struct {
 	spi       spiwrap.SPI
 	conf      Config
 	connected bool
-***REMOVED***
+}
 
-func New(spi spiwrap.SPI, conf Config***REMOVED*** *MAX31865 {
+func New(spi spiwrap.SPI, conf Config) *MAX31865 {
 	return &MAX31865{
 		spi:       spi,
 		conf:      conf,
 		connected: false,
-***REMOVED***
-***REMOVED***
+	}
+}
 
-func (m *MAX31865***REMOVED*** Connect(***REMOVED*** error {
+func (m *MAX31865) Connect() error {
 	var err error
 	var mode Mode
 	var wire Wire
 
 	if m.connected {
 		return nil
-***REMOVED***
+	}
 
-	if err = m.spi.Open(***REMOVED***; err != nil {
+	if err = m.spi.Open(); err != nil {
 		return err
-***REMOVED***
+	}
 
-	err = m.setMode(m.conf.Mode***REMOVED***
-***REMOVED***
+	err = m.setMode(m.conf.Mode)
+	if err != nil {
 		return err
-***REMOVED***
-	err = m.setWire(m.conf.Wire***REMOVED***
-***REMOVED***
+	}
+	err = m.setWire(m.conf.Wire)
+	if err != nil {
 		return err
-***REMOVED***
+	}
 
-	mode, err = m.getMode(***REMOVED***
-***REMOVED***
+	mode, err = m.getMode()
+	if err != nil {
 		return err
-***REMOVED***
+	}
 	if mode != m.conf.Mode {
-		return errors.New("max31865 set mode failed"***REMOVED***
-***REMOVED***
+		return errors.New("max31865 set mode failed")
+	}
 
-	wire, err = m.getWire(***REMOVED***
-***REMOVED***
+	wire, err = m.getWire()
+	if err != nil {
 		return err
-***REMOVED***
+	}
 	if wire != m.conf.Wire {
-		return errors.New("max31865 set wire failed"***REMOVED***
-***REMOVED***
+		return errors.New("max31865 set wire failed")
+	}
 
-	buf := make([]byte, 1***REMOVED***
-	err = m.readReg(addrCR, buf***REMOVED***
-***REMOVED***
+	buf := make([]byte, 1)
+	err = m.readReg(addrCR, buf)
+	if err != nil {
 		return err
-***REMOVED***
+	}
 
-	buf[0] = (buf[0] & 0x7f***REMOVED*** | (1 << 7***REMOVED***
-	err = m.writeReg(addrCR, buf***REMOVED***
-***REMOVED***
+	buf[0] = (buf[0] & 0x7f) | (1 << 7)
+	err = m.writeReg(addrCR, buf)
+	if err != nil {
 		return err
-***REMOVED***
+	}
 
 	m.connected = true
 	return nil
-***REMOVED***
+}
 
-func (m *MAX31865***REMOVED*** Disconnect(***REMOVED*** error {
-	if err := m.spi.Close(***REMOVED***; err != nil {
+func (m *MAX31865) Disconnect() error {
+	if err := m.spi.Close(); err != nil {
 		return err
-***REMOVED***
+	}
 	m.connected = false
 	return nil
-***REMOVED***
+}
 
 // GetTemperature get temperature
 //
 // Callendar-Van Dusen equation:
-// R(T***REMOVED*** = R0(1 + aT + bT2 + c(T - 100***REMOVED***T3***REMOVED***
+// R(T) = R0(1 + aT + bT2 + c(T - 100)T3)
 // where:
-//     T = temperature (C***REMOVED***
-//     R(T***REMOVED*** = resistance at T
+//     T = temperature (C)
+//     R(T) = resistance at T
 //     R0 = resistance at T = 0C
 //     IEC 751 specifies α = 0.00385055 and the following
 //     Callendar-Van Dusen coefficient values:
@@ -134,102 +134,102 @@ func (m *MAX31865***REMOVED*** Disconnect(***REMOVED*** error {
 // For a temperature range of -100C to +100C, a good
 // approximation of temperature can be made by simply
 // using the RTD data as shown below:
-// Temperature (C***REMOVED*** ≈ (ADC code/32***REMOVED*** – 256
-func (m *MAX31865***REMOVED*** GetTemperature(***REMOVED*** (float64, error***REMOVED*** {
+// Temperature (C) ≈ (ADC code/32) – 256
+func (m *MAX31865) GetTemperature() (float64, error) {
 
 	if !m.connected {
-		return 0, errors.New("sensor is not connected yet"***REMOVED***
-***REMOVED***
+		return 0, errors.New("sensor is not connected yet")
+	}
 
-	buf := make([]byte, 2***REMOVED***
-	err := m.readReg(addrRTDH, buf***REMOVED***
-***REMOVED***
+	buf := make([]byte, 2)
+	err := m.readReg(addrRTDH, buf)
+	if err != nil {
 		return 0, err
-***REMOVED***
+	}
 
-	if (buf[1] & 0x1***REMOVED*** != 0 {
+	if (buf[1] & 0x1) != 0 {
 		var value byte
-		value, err = m.getError(***REMOVED***
-	***REMOVED***
+		value, err = m.getError()
+		if err != nil {
 			return 0, err
-	***REMOVED***
+		}
 
-		err = m.clearError(***REMOVED***
-	***REMOVED***
+		err = m.clearError()
+		if err != nil {
 			return 0, err
-	***REMOVED***
+		}
 
-		return 0, fmt.Errorf("max31865 error %02x", value***REMOVED***
-***REMOVED***
+		return 0, fmt.Errorf("max31865 error %02x", value)
+	}
 
-	adcValue := ((int32(buf[0]***REMOVED*** << 8***REMOVED*** | (int32(buf[1]***REMOVED******REMOVED******REMOVED*** >> 1
+	adcValue := ((int32(buf[0]) << 8) | (int32(buf[1]))) >> 1
 	if adcValue == 0 {
-		return 0, errors.New("get zero adcValue"***REMOVED***
-***REMOVED***
+		return 0, errors.New("get zero adcValue")
+	}
 
-	return float64(adcValue***REMOVED***/32 - 256, nil
-***REMOVED***
+	return float64(adcValue)/32 - 256, nil
+}
 
-func (m *MAX31865***REMOVED*** getMode(***REMOVED*** (Mode, error***REMOVED*** {
-	buf := make([]byte, 1***REMOVED***
-	err := m.readReg(addrCR, buf***REMOVED***
-	return Mode((buf[0] & 0x40***REMOVED*** >> 6***REMOVED***, err
-***REMOVED***
+func (m *MAX31865) getMode() (Mode, error) {
+	buf := make([]byte, 1)
+	err := m.readReg(addrCR, buf)
+	return Mode((buf[0] & 0x40) >> 6), err
+}
 
-func (m *MAX31865***REMOVED*** setMode(mode Mode***REMOVED*** error {
-	buf := make([]byte, 1***REMOVED***
-	err := m.readReg(addrCR, buf***REMOVED***
-***REMOVED***
+func (m *MAX31865) setMode(mode Mode) error {
+	buf := make([]byte, 1)
+	err := m.readReg(addrCR, buf)
+	if err != nil {
 		return err
-***REMOVED***
-	buf[0] = (buf[0] & 0xbf***REMOVED*** | (byte(mode***REMOVED*** << 6***REMOVED***
-	return m.writeReg(addrCR, buf***REMOVED***
-***REMOVED***
+	}
+	buf[0] = (buf[0] & 0xbf) | (byte(mode) << 6)
+	return m.writeReg(addrCR, buf)
+}
 
-func (m *MAX31865***REMOVED*** getWire(***REMOVED*** (Wire, error***REMOVED*** {
-	buf := make([]byte, 1***REMOVED***
-	err := m.readReg(addrCR, buf***REMOVED***
-	return Wire((buf[0] & 0x10***REMOVED*** >> 4***REMOVED***, err
-***REMOVED***
+func (m *MAX31865) getWire() (Wire, error) {
+	buf := make([]byte, 1)
+	err := m.readReg(addrCR, buf)
+	return Wire((buf[0] & 0x10) >> 4), err
+}
 
-func (m *MAX31865***REMOVED*** setWire(wire Wire***REMOVED*** error {
-	buf := make([]byte, 1***REMOVED***
-	err := m.readReg(addrCR, buf***REMOVED***
-***REMOVED***
+func (m *MAX31865) setWire(wire Wire) error {
+	buf := make([]byte, 1)
+	err := m.readReg(addrCR, buf)
+	if err != nil {
 		return err
-***REMOVED***
-	buf[0] = (buf[0] & 0xef***REMOVED*** | (byte(wire***REMOVED*** << 4***REMOVED***
-	return m.writeReg(addrCR, buf***REMOVED***
-***REMOVED***
+	}
+	buf[0] = (buf[0] & 0xef) | (byte(wire) << 4)
+	return m.writeReg(addrCR, buf)
+}
 
-func (m *MAX31865***REMOVED*** getError(***REMOVED*** (byte, error***REMOVED*** {
-	buf := make([]byte, 1***REMOVED***
-	err := m.readReg(addrFault, buf***REMOVED***
+func (m *MAX31865) getError() (byte, error) {
+	buf := make([]byte, 1)
+	err := m.readReg(addrFault, buf)
 	return buf[0], err
-***REMOVED***
+}
 
-func (m *MAX31865***REMOVED*** clearError(***REMOVED*** error {
-	buf := make([]byte, 1***REMOVED***
-	err := m.readReg(addrCR, buf***REMOVED***
-***REMOVED***
+func (m *MAX31865) clearError() error {
+	buf := make([]byte, 1)
+	err := m.readReg(addrCR, buf)
+	if err != nil {
 		return err
-***REMOVED***
+	}
 	buf[0] |= 0x2
-	return m.writeReg(addrCR, buf***REMOVED***
-***REMOVED***
+	return m.writeReg(addrCR, buf)
+}
 
-func (m *MAX31865***REMOVED*** readReg(addr byte, buf []byte***REMOVED*** error {
-	wbuf := append([]byte{addr***REMOVED***, buf...***REMOVED***
-	rbuf := make([]byte, len(wbuf***REMOVED******REMOVED***
-	if err := m.spi.Tx(wbuf, rbuf***REMOVED***; err != nil {
+func (m *MAX31865) readReg(addr byte, buf []byte) error {
+	wbuf := append([]byte{addr}, buf...)
+	rbuf := make([]byte, len(wbuf))
+	if err := m.spi.Tx(wbuf, rbuf); err != nil {
 		return err
-***REMOVED***
-	copy(buf, rbuf[1:]***REMOVED***
+	}
+	copy(buf, rbuf[1:])
 	return nil
-***REMOVED***
+}
 
-func (m *MAX31865***REMOVED*** writeReg(addr byte, buf []byte***REMOVED*** error {
-	wbuf := append([]byte{addr | addrWriteMAX31865***REMOVED***, buf...***REMOVED***
-	rbuf := make([]byte, len(wbuf***REMOVED******REMOVED***
-	return m.spi.Tx(wbuf, rbuf***REMOVED***
-***REMOVED***
+func (m *MAX31865) writeReg(addr byte, buf []byte) error {
+	wbuf := append([]byte{addr | addrWriteMAX31865}, buf...)
+	rbuf := make([]byte, len(wbuf))
+	return m.spi.Tx(wbuf, rbuf)
+}

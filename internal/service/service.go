@@ -1,9 +1,9 @@
 package service
 
-***REMOVED***
+import (
 	"context"
 	"errors"
-***REMOVED***
+	"fmt"
 	"time"
 
 	nats "github.com/nats-io/go-nats"
@@ -21,280 +21,280 @@ package service
 	"github.com/yanagiis/GoTuringCoffee/internal/service/tanktemp"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/uartserver"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/web"
-***REMOVED***
-***REMOVED***
+	"github.com/yanagiis/GoTuringCoffee/internal/service/web/model"
+)
 
 var (
-	ErrWrongConfig = errors.New("wrong configuration"***REMOVED***
-***REMOVED***
+	ErrWrongConfig = errors.New("wrong configuration")
+)
 
 type services interface {
-	Run(ctx context.Context, nc *nats.EncodedConn***REMOVED*** error
-***REMOVED***
+	Run(ctx context.Context, nc *nats.EncodedConn) error
+}
 
 type ServiceError struct {
 	name string
 	msg  string
 	err  error
-***REMOVED***
+}
 
-func NewServiceError(name string, msg string, err error***REMOVED*** *ServiceError {
+func NewServiceError(name string, msg string, err error) *ServiceError {
 	return &ServiceError{
 		name: name,
 		msg:  msg,
 		err:  err,
-***REMOVED***
-***REMOVED***
+	}
+}
 
-func NewMissingFieldError(name string, field string***REMOVED*** *ServiceError {
-	return NewServiceError(name, fmt.Sprintf("%q is required"***REMOVED***, ErrWrongConfig***REMOVED***
-***REMOVED***
+func NewMissingFieldError(name string, field string) *ServiceError {
+	return NewServiceError(name, fmt.Sprintf("%q is required"), ErrWrongConfig)
+}
 
-func (e *ServiceError***REMOVED*** Error(***REMOVED*** string {
-	return fmt.Sprintf("%s: %s: %s", e.err.Error(***REMOVED***, e.name, e.msg***REMOVED***
-***REMOVED***
+func (e *ServiceError) Error() string {
+	return fmt.Sprintf("%s: %s: %s", e.err.Error(), e.name, e.msg)
+}
 
 type ServiceManager struct {
 	services map[string]services
 	cancels  map[string]context.CancelFunc
-***REMOVED***
+}
 
-func NewServiceManager(***REMOVED*** *ServiceManager {
+func NewServiceManager() *ServiceManager {
 	return &ServiceManager{
-		services: make(map[string]services***REMOVED***,
-		cancels:  make(map[string]context.CancelFunc***REMOVED***,
-***REMOVED***
-***REMOVED***
+		services: make(map[string]services),
+		cancels:  make(map[string]context.CancelFunc),
+	}
+}
 
-func (s *ServiceManager***REMOVED*** Load(viper *viper.Viper, hwm *hardware.HWManager, m *mdns.MDNS***REMOVED*** error {
-	if !viper.IsSet("services"***REMOVED*** {
-		return NewServiceError("services", "no services field", ErrWrongConfig***REMOVED***
-***REMOVED***
+func (s *ServiceManager) Load(viper *viper.Viper, hwm *hardware.HWManager, m *mdns.MDNS) error {
+	if !viper.IsSet("services") {
+		return NewServiceError("services", "no services field", ErrWrongConfig)
+	}
 
-	services := viper.GetStringMapString("services"***REMOVED***
+	services := viper.GetStringMapString("services")
 	for name := range services {
-		services := viper.Sub(fmt.Sprintf("services.%s", name***REMOVED******REMOVED***
-		if err := s.AddService(name, services, hwm, m***REMOVED***; err != nil {
-			log.Fatal(***REMOVED***.Msgf("load service %q failed - %v", name, err***REMOVED***
+		services := viper.Sub(fmt.Sprintf("services.%s", name))
+		if err := s.AddService(name, services, hwm, m); err != nil {
+			log.Fatal().Msgf("load service %q failed - %v", name, err)
 			return err
-	***REMOVED***
-		log.Info(***REMOVED***.Msgf("load service %q", name***REMOVED***
-***REMOVED***
+		}
+		log.Info().Msgf("load service %q", name)
+	}
 
 	return nil
-***REMOVED***
+}
 
-func (s *ServiceManager***REMOVED*** AddService(name string, viper *viper.Viper, hwm *hardware.HWManager, m *mdns.MDNS***REMOVED*** error {
+func (s *ServiceManager) AddService(name string, viper *viper.Viper, hwm *hardware.HWManager, m *mdns.MDNS) error {
 	if _, ok := s.services[name]; ok {
-		return NewServiceError(name, "name is used", ErrWrongConfig***REMOVED***
-***REMOVED***
-	if !viper.IsSet("enable"***REMOVED*** {
-		return NewServiceError(name, "miss enable field", ErrWrongConfig***REMOVED***
-***REMOVED***
+		return NewServiceError(name, "name is used", ErrWrongConfig)
+	}
+	if !viper.IsSet("enable") {
+		return NewServiceError(name, "miss enable field", ErrWrongConfig)
+	}
 
-	if !viper.GetBool("enable"***REMOVED*** {
-		log.Debug(***REMOVED***.Msgf("%s is disable", name***REMOVED***
+	if !viper.GetBool("enable") {
+		log.Debug().Msgf("%s is disable", name)
 		return nil
-***REMOVED***
+	}
 
 	switch name {
 	case "output_temp_service":
-		if err := s.parseOutTempService(name, viper, hwm, m***REMOVED***; err != nil {
+		if err := s.parseOutTempService(name, viper, hwm, m); err != nil {
 			return err
-	***REMOVED***
+		}
 	case "tank_temp_service":
-		if err := s.parseTankTempService(name, viper, hwm, m***REMOVED***; err != nil {
+		if err := s.parseTankTempService(name, viper, hwm, m); err != nil {
 			return err
-	***REMOVED***
+		}
 	case "tank_meter_service":
-		if err := s.parseTankMeterService(name, viper, hwm, m***REMOVED***; err != nil {
+		if err := s.parseTankMeterService(name, viper, hwm, m); err != nil {
 			return err
-	***REMOVED***
+		}
 	case "replenisher_service":
-		if err := s.parseReplenisher(name, viper, hwm, m***REMOVED***; err != nil {
+		if err := s.parseReplenisher(name, viper, hwm, m); err != nil {
 			return err
-	***REMOVED***
+		}
 	case "heater":
-		if err := s.parseHeater(name, viper, hwm, m***REMOVED***; err != nil {
+		if err := s.parseHeater(name, viper, hwm, m); err != nil {
 			return err
-	***REMOVED***
+		}
 	case "barista":
-		if err := s.parseBarista(name, viper, hwm, m***REMOVED***; err != nil {
+		if err := s.parseBarista(name, viper, hwm, m); err != nil {
 			return err
-	***REMOVED***
+		}
 	case "uartserver":
-		if err := s.parseUARTServer(name, viper, hwm, m***REMOVED***; err != nil {
+		if err := s.parseUARTServer(name, viper, hwm, m); err != nil {
 			return err
-	***REMOVED***
+		}
 	case "web":
-		if err := s.parseWeb(name, viper, hwm, m***REMOVED***; err != nil {
+		if err := s.parseWeb(name, viper, hwm, m); err != nil {
 			return err
-	***REMOVED***
-***REMOVED***
+		}
+	}
 
 	return nil
-***REMOVED***
+}
 
-func (s *ServiceManager***REMOVED*** parseBarista(name string, viper *viper.Viper, hwm *hardware.HWManager, m *mdns.MDNS***REMOVED*** error {
+func (s *ServiceManager) parseBarista(name string, viper *viper.Viper, hwm *hardware.HWManager, m *mdns.MDNS) error {
 	var conf barista.BaristaConfig
 	var err error
-	var tmp interface{***REMOVED***
+	var tmp interface{}
 
-	if err = checkFields(viper, []string{"smoothie", "extruder"***REMOVED******REMOVED***; err != nil {
+	if err = checkFields(viper, []string{"smoothie", "extruder"}); err != nil {
 		return err
-***REMOVED***
+	}
 
-	smoothieName := viper.GetString("smoothie"***REMOVED***
-	if tmp, err = hwm.GetDevice(smoothieName***REMOVED***; err != nil {
+	smoothieName := viper.GetString("smoothie")
+	if tmp, err = hwm.GetDevice(smoothieName); err != nil {
 		return err
-***REMOVED***
-	smoothie := tmp.(*hardware.Smoothie***REMOVED***
+	}
+	smoothie := tmp.(*hardware.Smoothie)
 
-	extruderName := viper.GetString("extruder"***REMOVED***
-	if tmp, err = hwm.GetDevice(extruderName***REMOVED***; err != nil {
+	extruderName := viper.GetString("extruder")
+	if tmp, err = hwm.GetDevice(extruderName); err != nil {
 		return err
-***REMOVED***
-	extruder := tmp.(*hardware.Extruder***REMOVED***
+	}
+	extruder := tmp.(*hardware.Extruder)
 
-	if err := viper.Unmarshal(&conf***REMOVED***; err != nil {
-		return NewServiceError(name, err.Error(***REMOVED***, ErrWrongConfig***REMOVED***
-***REMOVED***
+	if err := viper.Unmarshal(&conf); err != nil {
+		return NewServiceError(name, err.Error(), ErrWrongConfig)
+	}
 
 	barista := barista.NewBarista(conf, &barista.SEController{
 		Smoothie: smoothie,
 		Extruder: extruder,
-***REMOVED******REMOVED***
+	})
 	s.services[name] = barista
 	return nil
-***REMOVED***
+}
 
-func (s *ServiceManager***REMOVED*** parseReplenisher(name string, viper *viper.Viper, hwm *hardware.HWManager, m *mdns.MDNS***REMOVED*** error {
+func (s *ServiceManager) parseReplenisher(name string, viper *viper.Viper, hwm *hardware.HWManager, m *mdns.MDNS) error {
 	var pwmConfig hardware.PWMConfig
 
-	devName := viper.GetString("dev"***REMOVED***
-	dev, err := hwm.GetDevice(devName***REMOVED***
-***REMOVED***
-		return NewServiceError(name, err.Error(***REMOVED***, ErrWrongConfig***REMOVED***
-***REMOVED***
-	pwm := dev.(hardware.PWM***REMOVED***
+	devName := viper.GetString("dev")
+	dev, err := hwm.GetDevice(devName)
+	if err != nil {
+		return NewServiceError(name, err.Error(), ErrWrongConfig)
+	}
+	pwm := dev.(hardware.PWM)
 
-	scanInterval := time.Duration(viper.GetInt64("scan_interval_ms"***REMOVED******REMOVED*** * time.Millisecond
-	if err = viper.Unmarshal(&pwmConfig***REMOVED***; err != nil {
-		return NewServiceError(name, err.Error(***REMOVED***, ErrWrongConfig***REMOVED***
-***REMOVED***
+	scanInterval := time.Duration(viper.GetInt64("scan_interval_ms")) * time.Millisecond
+	if err = viper.Unmarshal(&pwmConfig); err != nil {
+		return NewServiceError(name, err.Error(), ErrWrongConfig)
+	}
 
-	s.services[name] = replenisher.NewService(pwm, scanInterval, pwmConfig***REMOVED***
+	s.services[name] = replenisher.NewService(pwm, scanInterval, pwmConfig)
 	return nil
-***REMOVED***
+}
 
-func (s *ServiceManager***REMOVED*** parseOutTempService(name string, viper *viper.Viper, hwm *hardware.HWManager, m *mdns.MDNS***REMOVED*** error {
-	devName := viper.GetString("dev"***REMOVED***
-	dev, err := hwm.GetDevice(devName***REMOVED***
-***REMOVED***
-		return NewServiceError(name, err.Error(***REMOVED***, ErrWrongConfig***REMOVED***
-***REMOVED***
-	sensor := dev.(hardware.TemperatureSensor***REMOVED***
-	scanInterval := time.Duration(viper.GetInt64("scan_interval_ms"***REMOVED******REMOVED*** * time.Millisecond
-	s.services[name] = outtemp.NewService(sensor, scanInterval***REMOVED***
+func (s *ServiceManager) parseOutTempService(name string, viper *viper.Viper, hwm *hardware.HWManager, m *mdns.MDNS) error {
+	devName := viper.GetString("dev")
+	dev, err := hwm.GetDevice(devName)
+	if err != nil {
+		return NewServiceError(name, err.Error(), ErrWrongConfig)
+	}
+	sensor := dev.(hardware.TemperatureSensor)
+	scanInterval := time.Duration(viper.GetInt64("scan_interval_ms")) * time.Millisecond
+	s.services[name] = outtemp.NewService(sensor, scanInterval)
 	return nil
-***REMOVED***
+}
 
-func (s *ServiceManager***REMOVED*** parseTankTempService(name string, viper *viper.Viper, hwm *hardware.HWManager, m *mdns.MDNS***REMOVED*** error {
-	devName := viper.GetString("dev"***REMOVED***
-	dev, err := hwm.GetDevice(devName***REMOVED***
-***REMOVED***
-		return NewServiceError(name, err.Error(***REMOVED***, ErrWrongConfig***REMOVED***
-***REMOVED***
-	sensor := dev.(hardware.TemperatureSensor***REMOVED***
-	scanInterval := time.Duration(viper.GetInt64("scan_interval_ms"***REMOVED******REMOVED*** * time.Millisecond
-	s.services[name] = tanktemp.NewService(sensor, scanInterval***REMOVED***
+func (s *ServiceManager) parseTankTempService(name string, viper *viper.Viper, hwm *hardware.HWManager, m *mdns.MDNS) error {
+	devName := viper.GetString("dev")
+	dev, err := hwm.GetDevice(devName)
+	if err != nil {
+		return NewServiceError(name, err.Error(), ErrWrongConfig)
+	}
+	sensor := dev.(hardware.TemperatureSensor)
+	scanInterval := time.Duration(viper.GetInt64("scan_interval_ms")) * time.Millisecond
+	s.services[name] = tanktemp.NewService(sensor, scanInterval)
 	return nil
-***REMOVED***
+}
 
-func (s *ServiceManager***REMOVED*** parseTankMeterService(name string, viper *viper.Viper, hwm *hardware.HWManager, m *mdns.MDNS***REMOVED*** error {
-	devName := viper.GetString("dev"***REMOVED***
-	dev, err := hwm.GetDevice(devName***REMOVED***
-***REMOVED***
-		return NewServiceError(name, err.Error(***REMOVED***, ErrWrongConfig***REMOVED***
-***REMOVED***
-	sensor := dev.(hardware.WaterDetector***REMOVED***
-	scanInterval := time.Duration(viper.GetInt64("scan_interval_ms"***REMOVED******REMOVED*** * time.Millisecond
-	s.services[name] = tankmeter.NewService(sensor, scanInterval***REMOVED***
+func (s *ServiceManager) parseTankMeterService(name string, viper *viper.Viper, hwm *hardware.HWManager, m *mdns.MDNS) error {
+	devName := viper.GetString("dev")
+	dev, err := hwm.GetDevice(devName)
+	if err != nil {
+		return NewServiceError(name, err.Error(), ErrWrongConfig)
+	}
+	sensor := dev.(hardware.WaterDetector)
+	scanInterval := time.Duration(viper.GetInt64("scan_interval_ms")) * time.Millisecond
+	s.services[name] = tankmeter.NewService(sensor, scanInterval)
 	return nil
-***REMOVED***
+}
 
-func (s *ServiceManager***REMOVED*** parseHeater(name string, viper *viper.Viper, hwm *hardware.HWManager, m *mdns.MDNS***REMOVED*** error {
+func (s *ServiceManager) parseHeater(name string, viper *viper.Viper, hwm *hardware.HWManager, m *mdns.MDNS) error {
 	var pid lib.NormalPID
-	devName := viper.GetString("pwm_dev"***REMOVED***
-	dev, err := hwm.GetDevice(devName***REMOVED***
-***REMOVED***
-		return NewServiceError(name, err.Error(***REMOVED***, ErrWrongConfig***REMOVED***
-***REMOVED***
-	pwm := dev.(hardware.PWM***REMOVED***
-	scanInterval := time.Duration(viper.GetInt64("scan_interval_ms"***REMOVED******REMOVED*** * time.Millisecond
-	viper.Sub("pid"***REMOVED***.Unmarshal(&pid***REMOVED***
-	s.services[name] = heater.NewService(pwm, scanInterval, &pid***REMOVED***
+	devName := viper.GetString("pwm_dev")
+	dev, err := hwm.GetDevice(devName)
+	if err != nil {
+		return NewServiceError(name, err.Error(), ErrWrongConfig)
+	}
+	pwm := dev.(hardware.PWM)
+	scanInterval := time.Duration(viper.GetInt64("scan_interval_ms")) * time.Millisecond
+	viper.Sub("pid").Unmarshal(&pid)
+	s.services[name] = heater.NewService(pwm, scanInterval, &pid)
 	return nil
-***REMOVED***
+}
 
-func (s *ServiceManager***REMOVED*** parseUARTServer(name string, viper *viper.Viper, hwm *hardware.HWManager, m *mdns.MDNS***REMOVED*** (err error***REMOVED*** {
-	var device interface{***REMOVED***
-	if err = checkFields(viper, []string{"mdns_service", "port", "uartdev"***REMOVED******REMOVED***; err != nil {
+func (s *ServiceManager) parseUARTServer(name string, viper *viper.Viper, hwm *hardware.HWManager, m *mdns.MDNS) (err error) {
+	var device interface{}
+	if err = checkFields(viper, []string{"mdns_service", "port", "uartdev"}); err != nil {
 		return
-***REMOVED***
-	service := viper.GetString("mdns_service"***REMOVED***
-	port := viper.GetInt("port"***REMOVED***
-	if device, err = hwm.GetDevice(viper.GetString("uartdev"***REMOVED******REMOVED***; err != nil {
+	}
+	service := viper.GetString("mdns_service")
+	port := viper.GetInt("port")
+	if device, err = hwm.GetDevice(viper.GetString("uartdev")); err != nil {
 		return
-***REMOVED***
+	}
 
-	s.services[name] = uartserver.NewService(service, port, device.(uartwrap.UART***REMOVED***, m***REMOVED***
+	s.services[name] = uartserver.NewService(service, port, device.(uartwrap.UART), m)
 	return
-***REMOVED***
+}
 
-func (s *ServiceManager***REMOVED*** parseWeb(name string, viper *viper.Viper, hwm *hardware.HWManager, m *mdns.MDNS***REMOVED*** (err error***REMOVED*** {
-	if err = checkFields(viper, []string{"port", "static_files", "mongodb"***REMOVED******REMOVED***; err != nil {
+func (s *ServiceManager) parseWeb(name string, viper *viper.Viper, hwm *hardware.HWManager, m *mdns.MDNS) (err error) {
+	if err = checkFields(viper, []string{"port", "static_files", "mongodb"}); err != nil {
 		return
-***REMOVED***
-	port := viper.GetInt("port"***REMOVED***
-	staticFiles := viper.GetString("static_files"***REMOVED***
-	mongodbMap := viper.GetStringMapString("mongodb"***REMOVED***
+	}
+	port := viper.GetInt("port")
+	staticFiles := viper.GetString("static_files")
+	mongodbMap := viper.GetStringMapString("mongodb")
 
 	service := &web.Service{
 		DB: model.MongoDBConfig{
 			Url: mongodbMap["url"],
-	***REMOVED***,
+		},
 		Web: web.WebConfig{
 			StaticFilePath: staticFiles,
 			Port:           port,
-	***REMOVED***,
-***REMOVED***
+		},
+	}
 
 	s.services[name] = service
 	return
-***REMOVED***
+}
 
-func (s *ServiceManager***REMOVED*** RunServices(nc *nats.EncodedConn***REMOVED*** error {
+func (s *ServiceManager) RunServices(nc *nats.EncodedConn) error {
 	for name, service := range s.services {
 		var ctx context.Context
-		ctx, s.cancels[name] = context.WithCancel(context.Background(***REMOVED******REMOVED***
-		go service.Run(ctx, nc***REMOVED***
-***REMOVED***
+		ctx, s.cancels[name] = context.WithCancel(context.Background())
+		go service.Run(ctx, nc)
+	}
 	return nil
-***REMOVED***
+}
 
-func (s *ServiceManager***REMOVED*** StopServices(***REMOVED*** error {
+func (s *ServiceManager) StopServices() error {
 	for _, cancel := range s.cancels {
-		cancel(***REMOVED***
-***REMOVED***
+		cancel()
+	}
 	return nil
-***REMOVED***
+}
 
-func checkFields(viper *viper.Viper, fields []string***REMOVED*** error {
+func checkFields(viper *viper.Viper, fields []string) error {
 	for _, field := range fields {
-		if !viper.IsSet(field***REMOVED*** {
-			return NewMissingFieldError("", field***REMOVED***
-	***REMOVED***
-***REMOVED***
+		if !viper.IsSet(field) {
+			return NewMissingFieldError("", field)
+		}
+	}
 	return nil
-***REMOVED***
+}

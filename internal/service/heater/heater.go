@@ -1,6 +1,6 @@
 package heater
 
-***REMOVED***
+import (
 	"context"
 	"errors"
 	"time"
@@ -10,7 +10,7 @@ package heater
 	"github.com/yanagiis/GoTuringCoffee/internal/hardware"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/lib"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/tanktemp"
-***REMOVED***
+)
 
 type Service struct {
 	ScanInterval   time.Duration
@@ -20,124 +20,124 @@ type Service struct {
 	sensorErr      error
 	record         lib.HeaterRecord
 	lastTempRecord lib.TempRecord
-***REMOVED***
+}
 
-func NewService(dev hardware.PWM, scanInterval time.Duration, pid lib.PID***REMOVED*** *Service {
+func NewService(dev hardware.PWM, scanInterval time.Duration, pid lib.PID) *Service {
 	return &Service{
 		ScanInterval: scanInterval,
 		pwm:          dev,
 		pid:          pid,
-***REMOVED***
-***REMOVED***
+	}
+}
 
-func (h *Service***REMOVED*** Run(ctx context.Context, nc *nats.EncodedConn***REMOVED*** (err error***REMOVED*** {
+func (h *Service) Run(ctx context.Context, nc *nats.EncodedConn) (err error) {
 	var reqSub *nats.Subscription
 
-	reqCh := make(chan *nats.Msg***REMOVED***
-	reqSub, err = nc.BindRecvChan("tank.heater", reqCh***REMOVED***
-***REMOVED***
+	reqCh := make(chan *nats.Msg)
+	reqSub, err = nc.BindRecvChan("tank.heater", reqCh)
+	if err != nil {
 		return err
-***REMOVED***
-	defer func(***REMOVED*** {
-		err = reqSub.Unsubscribe(***REMOVED***
-		close(reqCh***REMOVED***
-***REMOVED***(***REMOVED***
+	}
+	defer func() {
+		err = reqSub.Unsubscribe()
+		close(reqCh)
+	}()
 
-	timer := time.NewTimer(h.ScanInterval***REMOVED***
+	timer := time.NewTimer(h.ScanInterval)
 
 	for {
 		select {
 		case msg := <-reqCh:
 			var req lib.HeaterRequest
-			if err := jsoniter.Unmarshal(msg.Data, &req***REMOVED***; err != nil {
+			if err := jsoniter.Unmarshal(msg.Data, &req); err != nil {
 				nc.Publish(msg.Reply, lib.HeaterResponse{
 					Response: lib.Response{
 						Code: lib.CodeFailure,
-						Msg:  err.Error(***REMOVED***,
-				***REMOVED***,
-			***REMOVED******REMOVED***
-		***REMOVED***
-			if req.IsGet(***REMOVED*** {
-				resp := h.handleHeaterStatus(***REMOVED***
-				nc.Publish(msg.Reply, resp***REMOVED***
-		***REMOVED***
-			if req.IsPut(***REMOVED*** {
-				resp := h.handleSetTemperature(req.Temp***REMOVED***
-				nc.Publish(msg.Reply, resp***REMOVED***
-		***REMOVED***
+						Msg:  err.Error(),
+					},
+				})
+			}
+			if req.IsGet() {
+				resp := h.handleHeaterStatus()
+				nc.Publish(msg.Reply, resp)
+			}
+			if req.IsPut() {
+				resp := h.handleSetTemperature(req.Temp)
+				nc.Publish(msg.Reply, resp)
+			}
 		case <-timer.C:
-			h.adjustTemperature(ctx, nc***REMOVED***
-			timer = time.NewTimer(h.ScanInterval***REMOVED***
-		case <-ctx.Done(***REMOVED***:
-			err = ctx.Err(***REMOVED***
-	***REMOVED***
-***REMOVED***
-***REMOVED***
+			h.adjustTemperature(ctx, nc)
+			timer = time.NewTimer(h.ScanInterval)
+		case <-ctx.Done():
+			err = ctx.Err()
+		}
+	}
+}
 
-func (h *Service***REMOVED*** handleHeaterStatus(***REMOVED*** lib.HeaterResponse {
+func (h *Service) handleHeaterStatus() lib.HeaterResponse {
 	var resp lib.HeaterResponse
 	if h.sensorErr != nil {
 		resp = lib.HeaterResponse{
 			Response: lib.Response{
 				Code: lib.CodeFailure,
-				Msg:  h.sensorErr.Error(***REMOVED***,
-		***REMOVED***,
-	***REMOVED***
-***REMOVED*** else {
+				Msg:  h.sensorErr.Error(),
+			},
+		}
+	} else {
 		resp = lib.HeaterResponse{
 			Response: lib.Response{
 				Code: lib.CodeSuccess,
-		***REMOVED***,
+			},
 			Payload: h.record,
-	***REMOVED***
-***REMOVED***
+		}
+	}
 	return resp
-***REMOVED***
+}
 
-func (h *Service***REMOVED*** handleSetTemperature(temp float64***REMOVED*** lib.HeaterResponse {
+func (h *Service) handleSetTemperature(temp float64) lib.HeaterResponse {
 	h.targetTemp = temp
 	return lib.HeaterResponse{
 		Response: lib.Response{
 			Code: lib.CodeSuccess,
-	***REMOVED***,
-***REMOVED***
-***REMOVED***
+		},
+	}
+}
 
-func (h *Service***REMOVED*** adjustTemperature(ctx context.Context, nc *nats.EncodedConn***REMOVED*** error {
-	resp, err := tanktemp.GetTemperature(ctx, nc***REMOVED***
-***REMOVED***
+func (h *Service) adjustTemperature(ctx context.Context, nc *nats.EncodedConn) error {
+	resp, err := tanktemp.GetTemperature(ctx, nc)
+	if err != nil {
 		return err
-***REMOVED***
-	if resp.IsFailure(***REMOVED*** {
-		return errors.New("Cannot get tank temperature"***REMOVED***
-***REMOVED***
-	duty := h.pid.Compute(resp.Payload.Temp, resp.Payload.Time.Sub(h.lastTempRecord.Time***REMOVED******REMOVED***
-	if err := h.pwm.PWM(duty, time.Second***REMOVED***; err != nil {
+	}
+	if resp.IsFailure() {
+		return errors.New("Cannot get tank temperature")
+	}
+	duty := h.pid.Compute(resp.Payload.Temp, resp.Payload.Time.Sub(h.lastTempRecord.Time))
+	if err := h.pwm.PWM(duty, time.Second); err != nil {
 		return err
-***REMOVED***
+	}
 	h.record.Duty = duty
-	h.record.Time = time.Now(***REMOVED***
+	h.record.Time = time.Now()
 	h.lastTempRecord = resp.Payload
 	return nil
-***REMOVED***
+}
 
-func GetHeaterInfo(ctx context.Context, nc *nats.EncodedConn***REMOVED*** (resp lib.HeaterResponse, err error***REMOVED*** {
+func GetHeaterInfo(ctx context.Context, nc *nats.EncodedConn) (resp lib.HeaterResponse, err error) {
 	payload := lib.HeaterRequest{
 		Request: lib.Request{
 			Code: lib.CodePut,
-	***REMOVED***,
-***REMOVED***
-	err = nc.RequestWithContext(ctx, "output.temperature", payload, &resp***REMOVED***
+		},
+	}
+	err = nc.RequestWithContext(ctx, "output.temperature", payload, &resp)
 	return
-***REMOVED***
+}
 
-func SetTemperature(ctx context.Context, nc *nats.EncodedConn, temp float64***REMOVED*** (resp lib.TempResponse, err error***REMOVED*** {
+func SetTemperature(ctx context.Context, nc *nats.EncodedConn, temp float64) (resp lib.TempResponse, err error) {
 	payload := lib.HeaterRequest{
 		Request: lib.Request{
 			Code: lib.CodePut,
-	***REMOVED***,
+		},
 		Temp: temp,
-***REMOVED***
-	err = nc.RequestWithContext(ctx, "output.temperature", payload, &resp***REMOVED***
+	}
+	err = nc.RequestWithContext(ctx, "output.temperature", payload, &resp)
 	return
-***REMOVED***
+}

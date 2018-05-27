@@ -1,64 +1,64 @@
 package uartwrap
 
-***REMOVED***
+import (
 	"context"
-***REMOVED***
+	"fmt"
 	"net"
 	"time"
 
 	"github.com/yanagiis/GoTuringCoffee/internal/service/mdns"
-***REMOVED***
+)
 
 type TCPUARTClient struct {
 	service string
 	md      *mdns.MDNS
 	conn    net.Conn
-***REMOVED***
+}
 
-func NewTCPUARTClientMDNS(service string, md *mdns.MDNS***REMOVED*** *TCPUARTClient {
+func NewTCPUARTClientMDNS(service string, md *mdns.MDNS) *TCPUARTClient {
 	return &TCPUARTClient{
 		service: service,
 		md:      md,
-***REMOVED***
-***REMOVED***
+	}
+}
 
-func (c *TCPUARTClient***REMOVED*** Open(***REMOVED*** (err error***REMOVED*** {
+func (c *TCPUARTClient) Open() (err error) {
 	var addrs []net.IP
 	var port int
-	if addrs, port, err = c.md.Lookup(c.service, time.Second***REMOVED***; err != nil {
+	if addrs, port, err = c.md.Lookup(c.service, time.Second); err != nil {
 		return
-***REMOVED***
-	if len(addrs***REMOVED*** == 0 {
-		err = fmt.Errorf("Cannot lookup %q ip and port", c.service***REMOVED***
+	}
+	if len(addrs) == 0 {
+		err = fmt.Errorf("Cannot lookup %q ip and port", c.service)
 		return
-***REMOVED***
+	}
 
-	url := fmt.Sprintf("%s:%d", addrs[0], port***REMOVED***
-	if c.conn, err = net.Dial("tcp", url***REMOVED***; err != nil {
+	url := fmt.Sprintf("%s:%d", addrs[0], port)
+	if c.conn, err = net.Dial("tcp", url); err != nil {
 		return
-***REMOVED***
+	}
 	return
-***REMOVED***
+}
 
-func (c *TCPUARTClient***REMOVED*** IsOpen(***REMOVED*** bool {
+func (c *TCPUARTClient) IsOpen() bool {
 	return c.conn != nil
-***REMOVED***
+}
 
-func (c *TCPUARTClient***REMOVED*** Close(***REMOVED*** (err error***REMOVED*** {
-	if err = c.conn.Close(***REMOVED***; err != nil {
+func (c *TCPUARTClient) Close() (err error) {
+	if err = c.conn.Close(); err != nil {
 		return
-***REMOVED***
+	}
 	c.conn = nil
 	return
-***REMOVED***
+}
 
-func (c *TCPUARTClient***REMOVED*** Read(p []byte***REMOVED*** (int, error***REMOVED*** {
-	return c.conn.Read(p***REMOVED***
-***REMOVED***
+func (c *TCPUARTClient) Read(p []byte) (int, error) {
+	return c.conn.Read(p)
+}
 
-func (c *TCPUARTClient***REMOVED*** Write(p []byte***REMOVED*** (int, error***REMOVED*** {
-	return c.conn.Write(p***REMOVED***
-***REMOVED***
+func (c *TCPUARTClient) Write(p []byte) (int, error) {
+	return c.conn.Write(p)
+}
 
 type TCPUARTServer struct {
 	Service string
@@ -67,43 +67,43 @@ type TCPUARTServer struct {
 	conn    net.Conn
 	uart    UART
 	ctx     context.Context
-***REMOVED***
+}
 
-func NewTCPUARTServerMDNS(service string, port int, uart UART, md *mdns.MDNS***REMOVED*** *TCPUARTServer {
+func NewTCPUARTServerMDNS(service string, port int, uart UART, md *mdns.MDNS) *TCPUARTServer {
 	server := &TCPUARTServer{
 		Service: service,
 		md:      md,
 		uart:    uart,
-***REMOVED***
-	if err := md.Register(service, port***REMOVED***; err != nil {
+	}
+	if err := md.Register(service, port); err != nil {
 		return nil
-***REMOVED***
+	}
 	return server
-***REMOVED***
+}
 
-func (s *TCPUARTServer***REMOVED*** Pair(timeout time.Duration***REMOVED*** (conn *net.Conn, err error***REMOVED*** {
+func (s *TCPUARTServer) Pair(timeout time.Duration) (conn *net.Conn, err error) {
 	var ln *net.TCPListener
 
-	if err = s.uart.Open(***REMOVED***; err != nil {
+	if err = s.uart.Open(); err != nil {
 		return
-***REMOVED***
+	}
 	tcpAddr := net.TCPAddr{
 		Port: s.Port,
-***REMOVED***
-	if ln, err = net.ListenTCP("tcp", &tcpAddr***REMOVED***; err != nil {
-		s.uart.Close(***REMOVED***
+	}
+	if ln, err = net.ListenTCP("tcp", &tcpAddr); err != nil {
+		s.uart.Close()
 		return
-***REMOVED***
-	defer ln.Close(***REMOVED***
-	if s.conn, err = ln.Accept(***REMOVED***; err != nil {
-		s.uart.Close(***REMOVED***
+	}
+	defer ln.Close()
+	if s.conn, err = ln.Accept(); err != nil {
+		s.uart.Close()
 		return
-***REMOVED***
+	}
 	return
-***REMOVED***
+}
 
-func (s *TCPUARTServer***REMOVED*** Unpair(***REMOVED*** (err error***REMOVED*** {
-	s.uart.Close(***REMOVED***
-	err = s.conn.Close(***REMOVED***
+func (s *TCPUARTServer) Unpair() (err error) {
+	s.uart.Close()
+	err = s.conn.Close()
 	return
-***REMOVED***
+}

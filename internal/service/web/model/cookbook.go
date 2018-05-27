@@ -1,77 +1,77 @@
 package model
 
-***REMOVED***
+import (
 	"github.com/globalsign/mgo"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/lib"
-***REMOVED***
+)
 
 type MongoDBConfig struct {
 	Url string
-***REMOVED***
+}
 
 type Cookbook struct {
 	dbConf  *MongoDBConfig
 	session *mgo.Session
 	c       *mgo.Collection
-***REMOVED***
+}
 
-func NewCookbook(dbConf *MongoDBConfig***REMOVED*** *Cookbook {
+func NewCookbook(dbConf *MongoDBConfig) *Cookbook {
 	return &Cookbook{
 		dbConf: dbConf,
-***REMOVED***
-***REMOVED***
+	}
+}
 
-func (m *Cookbook***REMOVED*** ListCookbooks(***REMOVED*** ([]lib.Cookbook, error***REMOVED*** {
+func (m *Cookbook) ListCookbooks() ([]lib.Cookbook, error) {
 	var cookbooks []lib.Cookbook
-	if err := m.Connect(***REMOVED***; err != nil {
+	if err := m.Connect(); err != nil {
 		return nil, err
-***REMOVED***
-	if err := m.c.Find(nil***REMOVED***.All(&cookbooks***REMOVED***; err != nil {
+	}
+	if err := m.c.Find(nil).All(&cookbooks); err != nil {
 		return nil, err
-***REMOVED***
+	}
 	return cookbooks, nil
-***REMOVED***
+}
 
-func (m *Cookbook***REMOVED*** GetCookbook(id string***REMOVED*** (*lib.Cookbook, error***REMOVED*** {
+func (m *Cookbook) GetCookbook(id string) (*lib.Cookbook, error) {
 	var cookbook lib.Cookbook
-	if err := m.Connect(***REMOVED***; err != nil {
+	if err := m.Connect(); err != nil {
 		return nil, err
-***REMOVED***
-	if err := m.c.FindId(id***REMOVED***.One(&cookbook***REMOVED***; err != nil {
+	}
+	if err := m.c.FindId(id).One(&cookbook); err != nil {
 		return nil, err
-***REMOVED***
+	}
 	return &cookbook, nil
-***REMOVED***
+}
 
-func (m *Cookbook***REMOVED*** UpdateCookbook(id string, cookbook *lib.Cookbook***REMOVED*** error {
-	if err := m.Connect(***REMOVED***; err != nil {
+func (m *Cookbook) UpdateCookbook(id string, cookbook *lib.Cookbook) error {
+	if err := m.Connect(); err != nil {
 		return err
-***REMOVED***
-	return m.c.UpdateId(id, cookbook***REMOVED***
-***REMOVED***
+	}
+	return m.c.UpdateId(id, cookbook)
+}
 
-func (m *Cookbook***REMOVED*** DeleteCookbook(id string***REMOVED*** error {
-	if err := m.Connect(***REMOVED***; err != nil {
+func (m *Cookbook) DeleteCookbook(id string) error {
+	if err := m.Connect(); err != nil {
 		return err
-***REMOVED***
-	return m.c.RemoveId(id***REMOVED***
-***REMOVED***
+	}
+	return m.c.RemoveId(id)
+}
 
-func (m *Cookbook***REMOVED*** Connect(***REMOVED*** (err error***REMOVED*** {
+func (m *Cookbook) Connect() (err error) {
 	if m.session == nil {
-		if m.session, err = mgo.Dial(m.dbConf.Url***REMOVED***; err != nil {
+		if m.session, err = mgo.Dial(m.dbConf.Url); err != nil {
 			return
-	***REMOVED***
-***REMOVED***
+		}
+	}
 	if m.c == nil {
-		m.c = m.session.DB("turing-coffee"***REMOVED***.C("cookbooknew"***REMOVED***
-***REMOVED***
+		m.c = m.session.DB("turing-coffee").C("cookbooknew")
+	}
 	return
-***REMOVED***
+}
 
-func (m *Cookbook***REMOVED*** Disconnect(***REMOVED*** {
+func (m *Cookbook) Disconnect() {
 	if m.session != nil {
-		m.session.Close(***REMOVED***
+		m.session.Close()
 		m.session = nil
-***REMOVED***
-***REMOVED***
+	}
+}
