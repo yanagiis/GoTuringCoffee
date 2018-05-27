@@ -110,7 +110,7 @@ func (s *ServiceManager) AddService(name string, viper *viper.Viper, hwm *hardwa
 		if err := s.parseTankMeterService(name, viper, hwm, m); err != nil {
 			return err
 		}
-	case "replenisher_service":
+	case "replenish_service":
 		if err := s.parseReplenisher(name, viper, hwm, m); err != nil {
 			return err
 		}
