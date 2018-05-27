@@ -15,7 +15,10 @@ type Request struct {
 
 type Response struct {
 	Code uint8
-	Msg  interface{***REMOVED***
+	Msg  string
+***REMOVED***
+
+type BaristaResponse struct {
 ***REMOVED***
 
 type TempResponse struct {
@@ -64,7 +67,7 @@ type FullRecord struct {
 ***REMOVED***
 
 type HeaterRecord struct {
-	Duty   int64
+	Duty   float64
 	Period time.Duration
 	Time   time.Time
 ***REMOVED***

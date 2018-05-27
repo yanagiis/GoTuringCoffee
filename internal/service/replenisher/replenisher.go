@@ -4,6 +4,7 @@ package replenisher
 	"context"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
 	nats "github.com/nats-io/go-nats"
 	"github.com/yanagiis/GoTuringCoffee/internal/hardware"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/lib"
@@ -13,6 +14,8 @@ type Service struct {
 	ScanInterval time.Duration
 	Dev          hardware.PWM
 	PWMConf      hardware.PWMConfig
+	devErr       error
+	stop         bool
 ***REMOVED***
 
 func NewService(dev hardware.PWM, scanInterval time.Duration, pwmConf hardware.PWMConfig***REMOVED*** *Service {
@@ -37,12 +40,6 @@ func (r *Service***REMOVED*** Run(ctx context.Context, nc *nats.EncodedConn***RE
 		close(reqCh***REMOVED***
 ***REMOVED***(***REMOVED***
 
-	var devErr error
-	replenishRecord := lib.ReplenisherRecord{
-		IsReplenishing: false,
-		Time:           time.Time{***REMOVED***,
-***REMOVED***
-
 	r.Dev.Connect(***REMOVED***
 	defer r.Dev.Disconnect(***REMOVED***
 	timer := time.NewTimer(r.ScanInterval***REMOVED***
@@ -50,31 +47,70 @@ func (r *Service***REMOVED*** Run(ctx context.Context, nc *nats.EncodedConn***RE
 	for {
 		select {
 		case msg := <-reqCh:
-			var resp lib.ReplenisherResponse
-			if devErr != nil {
-				resp = lib.ReplenisherResponse{
+			var req lib.ReplenisherRequest
+			if decodeErr := jsoniter.Unmarshal(msg.Data, &req***REMOVED***; decodeErr != nil {
+				nc.Publish(msg.Reply, lib.HeaterResponse{
 					Response: lib.Response{
 						Code: lib.CodeFailure,
-						Msg:  devErr.Error(***REMOVED***,
+						Msg:  decodeErr.Error(***REMOVED***,
 				***REMOVED***,
-					Payload: lib.ReplenisherRecord{***REMOVED***,
-			***REMOVED***
-		***REMOVED*** else {
-				resp = lib.ReplenisherResponse{
-					Response: lib.Response{
-						Code: lib.CodeSuccess,
-				***REMOVED***,
-					Payload: replenishRecord,
-			***REMOVED***
+			***REMOVED******REMOVED***
 		***REMOVED***
-			nc.Publish(msg.Reply, resp***REMOVED***
+			if req.IsGet(***REMOVED*** {
+				resp := r.handleReplenishStatus(***REMOVED***
+				nc.Publish(msg.Reply, resp***REMOVED***
+		***REMOVED***
+			if req.IsPut(***REMOVED*** {
+				resp := r.handleControlReplenish(req.Stop***REMOVED***
+				nc.Publish(msg.Reply, resp***REMOVED***
+		***REMOVED***
 		case <-timer.C:
 			timer = time.NewTimer(r.ScanInterval***REMOVED***
+			r.scan(***REMOVED***
 		case <-ctx.Done(***REMOVED***:
 			err = ctx.Err(***REMOVED***
 			return
 	***REMOVED***
 ***REMOVED***
+***REMOVED***
+
+func (r *Service***REMOVED*** handleReplenishStatus(***REMOVED*** lib.ReplenisherResponse {
+	if r.devErr != nil {
+		return lib.ReplenisherResponse{
+			Response: lib.Response{
+				Code: lib.CodeFailure,
+				Msg:  r.devErr.Error(***REMOVED***,
+		***REMOVED***,
+			Payload: lib.ReplenisherRecord{***REMOVED***,
+	***REMOVED***
+***REMOVED*** else {
+		return lib.ReplenisherResponse{
+			Response: lib.Response{
+				Code: lib.CodeSuccess,
+		***REMOVED***,
+			Payload: lib.ReplenisherRecord{
+				IsReplenishing: !r.stop,
+				Time:           time.Now(***REMOVED***,
+		***REMOVED***,
+	***REMOVED***
+***REMOVED***
+***REMOVED***
+
+func (r *Service***REMOVED*** handleControlReplenish(stop bool***REMOVED*** lib.ReplenisherResponse {
+	r.stop = stop
+	return lib.ReplenisherResponse{
+		Response: lib.Response{
+			Code: lib.CodeSuccess,
+	***REMOVED***,
+***REMOVED***
+***REMOVED***
+
+func (r *Service***REMOVED*** scan(***REMOVED*** {
+	duty := r.PWMConf.Duty
+	if r.stop {
+		duty = 0
+***REMOVED***
+	r.Dev.PWM(duty, r.PWMConf.Period***REMOVED***
 ***REMOVED***
 
 func GetReplenishInfo(ctx context.Context, nc *nats.EncodedConn***REMOVED*** (resp lib.ReplenisherResponse, err error***REMOVED*** {

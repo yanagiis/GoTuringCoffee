@@ -22,6 +22,7 @@ package service
 	"github.com/yanagiis/GoTuringCoffee/internal/service/uartserver"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/web"
 ***REMOVED***
+***REMOVED***
 
 var (
 	ErrWrongConfig = errors.New("wrong configuration"***REMOVED***
@@ -260,7 +261,7 @@ func (s *ServiceManager***REMOVED*** parseWeb(name string, viper *viper.Viper, h
 	mongodbMap := viper.GetStringMapString("mongodb"***REMOVED***
 
 	service := &web.Service{
-		DB: web.MongoDBConfig{
+		DB: model.MongoDBConfig{
 			Url: mongodbMap["url"],
 	***REMOVED***,
 		Web: web.WebConfig{

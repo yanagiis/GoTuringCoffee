@@ -12,7 +12,7 @@ package hardware
 type PWM interface {
 	Connect(***REMOVED*** error
 	Disconnect(***REMOVED*** error
-	PWM(duty int64, period time.Duration***REMOVED*** error
+	PWM(duty float64, period time.Duration***REMOVED*** error
 ***REMOVED***
 
 type PWMDevice struct {
@@ -38,9 +38,10 @@ func (p *PWMDevice***REMOVED*** Disconnect(***REMOVED*** error {
 	return nil
 ***REMOVED***
 
-func (p *PWMDevice***REMOVED*** PWM(duty int64, period time.Duration***REMOVED*** error {
+func (p *PWMDevice***REMOVED*** PWM(duty float64, period time.Duration***REMOVED*** error {
 	if p.pwm == nil {
 		return errors.New("pwm not connected"***REMOVED***
 ***REMOVED***
-	return p.pwm.PWM(gpio.Duty(duty***REMOVED***, period***REMOVED***
+	dutyInt := gpio.Duty(duty * float64(gpio.DutyMax***REMOVED******REMOVED***
+	return p.pwm.PWM(gpio.Duty(dutyInt***REMOVED***, period***REMOVED***
 ***REMOVED***

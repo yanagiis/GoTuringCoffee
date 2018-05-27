@@ -71,9 +71,9 @@ func (b *Barista***REMOVED*** Run(ctx context.Context, nc *nats.EncodedConn***RE
 
 	for {
 		select {
-		case msg := <-cookCh:
+		case req := <-cookCh:
 			var points []lib.Point
-			response(nc, msg, lib.CodeSuccess, points***REMOVED***
+			response(nc, req, lib.CodeSuccess, "OK", nil***REMOVED***
 			cookCtx, cookCancel = context.WithCancel(context.Background(***REMOVED******REMOVED***
 			go b.cook(cookCtx, doneCh, points***REMOVED***
 		case <-queryCh:
@@ -113,10 +113,10 @@ func (b *Barista***REMOVED*** cook(ctx context.Context, doneCh chan<- struct{***
 	doneCh <- struct{***REMOVED***{***REMOVED***
 ***REMOVED***
 
-func response(nc *nats.EncodedConn, reply *nats.Msg, code uint8, msg interface{***REMOVED******REMOVED*** {
+func response(nc *nats.EncodedConn, req *nats.Msg, code uint8, msg string, payload interface{***REMOVED******REMOVED*** {
 	resp := lib.Response{
 		Code: code,
 		Msg:  msg,
 ***REMOVED***
-	nc.Publish(reply.Reply, resp***REMOVED***
+	nc.Publish(req.Reply, resp***REMOVED***
 ***REMOVED***
