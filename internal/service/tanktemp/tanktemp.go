@@ -67,16 +67,17 @@ func (t *Service) Run(ctx context.Context, nc *nats.EncodedConn) (err error) {
 			}
 			nc.Publish(msg.Reply, resp)
 		case <-timer.C:
-			timer = time.NewTimer(t.ScanInterval)
 			if sensorErr = t.Sensor.Connect(); sensorErr != nil {
 				log.Error().Msg(sensorErr.Error())
 				continue
 			}
 			if temperature.Temp, sensorErr = t.Sensor.GetTemperature(); err != nil {
 				t.Sensor.Disconnect()
+				log.Error().Msg(sensorErr.Error())
 				continue
 			}
 			temperature.Time = time.Now()
+			timer = time.NewTimer(t.ScanInterval)
 		case <-ctx.Done():
 			err = ctx.Err()
 			return

@@ -2,6 +2,7 @@ package tankmeter
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
@@ -24,55 +25,46 @@ func NewService(dev hardware.WaterDetector, scanInterval time.Duration) *Service
 }
 
 func (t *Service) Run(ctx context.Context, nc *nats.EncodedConn) (err error) {
-	var reqSub *nats.Subscription
-	var reqCh chan *nats.Msg
-
-	reqCh = make(chan *nats.Msg)
-	reqSub, err = nc.BindRecvChan("tank.meter", reqCh)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		err = reqSub.Unsubscribe()
-		close(reqCh)
-	}()
-
 	var sensorErr error
+
 	fullRecord := lib.FullRecord{
 		IsFull: false,
 		Time:   time.Time{},
 	}
 
+	nc.Subscribe("tank.meter", func(subj, reply string, req lib.Request) {
+		fmt.Println("hello")
+		var resp lib.FullResponse
+		if sensorErr != nil {
+			resp = lib.FullResponse{
+				Response: lib.Response{
+					Code: 1,
+					Msg:  sensorErr.Error(),
+				},
+			}
+		} else {
+			resp = lib.FullResponse{
+				Response: lib.Response{
+					Code: 0,
+				},
+				Payload: fullRecord,
+			}
+		}
+		nc.Publish(reply, resp)
+	})
+
 	timer := time.NewTimer(t.ScanInterval)
 
 	for {
 		select {
-		case msg := <-reqCh:
-			var resp lib.FullResponse
-			if sensorErr != nil {
-				resp = lib.FullResponse{
-					Response: lib.Response{
-						Code: 1,
-						Msg:  sensorErr.Error(),
-					},
-				}
-			} else {
-				resp = lib.FullResponse{
-					Response: lib.Response{
-						Code: 0,
-					},
-					Payload: fullRecord,
-				}
-			}
-			nc.Publish(msg.Reply, resp)
 		case <-timer.C:
-			timer = time.NewTimer(t.ScanInterval)
 			if sensorErr = t.Sensor.Connect(); sensorErr != nil {
 				log.Error().Msg(sensorErr.Error())
 				continue
 			}
 			fullRecord.IsFull, sensorErr = t.Sensor.IsWaterFull()
 			fullRecord.Time = time.Now()
+			timer = time.NewTimer(t.ScanInterval)
 		case <-ctx.Done():
 			err = ctx.Err()
 			return
@@ -85,5 +77,8 @@ func GetMeterInfo(ctx context.Context, nc *nats.EncodedConn) (resp lib.FullRespo
 		Code: lib.CodeGet,
 	})
 	err = nc.RequestWithContext(ctx, "tank.meter", payload, &resp)
+	if err != nil {
+		log.Error().Msg(err.Error())
+	}
 	return
 }
