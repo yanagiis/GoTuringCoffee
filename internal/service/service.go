@@ -130,6 +130,9 @@ func (s *ServiceManager) AddService(name string, viper *viper.Viper, hwm *hardwa
 		if err := s.parseWeb(name, viper, hwm, m); err != nil {
 			return err
 		}
+	default:
+		log.Error().Msgf("Unknown service '%s'", name)
+		return fmt.Errorf("Unknown service '%s'", name)
 	}
 
 	return nil
@@ -278,6 +281,7 @@ func (s *ServiceManager) RunServices(nc *nats.EncodedConn) error {
 	for name, service := range s.services {
 		var ctx context.Context
 		ctx, s.cancels[name] = context.WithCancel(context.Background())
+		log.Info().Msgf("Run '%s' service", name)
 		go service.Run(ctx, nc)
 	}
 	return nil
