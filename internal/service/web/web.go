@@ -60,7 +60,7 @@ func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn) (err error) {
 }
 
 func (s *Service) ListCookbook(c echo.Context) error {
-	cc := c.(*CustomContext)
+	cc := c.(CustomContext)
 	cookbooks, err := cc.cookbookModel.ListCookbooks()
 	if err != nil {
 		return err
@@ -69,7 +69,7 @@ func (s *Service) ListCookbook(c echo.Context) error {
 }
 
 func (s *Service) GetCookbook(c echo.Context) error {
-	cc := c.(*CustomContext)
+	cc := c.(CustomContext)
 	id := cc.Param("id")
 	cookbook, err := cc.cookbookModel.GetCookbook(id)
 	if err != nil {
@@ -79,7 +79,7 @@ func (s *Service) GetCookbook(c echo.Context) error {
 }
 
 func (s *Service) UpdateCookbook(c echo.Context) error {
-	cc := c.(*CustomContext)
+	cc := c.(CustomContext)
 	var cookbook lib.Cookbook
 	if err := cc.Bind(cookbook); err != nil {
 		return err
@@ -93,7 +93,7 @@ func (s *Service) UpdateCookbook(c echo.Context) error {
 }
 
 func (s *Service) DeleteCookbook(c echo.Context) error {
-	cc := c.(*CustomContext)
+	cc := c.(CustomContext)
 	id := cc.Param("id")
 	err := cc.cookbookModel.DeleteCookbook(id)
 	if err != nil {
@@ -103,7 +103,7 @@ func (s *Service) DeleteCookbook(c echo.Context) error {
 }
 
 func (s *Service) GetMachineStatus(c echo.Context) error {
-	cc := c.(*CustomContext)
+	cc := c.(CustomContext)
 	status, err := cc.machineModel.GetMachineStatus()
 	if err != nil {
 		return err
