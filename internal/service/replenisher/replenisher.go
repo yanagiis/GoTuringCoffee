@@ -136,12 +136,12 @@ func (r *Service) scan(ctx context.Context, nc *nats.EncodedConn) {
 }
 
 func GetReplenishInfo(ctx context.Context, nc *nats.EncodedConn) (resp lib.ReplenisherResponse, err error) {
-	payload := lib.ReplenisherRequest{
+	req := lib.ReplenisherRequest{
 		Request: lib.Request{
 			Code: lib.CodeGet,
 		},
 	}
-	err = nc.RequestWithContext(ctx, "tank.meter", payload, &resp)
+	err = nc.RequestWithContext(ctx, "tank.meter", &req, &resp)
 	if err != nil {
 		return
 	}
@@ -157,12 +157,12 @@ func StartReplenish(ctx context.Context, nc *nats.EncodedConn) (lib.ReplenisherR
 }
 
 func toggleReplenish(ctx context.Context, nc *nats.EncodedConn, stop bool) (resp lib.ReplenisherResponse, err error) {
-	payload := lib.ReplenisherRequest{
+	req := lib.ReplenisherRequest{
 		Request: lib.Request{
 			Code: lib.CodeGet,
 		},
 		Stop: stop,
 	}
-	err = nc.RequestWithContext(ctx, "tank.replenisher", payload, &resp)
+	err = nc.RequestWithContext(ctx, "tank.replenisher", &req, &resp)
 	return
 }

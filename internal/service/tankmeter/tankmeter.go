@@ -73,10 +73,10 @@ func (t *Service) Run(ctx context.Context, nc *nats.EncodedConn) (err error) {
 }
 
 func GetMeterInfo(ctx context.Context, nc *nats.EncodedConn) (resp lib.FullResponse, err error) {
-	payload, _ := jsoniter.Marshal(lib.Request{
+	req := lib.Request{
 		Code: lib.CodeGet,
 	})
-	err = nc.RequestWithContext(ctx, "tank.meter", payload, &resp)
+	err = nc.RequestWithContext(ctx, "tank.meter", &req, &resp)
 	if err != nil {
 		log.Error().Msg(err.Error())
 	}

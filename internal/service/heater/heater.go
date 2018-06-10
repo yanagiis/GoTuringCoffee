@@ -122,22 +122,22 @@ func (h *Service) adjustTemperature(ctx context.Context, nc *nats.EncodedConn) e
 }
 
 func GetHeaterInfo(ctx context.Context, nc *nats.EncodedConn) (resp lib.HeaterResponse, err error) {
-	payload := lib.HeaterRequest{
+	req := lib.HeaterRequest{
 		Request: lib.Request{
 			Code: lib.CodePut,
 		},
 	}
-	err = nc.RequestWithContext(ctx, "output.temperature", payload, &resp)
+	err = nc.RequestWithContext(ctx, "output.temperature", &req, &resp)
 	return
 }
 
 func SetTemperature(ctx context.Context, nc *nats.EncodedConn, temp float64) (resp lib.TempResponse, err error) {
-	payload := lib.HeaterRequest{
+	req := lib.HeaterRequest{
 		Request: lib.Request{
 			Code: lib.CodePut,
 		},
 		Temp: temp,
 	}
-	err = nc.RequestWithContext(ctx, "output.temperature", payload, &resp)
+	err = nc.RequestWithContext(ctx, "output.temperature", &req, &resp)
 	return
 }

@@ -86,9 +86,9 @@ func (t *Service) Run(ctx context.Context, nc *nats.EncodedConn) (err error) {
 }
 
 func GetTemperature(ctx context.Context, nc *nats.EncodedConn) (resp lib.TempResponse, err error) {
-	payload := lib.Request{
+	req := lib.Request{
 		Code: lib.CodeGet,
 	}
-	err = nc.RequestWithContext(ctx, "tank.temperature", payload, &resp)
+	err = nc.RequestWithContext(ctx, "tank.temperature", &req, &resp)
 	return
 }
