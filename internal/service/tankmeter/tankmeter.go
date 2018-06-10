@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	jsoniter "github.com/json-iterator/go"
 	nats "github.com/nats-io/go-nats"
 	"github.com/rs/zerolog/log"
 	"github.com/yanagiis/GoTuringCoffee/internal/hardware"
