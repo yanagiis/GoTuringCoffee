@@ -29,7 +29,7 @@ var (
 )
 
 type services interface {
-	Run(ctx context.Context, nc *nats.EncodedConn) error
+	Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- struct{}) error
 }
 
 type ServiceError struct {
@@ -57,12 +57,14 @@ func (e *ServiceError) Error() string {
 type ServiceManager struct {
 	services map[string]services
 	cancels  map[string]context.CancelFunc
+	fins     map[string]chan struct{}
 }
 
 func NewServiceManager() *ServiceManager {
 	return &ServiceManager{
 		services: make(map[string]services),
 		cancels:  make(map[string]context.CancelFunc),
+		fins:     make(map[string]chan struct{}),
 	}
 }
 
@@ -126,6 +128,10 @@ func (s *ServiceManager) AddService(name string, viper *viper.Viper, hwm *hardwa
 		if err := s.parseUARTServer(name, viper, hwm, m); err != nil {
 			return err
 		}
+	// case "uartclient":
+	// 	if err := s.parseUARTClient(name, viper, hwm, m); err != nil {
+	// 		return err
+	// 	}
 	case "web":
 		if err := s.parseWeb(name, viper, hwm, m); err != nil {
 			return err
@@ -281,8 +287,9 @@ func (s *ServiceManager) RunServices(nc *nats.EncodedConn) error {
 	for name, service := range s.services {
 		var ctx context.Context
 		ctx, s.cancels[name] = context.WithCancel(context.Background())
+		s.fins[name] = make(chan struct{})
 		log.Info().Msgf("Run '%s' service", name)
-		go service.Run(ctx, nc)
+		go service.Run(ctx, nc, s.fins[name])
 	}
 	return nil
 }
@@ -290,6 +297,9 @@ func (s *ServiceManager) RunServices(nc *nats.EncodedConn) error {
 func (s *ServiceManager) StopServices() error {
 	for _, cancel := range s.cancels {
 		cancel()
+	}
+	for _, fin := range s.fins {
+		<-fin
 	}
 	return nil
 }

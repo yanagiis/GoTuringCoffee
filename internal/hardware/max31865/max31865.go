@@ -58,12 +58,24 @@ func (m *MAX31865) Connect() error {
 	var err error
 	var mode Mode
 	var wire Wire
+	buf := make([]byte, 1)
 
 	if m.connected {
 		return nil
 	}
 
 	if err = m.spi.Open(); err != nil {
+		return err
+	}
+
+	err = m.readReg(addrCR, buf)
+	if err != nil {
+		return err
+	}
+
+	buf[0] = (buf[0] & 0x00)
+	err = m.writeReg(addrCR, buf)
+	if err != nil {
 		return err
 	}
 
@@ -92,7 +104,6 @@ func (m *MAX31865) Connect() error {
 		return errors.New("max31865 set wire failed")
 	}
 
-	buf := make([]byte, 1)
 	err = m.readReg(addrCR, buf)
 	if err != nil {
 		return err

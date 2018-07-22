@@ -8,7 +8,7 @@ import (
 
 func main() {
 	conf := model.MongoDBConfig{
-		Url: "mongodb://<username>:<password>@ds021000.mlab.com:21000/turing-coffee",
+		Url: "mongodb://turingcoffee:turingcoffeepassword@ds021000.mlab.com:21000/turing-coffee",
 	}
 
 	cModel := model.NewCookbook(&conf)

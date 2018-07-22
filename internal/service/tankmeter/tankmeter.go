@@ -2,7 +2,6 @@ package tankmeter
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	nats "github.com/nats-io/go-nats"
@@ -23,7 +22,7 @@ func NewService(dev hardware.WaterDetector, scanInterval time.Duration) *Service
 	}
 }
 
-func (t *Service) Run(ctx context.Context, nc *nats.EncodedConn) (err error) {
+func (t *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- struct{}) (err error) {
 	var sensorErr error
 
 	fullRecord := lib.FullRecord{
@@ -32,19 +31,18 @@ func (t *Service) Run(ctx context.Context, nc *nats.EncodedConn) (err error) {
 	}
 
 	nc.Subscribe("tank.meter", func(subj, reply string, req lib.Request) {
-		fmt.Println("hello")
 		var resp lib.FullResponse
 		if sensorErr != nil {
 			resp = lib.FullResponse{
 				Response: lib.Response{
-					Code: 1,
+					Code: lib.CodeFailure,
 					Msg:  sensorErr.Error(),
 				},
 			}
 		} else {
 			resp = lib.FullResponse{
 				Response: lib.Response{
-					Code: 0,
+					Code: lib.CodeSuccess,
 				},
 				Payload: fullRecord,
 			}
@@ -65,7 +63,10 @@ func (t *Service) Run(ctx context.Context, nc *nats.EncodedConn) (err error) {
 			fullRecord.Time = time.Now()
 			timer = time.NewTimer(t.ScanInterval)
 		case <-ctx.Done():
+			log.Info().Msg("stoping tank meter service")
 			err = ctx.Err()
+			defer func() { fin <- struct{}{} }()
+			log.Info().Msg("stop tank meter service")
 			return
 		}
 	}

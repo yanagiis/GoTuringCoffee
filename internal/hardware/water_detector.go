@@ -1,11 +1,7 @@
 package hardware
 
 import (
-	"errors"
-	"fmt"
-
-	"github.com/yanagiis/periph/conn/gpio"
-	"github.com/yanagiis/periph/conn/gpio/gpioreg"
+	rpio "github.com/stianeikeland/go-rpio"
 )
 
 type WaterDetector interface {
@@ -16,29 +12,20 @@ type WaterDetector interface {
 
 type GPIOWaterDetector struct {
 	Pin  uint32
-	gpio gpio.PinIO
+	gpio rpio.Pin
 }
 
 func (w *GPIOWaterDetector) Connect() error {
-	gpioName := fmt.Sprintf("GPIO%d", w.Pin)
-	w.gpio = gpioreg.ByName(gpioName)
-	if w.gpio == nil {
-		return fmt.Errorf("Cannot open %s", gpioName)
-	}
-	if err := w.gpio.In(gpio.PullNoChange, gpio.NoEdge); err != nil {
-		return err
-	}
+	w.gpio = rpio.Pin(w.Pin)
+	w.gpio.Input()
+	w.gpio.PullDown()
 	return nil
 }
 
 func (w *GPIOWaterDetector) Disconnect() error {
-	w.gpio = nil
 	return nil
 }
 
 func (w *GPIOWaterDetector) IsWaterFull() (bool, error) {
-	if w.gpio == nil {
-		return false, errors.New("gpio not connected")
-	}
-	return w.gpio.Read() == gpio.High, nil
+	return w.gpio.Read() == rpio.High, nil
 }

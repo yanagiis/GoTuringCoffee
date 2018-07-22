@@ -27,7 +27,7 @@ func NewService(serviceName string, port int, uart uartwrap.UART, md *mdns.MDNS)
 	}
 }
 
-func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn) (err error) {
+func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- struct{}) (err error) {
 	var ln net.Listener
 	var conn net.Conn
 
@@ -64,6 +64,7 @@ LOOP:
 
 		select {
 		case <-ctx.Done():
+			defer func() { fin <- struct{}{} }()
 			break LOOP
 		default:
 		}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
+	rpio "github.com/stianeikeland/go-rpio"
 	"github.com/yanagiis/GoTuringCoffee/internal/hardware/max31856"
 	"github.com/yanagiis/GoTuringCoffee/internal/hardware/max31865"
 	"github.com/yanagiis/GoTuringCoffee/internal/hardware/spiwrap"
@@ -63,6 +64,7 @@ func (e *HardwareError) Error() string {
 }
 
 func Init() {
+	rpio.Open()
 	_, err := host.Init()
 	if err != nil {
 		log.Fatal().Msgf("failed to initialize periph: %v", err)

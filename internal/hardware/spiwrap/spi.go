@@ -7,8 +7,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/yanagiis/periph/conn/spi"
-	"github.com/yanagiis/periph/conn/spi/spireg"
+	"periph.io/x/periph/conn/physic"
+	"periph.io/x/periph/conn/spi"
+	"periph.io/x/periph/conn/spi/spireg"
 )
 
 type SPI interface {
@@ -39,7 +40,7 @@ func (s *SPIDevice) Open() error {
 		}
 	}
 	if s.conn == nil {
-		if s.conn, err = s.closer.Connect(s.Conf.Speed, s.Conf.Mode, s.Conf.Bits); err != nil {
+		if s.conn, err = s.closer.Connect(physic.Frequency(s.Conf.Speed)*physic.Hertz, s.Conf.Mode, s.Conf.Bits); err != nil {
 			return err
 		}
 	}

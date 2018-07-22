@@ -68,9 +68,9 @@ func (pid *NormalPID) Compute(measure float64, duration time.Duration) float64 {
 
 	dMeasure := measure - pid.lastMeasure
 	pid.lastMeasure = measure
-	i := pid.I*err*time + pid.iterm
+	i := pid.I * err * time
 	d := pid.D * (dMeasure / time)
-	pid.iterm = pid.limitValue(i)
+	pid.iterm = pid.limitValue(pid.iterm + i)
 
 	return pid.limitValue(p + pid.iterm + d)
 }

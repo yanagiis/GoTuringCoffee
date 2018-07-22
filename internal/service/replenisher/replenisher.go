@@ -2,10 +2,8 @@ package replenisher
 
 import (
 	"context"
-	"fmt"
 	"time"
 
-	jsoniter "github.com/json-iterator/go"
 	nats "github.com/nats-io/go-nats"
 	"github.com/rs/zerolog/log"
 	"github.com/yanagiis/GoTuringCoffee/internal/hardware"
@@ -22,59 +20,48 @@ type Service struct {
 }
 
 func NewService(dev hardware.PWM, scanInterval time.Duration, pwmConf hardware.PWMConfig) *Service {
+	log.Info().Msgf("%v", pwmConf)
 	return &Service{
 		ScanInterval: scanInterval,
 		Dev:          dev,
 		PWMConf:      pwmConf,
+		stop:         false,
 	}
 }
 
-func (r *Service) Run(ctx context.Context, nc *nats.EncodedConn) (err error) {
-	var reqSub *nats.Subscription
-	var reqCh chan *nats.Msg
+func (r *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- struct{}) (err error) {
+	nc.Subscribe("tank.replenisher", func(subj, reply string, req lib.ReplenisherRequest) {
+		if req.IsGet() {
+			resp := r.handleReplenishStatus()
+			nc.Publish(reply, resp)
+		}
+		if req.IsPut() {
+			resp := r.handleControlReplenish(req.Stop)
+			nc.Publish(reply, resp)
+		}
+	})
 
-	reqCh = make(chan *nats.Msg)
-	reqSub, err = nc.BindRecvChan("tank.replenisher", reqCh)
-	if err != nil {
-		return err
+	if err = r.Dev.Connect(); err != nil {
+		log.Info().Msg("Replenisher device connect failed")
+		return
 	}
-	defer func() {
-		err = reqSub.Unsubscribe()
-		close(reqCh)
-	}()
 
-	r.Dev.Connect()
-	defer r.Dev.Disconnect()
 	timer := time.NewTimer(r.ScanInterval)
-
 	for {
 		select {
-		case msg := <-reqCh:
-			var req lib.ReplenisherRequest
-			if decodeErr := jsoniter.Unmarshal(msg.Data, &req); decodeErr != nil {
-				nc.Publish(msg.Reply, lib.HeaterResponse{
-					Response: lib.Response{
-						Code: lib.CodeFailure,
-						Msg:  decodeErr.Error(),
-					},
-				})
-			}
-			if req.IsGet() {
-				resp := r.handleReplenishStatus()
-				nc.Publish(msg.Reply, resp)
-			}
-			if req.IsPut() {
-				resp := r.handleControlReplenish(req.Stop)
-				nc.Publish(msg.Reply, resp)
-			}
 		case <-timer.C:
 			r.scan(ctx, nc)
 			timer = time.NewTimer(r.ScanInterval)
 		case <-ctx.Done():
+			log.Info().Msg("stoping replenisher service")
+			r.Dev.Disconnect()
 			err = ctx.Err()
+			defer func() { fin <- struct{}{} }()
+			log.Info().Msg("stop replenisher service")
 			return
 		}
 	}
+
 }
 
 func (r *Service) handleReplenishStatus() lib.ReplenisherResponse {
@@ -112,26 +99,22 @@ func (r *Service) scan(ctx context.Context, nc *nats.EncodedConn) {
 	var resp lib.FullResponse
 	var err error
 
-	if err = r.Dev.Connect(); err != nil {
-		fmt.Printf("%v\n", err)
-		return
-	}
 	duty := r.PWMConf.Duty
 	if r.stop {
 		duty = 0
-	}
-	timeCtx, _ := context.WithDeadline(ctx, time.Now().Add(5*time.Second))
-	if resp, err = tankmeter.GetMeterInfo(timeCtx, nc); err != nil {
-		duty = 0
-		log.Error().Msg(err.Error())
-	}
-	if resp.Payload.IsFull {
-		duty = 0
+	} else {
+		timeCtx, _ := context.WithDeadline(ctx, time.Now().Add(5*time.Second))
+		if resp, err = tankmeter.GetMeterInfo(timeCtx, nc); err != nil {
+			duty = 0
+			log.Error().Msg(err.Error())
+		}
+		if resp.Payload.IsFull {
+			duty = 0
+		}
 	}
 
-	fmt.Printf("%v\n", duty)
-	if err := r.Dev.PWM(duty, r.PWMConf.Period); err != nil {
-		fmt.Printf("%v\n", err)
+	if err := r.Dev.PWM(duty, r.PWMConf.Freq); err != nil {
+		log.Error().Msg(err.Error())
 	}
 }
 
@@ -141,7 +124,7 @@ func GetReplenishInfo(ctx context.Context, nc *nats.EncodedConn) (resp lib.Reple
 			Code: lib.CodeGet,
 		},
 	}
-	err = nc.RequestWithContext(ctx, "tank.meter", &req, &resp)
+	err = nc.RequestWithContext(ctx, "tank.replenisher", &req, &resp)
 	if err != nil {
 		return
 	}

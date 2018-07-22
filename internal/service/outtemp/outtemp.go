@@ -23,53 +23,40 @@ func NewService(dev hardware.TemperatureSensor, scanInterval time.Duration) *Ser
 	}
 }
 
-func (o *Service) Run(ctx context.Context, nc *nats.EncodedConn) (err error) {
-	var reqSub *nats.Subscription
-	var reqCh chan *nats.Msg
-
-	reqCh = make(chan *nats.Msg)
-	reqSub, err = nc.BindRecvChan("output.temperature", reqCh)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		err = reqSub.Unsubscribe()
-		close(reqCh)
-	}()
-
+func (o *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- struct{}) (err error) {
 	var sensorErr error
 	temperature := lib.TempRecord{
 		Temp: math.NaN(),
 		Time: time.Time{},
 	}
 
+	nc.Subscribe("output.temperature", func(subj, reply string, req lib.Request) {
+		var resp lib.TempResponse
+		if sensorErr != nil {
+			resp = lib.TempResponse{
+				Response: lib.Response{
+					Code: lib.CodeFailure,
+					Msg:  sensorErr.Error(),
+				},
+				Payload: lib.TempRecord{},
+			}
+		} else {
+			resp = lib.TempResponse{
+				Response: lib.Response{
+					Code: lib.CodeSuccess,
+				},
+				Payload: temperature,
+			}
+		}
+		nc.Publish(reply, resp)
+	})
+
 	timer := time.NewTimer(o.ScanInterval)
 
 	for {
 		select {
-		case msg := <-reqCh:
-			var resp lib.TempResponse
-			if sensorErr != nil {
-				resp = lib.TempResponse{
-					Response: lib.Response{
-						Code: lib.CodeFailure,
-						Msg:  sensorErr.Error(),
-					},
-					Payload: lib.TempRecord{},
-				}
-			} else {
-				resp = lib.TempResponse{
-					Response: lib.Response{
-						Code: lib.CodeSuccess,
-						Msg:  sensorErr.Error(),
-					},
-					Payload: temperature,
-				}
-			}
-			nc.Publish(msg.Reply, resp)
 		case <-timer.C:
 			var temp float64
-			timer = time.NewTimer(o.ScanInterval)
 			if sensorErr = o.Sensor.Connect(); sensorErr != nil {
 				log.Error().Msg(sensorErr.Error())
 				continue
@@ -81,8 +68,12 @@ func (o *Service) Run(ctx context.Context, nc *nats.EncodedConn) (err error) {
 			}
 			temperature.Temp = temp
 			temperature.Time = time.Now()
+			timer = time.NewTimer(o.ScanInterval)
 		case <-ctx.Done():
+			log.Info().Msg("stoping output temperature service")
 			err = ctx.Err()
+			defer func() { fin <- struct{}{} }()
+			log.Info().Msg("stop output temperature service")
 			return
 		}
 	}

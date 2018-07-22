@@ -1,6 +1,8 @@
 package lib
 
-import "time"
+import (
+	"time"
+)
 
 const (
 	CodeGet uint8 = iota
@@ -18,7 +20,9 @@ type Response struct {
 	Msg  string
 }
 
-type BaristaResponse struct {
+type BaristaRequest struct {
+	Request
+	Points []Point
 }
 
 type TempResponse struct {
@@ -68,6 +72,7 @@ type FullRecord struct {
 
 type HeaterRecord struct {
 	Duty   float64
+	Target float64
 	Period time.Duration
 	Time   time.Time
 }

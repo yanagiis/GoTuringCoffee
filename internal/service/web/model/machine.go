@@ -2,13 +2,13 @@ package model
 
 import (
 	"context"
-	"errors"
+	"time"
 
 	nats "github.com/nats-io/go-nats"
+	"github.com/rs/zerolog/log"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/heater"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/lib"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/outtemp"
-	"github.com/yanagiis/GoTuringCoffee/internal/service/replenisher"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/tankmeter"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/tanktemp"
 )
@@ -18,13 +18,33 @@ type Machine struct {
 	ctx context.Context
 }
 
-type MachineStatus struct {
-	Heater    lib.HeaterRecord      `json:"heater"`
-	Output    lib.TempRecord        `json:"output"`
-	Replenish lib.ReplenisherRecord `json:"replenish"`
-	TankMeter lib.FullRecord        `json:"tankmeter"`
-	TankTemp  lib.TempRecord        `json:"tanktemp"`
+// type MachineStatus struct {
+// 	Heater    lib.HeaterRecord      `json:"heater"`
+// 	Output    lib.TempRecord        `json:"output"`
+// 	Replenish lib.ReplenisherRecord `json:"replenish"`
+// 	TankMeter lib.FullRecord        `json:"tankmeter"`
+// 	TankTemp  lib.TempRecord        `json:"tanktemp"`
+// }
+
+type HeaterStatus struct {
+	DutyCycle  *float64 `json:"duty_cycle"`
+	TargetTemp *float64 `json:"target_temperature"`
 }
+
+type MachineStatus struct {
+	Output     *float64      `json:"output_temperature"`
+	TankTemp   *float64      `json:"tank_temperature"`
+	Heater     *HeaterStatus `json:"heater_status"`
+	WaterLevel *bool         `json:"water_level"`
+}
+
+// type MachineStatus struct {
+// 	Heater    lib.HeaterRecord      `json:"heater"`
+// 	Output    lib.TempRecord        `json:"output"`
+// 	Replenish lib.ReplenisherRecord `json:"replenish"`
+// 	TankMeter lib.FullRecord        `json:"tankmeter"`
+// 	TankTemp  lib.TempRecord        `json:"tanktemp"`
+// }
 
 func NewMachine(ctx context.Context, nc *nats.EncodedConn) *Machine {
 	return &Machine{
@@ -36,53 +56,63 @@ func NewMachine(ctx context.Context, nc *nats.EncodedConn) *Machine {
 func (m *Machine) GetMachineStatus() (status MachineStatus, err error) {
 	var heaterResp lib.HeaterResponse
 	var outResp lib.TempResponse
-	var replenResp lib.ReplenisherResponse
+	// var replenResp lib.ReplenisherResponse
 	var tankMeterResp lib.FullResponse
 	var tankTempResp lib.TempResponse
+	var ctx context.Context
+	var cancel context.CancelFunc
 
-	if heaterResp, err = heater.GetHeaterInfo(m.ctx, m.nc); err != nil {
-		return
+	ctx, cancel = context.WithTimeout(m.ctx, time.Second)
+	if heaterResp, err = heater.GetHeaterInfo(ctx, m.nc); err != nil {
+		cancel()
 	}
-	if heaterResp.IsFailure() {
-		err = errors.New(heaterResp.Msg)
-		return
-	}
-	status.Heater = heaterResp.Payload
+	if !heaterResp.IsFailure() {
+		log.Info().Msgf("Heater: %v\n", heaterResp)
 
-	if outResp, err = outtemp.GetTemperature(m.ctx, m.nc); err != nil {
-		return
+		status.Heater = new(HeaterStatus)
+		status.Heater.DutyCycle = new(float64)
+		*status.Heater.DutyCycle = heaterResp.Payload.Duty
+		status.Heater.TargetTemp = new(float64)
+		*status.Heater.TargetTemp = heaterResp.Payload.Target
 	}
-	if outResp.IsFailure() {
-		err = errors.New(outResp.Msg)
-		return
-	}
-	status.Output = outResp.Payload
 
-	if replenResp, err = replenisher.GetReplenishInfo(m.ctx, m.nc); err != nil {
-		return
+	ctx, cancel = context.WithTimeout(m.ctx, time.Second)
+	if outResp, err = outtemp.GetTemperature(ctx, m.nc); err != nil {
+		cancel()
 	}
-	if replenResp.IsFailure() {
-		err = errors.New(replenResp.Msg)
-		return
+	if !outResp.IsFailure() {
+		log.Info().Msgf("Output: %v\n", outResp)
+		status.Output = new(float64)
+		*status.Output = outResp.Payload.Temp
 	}
-	status.Replenish = replenResp.Payload
 
-	if tankMeterResp, err = tankmeter.GetMeterInfo(m.ctx, m.nc); err != nil {
-		return
-	}
-	if tankMeterResp.IsFailure() {
-		err = errors.New(tankMeterResp.Msg)
-		return
-	}
-	status.TankMeter = tankMeterResp.Payload
+	// 	ctx, cancel = context.WithTimeout(m.ctx, time.Second)
+	// 	if replenResp, err = replenisher.GetReplenishInfo(ctx, m.nc); err != nil {
+	// 		cancel()
+	// 	}
+	// 	if !replenResp.IsFailure() {
+	// 		log.Info().Msgf("Replenish: %v\n", replenResp)
+	// 		status.Replenish = replenResp.Payload
+	// 	}
 
-	if tankTempResp, err = tanktemp.GetTemperature(m.ctx, m.nc); err != nil {
-		return
+	ctx, cancel = context.WithTimeout(m.ctx, time.Second)
+	if tankMeterResp, err = tankmeter.GetMeterInfo(ctx, m.nc); err != nil {
+		cancel()
 	}
-	if tankTempResp.IsFailure() {
-		err = errors.New(tankTempResp.Msg)
-		return
+	if !tankMeterResp.IsFailure() {
+		log.Info().Msgf("TankMeter: %v\n", tankMeterResp)
+		status.WaterLevel = new(bool)
+		*status.WaterLevel = tankMeterResp.Payload.IsFull
 	}
-	status.TankTemp = tankTempResp.Payload
+
+	ctx, cancel = context.WithTimeout(m.ctx, time.Second)
+	if tankTempResp, err = tanktemp.GetTemperature(ctx, m.nc); err != nil {
+		cancel()
+	}
+	if !tankTempResp.IsFailure() {
+		log.Info().Msgf("TankTemp: %v\n", tankTempResp)
+		status.TankTemp = new(float64)
+		*status.TankTemp = tankTempResp.Payload.Temp
+	}
 	return
 }

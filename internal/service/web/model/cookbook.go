@@ -1,7 +1,10 @@
 package model
 
 import (
+	"fmt"
+
 	"github.com/globalsign/mgo"
+	"github.com/globalsign/mgo/bson"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/lib"
 )
 
@@ -33,11 +36,12 @@ func (m *Cookbook) ListCookbooks() ([]lib.Cookbook, error) {
 }
 
 func (m *Cookbook) GetCookbook(id string) (*lib.Cookbook, error) {
+	fmt.Println(id)
 	var cookbook lib.Cookbook
 	if err := m.Connect(); err != nil {
 		return nil, err
 	}
-	if err := m.c.FindId(id).One(&cookbook); err != nil {
+	if err := m.c.FindId(bson.ObjectIdHex(id)).One(&cookbook); err != nil {
 		return nil, err
 	}
 	return &cookbook, nil
@@ -47,14 +51,14 @@ func (m *Cookbook) UpdateCookbook(id string, cookbook *lib.Cookbook) error {
 	if err := m.Connect(); err != nil {
 		return err
 	}
-	return m.c.UpdateId(id, cookbook)
+	return m.c.UpdateId(bson.ObjectIdHex(id), cookbook)
 }
 
 func (m *Cookbook) DeleteCookbook(id string) error {
 	if err := m.Connect(); err != nil {
 		return err
 	}
-	return m.c.RemoveId(id)
+	return m.c.RemoveId(bson.ObjectIdHex(id))
 }
 
 func (m *Cookbook) Connect() (err error) {

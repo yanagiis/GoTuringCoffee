@@ -23,49 +23,37 @@ func NewService(dev hardware.TemperatureSensor, scanInterval time.Duration) *Ser
 	}
 }
 
-func (t *Service) Run(ctx context.Context, nc *nats.EncodedConn) (err error) {
-	var reqSub *nats.Subscription
-	var reqCh chan *nats.Msg
-
-	reqCh = make(chan *nats.Msg)
-	reqSub, err = nc.BindRecvChan("tank.temperature", reqCh)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		err = reqSub.Unsubscribe()
-		close(reqCh)
-	}()
-
+func (t *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- struct{}) (err error) {
 	var sensorErr error = nil
 	temperature := lib.TempRecord{
 		Temp: math.NaN(),
 		Time: time.Time{},
 	}
 
+	nc.Subscribe("tank.temperature", func(subj, reply string, req lib.Request) {
+		var resp lib.TempResponse
+		if sensorErr != nil {
+			resp = lib.TempResponse{
+				Response: lib.Response{
+					Code: lib.CodeFailure,
+					Msg:  sensorErr.Error(),
+				},
+			}
+		} else {
+			resp = lib.TempResponse{
+				Response: lib.Response{
+					Code: lib.CodeSuccess,
+				},
+				Payload: temperature,
+			}
+		}
+		nc.Publish(reply, resp)
+	})
+
 	timer := time.NewTimer(t.ScanInterval)
 
 	for {
 		select {
-		case msg := <-reqCh:
-			var resp lib.TempResponse
-			if sensorErr != nil {
-				resp = lib.TempResponse{
-					Response: lib.Response{
-						Code: 1,
-						Msg:  sensorErr.Error(),
-					},
-				}
-			} else {
-				resp = lib.TempResponse{
-					Response: lib.Response{
-						Code: 0,
-						Msg:  "",
-					},
-					Payload: temperature,
-				}
-			}
-			nc.Publish(msg.Reply, resp)
 		case <-timer.C:
 			if sensorErr = t.Sensor.Connect(); sensorErr != nil {
 				log.Error().Msg(sensorErr.Error())
@@ -79,7 +67,10 @@ func (t *Service) Run(ctx context.Context, nc *nats.EncodedConn) (err error) {
 			temperature.Time = time.Now()
 			timer = time.NewTimer(t.ScanInterval)
 		case <-ctx.Done():
+			log.Info().Msg("stoping tank temperature service")
 			err = ctx.Err()
+			defer func() { fin <- struct{}{} }()
+			log.Info().Msg("stop tank temperature service")
 			return
 		}
 	}

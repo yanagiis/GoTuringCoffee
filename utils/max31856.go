@@ -7,7 +7,7 @@ import (
 	"github.com/yanagiis/GoTuringCoffee/internal/hardware"
 	"github.com/yanagiis/GoTuringCoffee/internal/hardware/max31856"
 	"github.com/yanagiis/GoTuringCoffee/internal/hardware/spiwrap"
-	"github.com/yanagiis/periph/conn/spi"
+	"periph.io/x/periph/conn/spi"
 )
 
 func init() {
