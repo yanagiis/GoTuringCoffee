@@ -19,7 +19,7 @@ func NewTimeMiddleware() *TimeMiddleware {
 	}
 }
 
-func (m *TimeMiddleware) SetPos(p *lib.Point) {
+func (m *TimeMiddleware) setPos(p *lib.Point) {
 	if p.X != nil {
 		x := *p.X
 		m.pos.X = &x
@@ -44,5 +44,9 @@ func (m *TimeMiddleware) Transform(p *lib.Point) {
 		distance := m.pos.CalcDistance(p)
 		*p.Time = distance * 60 / *p.F
 	}
-	m.SetPos(p)
+	m.setPos(p)
+}
+
+func (m *TimeMiddleware) Free() {
+
 }

@@ -4,7 +4,7 @@ GENERATE = internal/hardware/max31856/max31856.go\
 		   internal/hardware/max31865/max31865.go\
 		   internal/hardware/hardware.go
 
-UTILS = max31856 max31865 db
+UTILS = max31856 max31865 db process
 
 ARCH ?= amd64
 

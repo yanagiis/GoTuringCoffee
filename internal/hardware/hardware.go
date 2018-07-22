@@ -12,7 +12,7 @@ import (
 	"github.com/yanagiis/GoTuringCoffee/internal/hardware/spiwrap"
 	"github.com/yanagiis/GoTuringCoffee/internal/hardware/uartwrap"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/mdns"
-	"github.com/yanagiis/periph/host"
+	"periph.io/x/periph/host"
 )
 
 var (

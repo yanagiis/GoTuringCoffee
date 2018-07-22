@@ -8,17 +8,18 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/barista/middleware"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/lib"
+	"github.com/yanagiis/GoTuringCoffee/internal/service/tanktemp"
 )
 
 type Position struct {
-	x float64 `mapstructure:"x"`
-	y float64 `mapstructure:"y"`
-	z float64 `mapstructure:"z"`
+	X float64 `mapstructure:"x"`
+	Y float64 `mapstructure:"y"`
+	Z float64 `mapstructure:"z"`
 }
 
 type BaristaConfig struct {
 	PID                lib.NormalPID `mapstructure:"pid"`
-	WasteWaterPosition Position      `mapstructure:"waste_water_position"`
+	DrainPosition      Position      `mapstructure:"drain_position"`
 	DefaultMovingSpeed float64       `mapstructure:"default_moving_speed"`
 }
 
@@ -26,17 +27,14 @@ type Barista struct {
 	conf       BaristaConfig
 	middles    []middleware.Middleware
 	controller Controller
+	cooking    bool
 }
 
 func NewBarista(conf BaristaConfig, controller Controller) *Barista {
-	middles := []middleware.Middleware{
-		middleware.NewTempMiddleware(&conf.PID, 20),
-		middleware.NewTimeMiddleware(),
-	}
 	return &Barista{
 		conf:       conf,
-		middles:    middles,
 		controller: controller,
+		cooking:    false,
 	}
 }
 
@@ -46,9 +44,14 @@ func (b *Barista) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 	var doneCh chan struct{}
 
 	nc.Subscribe("barista.brewing", func(subj, reply string, points []lib.Point) {
+		if b.cooking {
+			response(nc, reply, lib.CodeFailure, "Budy", nil)
+			return
+		}
+		b.cooking = true
 		response(nc, reply, lib.CodeSuccess, "OK", nil)
 		cookCtx, cookCancel = context.WithCancel(context.Background())
-		go b.cook(cookCtx, doneCh, points)
+		go b.cook(cookCtx, nc, doneCh, points)
 	})
 
 	timer := time.NewTimer(100 * time.Millisecond)
@@ -75,17 +78,73 @@ func (b *Barista) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 	}
 }
 
-func (b *Barista) cook(ctx context.Context, doneCh chan<- struct{}, points []lib.Point) {
+func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- struct{}, points []lib.Point) {
+
+	b.middles = []middleware.Middleware{
+		middleware.NewTempMiddleware(ctx, nc, &b.conf.PID, 20),
+		middleware.NewTimeMiddleware(),
+	}
+
 	for i := range points {
 		if _, ok := <-ctx.Done(); ok {
 			break
 		}
-		for _, middleware := range b.middles {
-			middleware.Transform(&points[i])
+		switch points[i].Type {
+		case lib.WaitT:
+			select {
+			case <-ctx.Done():
+			case <-time.After(time.Duration(*points[i].Time) * time.Second):
+			}
+		case lib.MixT:
+			b.moveToDrainPosition(ctx)
+			e := float64(0.2)
+			time := float64(0.1)
+			for j := 0; j < 100; j += 1 {
+				for k := 0; k < 10; k += 1 {
+					b.handlePoint(ctx, &lib.Point{
+						E:    &e,
+						T:    points[i].T,
+						Time: &time,
+					})
+				}
+				r, err := tanktemp.GetTemperature(ctx, nc)
+				if err != nil {
+					continue
+				}
+				if r.IsFailure() {
+					continue
+				}
+				diff := r.Payload.Temp - *points[i].T
+				if diff > 1 || diff < -1 {
+					continue
+				}
+				break
+			}
+		case lib.PointT:
+			b.handlePoint(ctx, &points[i])
 		}
-		b.controller.Do(&points[i])
 	}
-	doneCh <- struct{}{}
+	for i := range b.middles {
+		b.middles[i].Free()
+	}
+	b.middles = nil
+	b.cooking = false
+}
+
+func (b *Barista) handlePoint(ctx context.Context, point *lib.Point) {
+	for _, middleware := range b.middles {
+		middleware.Transform(point)
+	}
+	b.controller.Do(point)
+}
+
+func (b *Barista) moveToDrainPosition(ctx context.Context) {
+	b.handlePoint(ctx, &lib.Point{
+		X: &b.conf.DrainPosition.X,
+		Y: &b.conf.DrainPosition.Y,
+		Z: &b.conf.DrainPosition.Z,
+		F: &b.conf.DefaultMovingSpeed,
+	})
 }
 
 func response(nc *nats.EncodedConn, reply string, code uint8, msg string, payload interface{}) {

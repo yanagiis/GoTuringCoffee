@@ -1,10 +1,13 @@
 package middleware
 
 import (
+	"context"
 	"math"
 	"time"
 
+	nats "github.com/nats-io/go-nats"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/lib"
+	"github.com/yanagiis/GoTuringCoffee/internal/service/tanktemp"
 )
 
 type TempMiddleware struct {
@@ -17,10 +20,18 @@ type TempMiddleware struct {
 	maxAccWater    float64
 	idealPercent   float64
 	currentPercent float64
-	tempChan       *chan lib.TempRecord
+	inChan         chan struct{}
+	outChan        chan lib.TempRecord
+	doneChan       chan struct{}
+	cancel         context.CancelFunc
 }
 
-func NewTempMiddleware(pid lib.PID, maxAccWater float64) *TempMiddleware {
+func NewTempMiddleware(ctx context.Context, nc *nats.EncodedConn, pid lib.PID, maxAccWater float64) *TempMiddleware {
+	reqCtx, cancel := context.WithCancel(ctx)
+	reqInCh := make(chan struct{})
+	reqOutCh := make(chan lib.TempRecord)
+	reqDoneCh := make(chan struct{})
+	go requestTemp(reqCtx, nc, reqInCh, reqOutCh, reqDoneCh)
 	return &TempMiddleware{
 		pid:            pid,
 		lastMeasure:    time.Time{},
@@ -29,8 +40,33 @@ func NewTempMiddleware(pid lib.PID, maxAccWater float64) *TempMiddleware {
 		maxAccWater:    maxAccWater,
 		idealPercent:   math.NaN(),
 		currentPercent: math.NaN(),
-		tempChan:       nil,
+		inChan:         reqInCh,
+		outChan:        reqOutCh,
+		doneChan:       reqDoneCh,
+		cancel:         cancel,
 	}
+}
+
+func requestTemp(ctx context.Context, nc *nats.EncodedConn, inCh <-chan struct{}, outCh chan<- lib.TempRecord, doneCh chan<- struct{}) {
+	select {
+	case <-inCh:
+		for {
+			r, err := tanktemp.GetTemperature(ctx, nc)
+			if err != nil {
+				continue
+			}
+			if r.IsFailure() {
+				continue
+			}
+			outCh <- r.Payload
+			break
+		}
+	case <-ctx.Done():
+		break
+	}
+	doneCh <- struct{}{}
+	close(outCh)
+	close(doneCh)
 }
 
 func (m *TempMiddleware) Transform(p *lib.Point) {
@@ -43,15 +79,18 @@ func (m *TempMiddleware) Transform(p *lib.Point) {
 	}
 
 	if m.accWater > m.maxAccWater {
-		if m.tempChan == nil {
-			// m.tempChan = get_output_temperature()
+		select {
+		case m.inChan <- struct{}{}:
+		default:
 		}
-		if record, ok := <-*m.tempChan; ok {
+		select {
+		case record := <-m.outChan:
 			duration := record.Time.Sub(m.lastMeasure)
 			offset := m.pid.Compute(record.Temp, duration)
 			m.currentPercent = m.idealPercent + offset
 			m.lastMeasure = record.Time
 			m.accWater = 0
+		default:
 		}
 	}
 
@@ -60,4 +99,10 @@ func (m *TempMiddleware) Transform(p *lib.Point) {
 		*p.E2 = *p.E - *p.E1
 		m.accWater += *p.E
 	}
+}
+
+func (m *TempMiddleware) Free() {
+	m.cancel()
+	close(m.inChan)
+	<-m.doneChan
 }
