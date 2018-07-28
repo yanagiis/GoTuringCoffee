@@ -59,11 +59,13 @@ func (o *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 			var temp float64
 			if sensorErr = o.Sensor.Connect(); sensorErr != nil {
 				log.Error().Msg(sensorErr.Error())
+				timer = time.NewTimer(o.ScanInterval)
 				continue
 			}
 			if temp, sensorErr = o.Sensor.GetTemperature(); sensorErr != nil {
 				log.Error().Msg(sensorErr.Error())
 				o.Sensor.Disconnect()
+				timer = time.NewTimer(o.ScanInterval)
 				continue
 			}
 			temperature.Temp = temp

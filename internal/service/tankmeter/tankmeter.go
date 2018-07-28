@@ -57,6 +57,7 @@ func (t *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 		case <-timer.C:
 			if sensorErr = t.Sensor.Connect(); sensorErr != nil {
 				log.Error().Msg(sensorErr.Error())
+				timer = time.NewTimer(t.ScanInterval)
 				continue
 			}
 			fullRecord.IsFull, sensorErr = t.Sensor.IsWaterFull()
