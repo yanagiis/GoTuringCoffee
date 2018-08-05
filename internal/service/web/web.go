@@ -19,7 +19,7 @@ type WebConfig struct {
 
 type CustomContext struct {
 	echo.Context
-	cookbookModel *model.Cookbook
+	cookbookModel *model.CookbookModel
 	machineModel  *model.Machine
 }
 
@@ -35,7 +35,7 @@ type Response struct {
 }
 
 func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- struct{}) (err error) {
-	cookbookModel := model.NewCookbook(&s.DB)
+	cookbookModel := model.NewCookbookModel(&s.DB)
 	machineModel := model.NewMachine(ctx, nc)
 	e := echo.New()
 	e.Use(func(h echo.HandlerFunc) echo.HandlerFunc {
@@ -75,7 +75,7 @@ func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 }
 
 func (s *Service) ListCookbook(c echo.Context) (err error) {
-	var cookbooks []lib.Cookbook
+	var cookbooks []*lib.Cookbook
 
 	cc := c.(CustomContext)
 	cookbooks, err = cc.cookbookModel.ListCookbooks()
