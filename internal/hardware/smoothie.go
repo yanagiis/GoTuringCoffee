@@ -6,6 +6,8 @@ import (
 	"errors"
 	"io"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 )
 
 var initCmds = [...]string{"G28", "G21", "G90", "M83"}
@@ -37,22 +39,24 @@ func (s *Smoothie) Connect() error {
 	}
 
 	s.io.Flush()
-	if s.Writeline("G") {
-		line, err := s.Readline()
-		if err != nil {
-			return err
-		}
-		if strings.Compare(line, "Ok") == 0 {
-			return nil
-		}
+	if err := s.Writeline("G"); err != nil {
+		return err
+	}
+
+	line, err := s.Readline()
+	if err != nil {
+		return err
+	}
+	if strings.Compare(line, "Ok") == 0 {
+		return nil
 	}
 
 	for _, cmd := range initCmds {
 		var line string
 		var err error
 
-		if s.Writeline(cmd) {
-			return errors.New("initial failed")
+		if err := s.Writeline(cmd); err != nil {
+			return err
 		}
 		if line, err = s.Readline(); err != nil {
 			return err
@@ -62,7 +66,7 @@ func (s *Smoothie) Connect() error {
 		}
 	}
 
-	return errors.New("no response")
+	return nil
 }
 
 // Disconnect extruder
@@ -75,21 +79,30 @@ func (s *Smoothie) Disconnect() error {
 }
 
 // Writeline is used to write a line to extruder
-func (s *Smoothie) Writeline(msg string) bool {
+func (s *Smoothie) Writeline(msg string) error {
 	var buffer bytes.Buffer
 
-	buffer.WriteString(msg)
+	log.Info().Msg(msg)
+
+	if _, err := buffer.WriteString(msg); err != nil {
+		return err
+	}
 	buffer.WriteByte('\n')
 
 	if _, err := buffer.WriteTo(s.io); err != nil {
-		return false
+		return err
 	}
-	return true
+
+	s.io.Flush()
+	return nil
 }
 
 // Readline is used to read a line from extruder
 func (s *Smoothie) Readline() (string, error) {
 	line, isPrefix, err := s.io.ReadLine()
+
+	log.Info().Msg(string(line))
+
 	if err != nil {
 		return "", err
 	}

@@ -24,6 +24,7 @@ type SEController struct {
 
 func (se *SEController) Connect() (err error) {
 	if err = se.Extruder.Connect(); err != nil {
+		log.Error().Msg(err.Error())
 		return err
 	}
 	defer func() {
@@ -33,6 +34,7 @@ func (se *SEController) Connect() (err error) {
 	}()
 
 	if err = se.Smoothie.Connect(); err != nil {
+		log.Error().Msg(err.Error())
 		return err
 	}
 	return nil

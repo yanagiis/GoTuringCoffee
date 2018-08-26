@@ -6,6 +6,8 @@ import (
 	"errors"
 	"io"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 )
 
 type ExtruderPort interface {
@@ -30,7 +32,9 @@ func NewExtruder(port ExtruderPort) *Extruder {
 }
 
 func (e *Extruder) Connect() error {
+	log.Info().Msg("Connecting to Extruder")
 	if err := e.port.Open(); err != nil {
+		log.Error().Msg(err.Error())
 		return err
 	}
 
@@ -38,9 +42,12 @@ func (e *Extruder) Connect() error {
 	if e.Writeline("") == nil {
 		line, err := e.Readline()
 		if err != nil {
+			log.Error().Msg(err.Error())
 			return err
 		}
-		if strings.Compare(line, "Ok") == 0 {
+		log.Debug().Msg(line)
+		if strings.Compare(line, "ok") == 0 {
+			log.Info().Msg("Connect to Extruder successful")
 			return nil
 		}
 	}
@@ -66,11 +73,13 @@ func (e *Extruder) Writeline(msg string) error {
 	if _, err = buffer.WriteString(msg); err != nil {
 		return err
 	}
+	buffer.WriteByte('\r')
 	buffer.WriteByte('\n')
 
 	if _, err := buffer.WriteTo(e.io); err != nil {
 		return err
 	}
+	e.io.Flush()
 	return nil
 }
 

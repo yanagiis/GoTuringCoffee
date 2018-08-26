@@ -2,11 +2,13 @@ package uartserver
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net"
 	"sync"
 
 	nats "github.com/nats-io/go-nats"
+	"github.com/rs/zerolog/log"
 	"github.com/yanagiis/GoTuringCoffee/internal/hardware/uartwrap"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/mdns"
 )
@@ -31,30 +33,48 @@ func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 	var ln net.Listener
 	var conn net.Conn
 
-LOOP:
 	for {
+
 		ln, err = net.ListenTCP("tcp", &net.TCPAddr{
 			Port: s.port,
 		})
+		defer ln.Close()
 
+		fmt.Printf("Accept uart\n")
 		conn, err = ln.Accept()
 		if err != nil {
+			log.Error().Msg(err.Error())
 			continue
 		}
 
+		fmt.Printf("Open uart\n")
 		if err = s.uart.Open(); err != nil {
 			conn.Close()
+			log.Error().Msg(err.Error())
 			continue
 		}
 
+		fmt.Printf("Start txrx\n")
 		wg := sync.WaitGroup{}
 		wg.Add(2)
+
 		go func() {
-			ctxcopy(ctx, conn, s.uart)
+			for {
+				err := ctxcopy(ctx, conn, s.uart)
+				if err != nil {
+					break
+				}
+			}
 			wg.Done()
 		}()
+
 		go func() {
-			ctxcopy(ctx, s.uart, conn)
+			for {
+				err := ctxcopy(ctx, s.uart, conn)
+				if err != nil {
+					break
+				}
+			}
 			wg.Done()
 		}()
 
@@ -65,10 +85,10 @@ LOOP:
 		select {
 		case <-ctx.Done():
 			defer func() { fin <- struct{}{} }()
-			break LOOP
 		default:
 		}
 	}
+
 	return nil
 }
 

@@ -46,7 +46,6 @@ func (p *PWMDevice) PWM(duty float64, freq int64) error {
 	rpio.StopPwm()
 	dutyCount := uint32(duty * 100)
 	cycleCount := uint32(100) - dutyCount
-	log.Debug().Msgf("%v/%v", dutyCount, cycleCount)
 	p.pwm.DutyCycle(dutyCount, cycleCount)
 	p.pwm.Freq(int(freq))
 	return nil

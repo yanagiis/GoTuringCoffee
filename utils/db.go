@@ -11,7 +11,7 @@ func main() {
 		Url: "mongodb://turingcoffee:turingcoffeepassword@ds021000.mlab.com:21000/turing-coffee",
 	}
 
-	cModel := model.NewCookbook(&conf)
+	cModel := model.NewCookbookModel(&conf)
 	cookbooks, err := cModel.ListCookbooks()
 	if err != nil {
 		panic(err)

@@ -6,6 +6,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/mdns"
 )
 
@@ -26,15 +27,18 @@ func (c *TCPUARTClient) Open() (err error) {
 	var addrs []net.IP
 	var port int
 	if addrs, port, err = c.md.Lookup(c.service, time.Second); err != nil {
+		err = fmt.Errorf("Cannot lookup %q service", c.service)
 		return
 	}
 	if len(addrs) == 0 {
 		err = fmt.Errorf("Cannot lookup %q ip and port", c.service)
+		log.Error().Msg(err.Error())
 		return
 	}
 
 	url := fmt.Sprintf("%s:%d", addrs[0], port)
 	if c.conn, err = net.Dial("tcp", url); err != nil {
+		log.Error().Msg(err.Error())
 		return
 	}
 	return

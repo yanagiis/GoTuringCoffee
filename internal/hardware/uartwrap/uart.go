@@ -4,6 +4,7 @@ import (
 	"io"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/tarm/serial"
 )
 
@@ -27,11 +28,15 @@ type UARTDevice struct {
 
 func (u *UARTDevice) Open() error {
 	var err error
-	u.uart, err = serial.OpenPort(&serial.Config{
+
+	config := &serial.Config{
 		Name:        u.Conf.Path,
 		Baud:        int(u.Conf.Baudrate),
 		ReadTimeout: time.Second * u.Conf.ReadTimeout,
-	})
+	}
+	u.uart, err = serial.OpenPort(config)
+
+	log.Debug().Msgf("%v\n", config)
 
 	return err
 }
@@ -41,7 +46,8 @@ func (u *UARTDevice) IsOpen() bool {
 }
 
 func (u *UARTDevice) Read(p []byte) (int, error) {
-	return u.uart.Read(p)
+	n, err := u.uart.Read(p)
+	return n, err
 }
 
 func (u *UARTDevice) Write(p []byte) (int, error) {

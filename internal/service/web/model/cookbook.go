@@ -18,14 +18,14 @@ type CookbookModel struct {
 	c       *mgo.Collection
 }
 
-type CookbookJson struct {
-	ID          bson.ObjectId `json:"id" bson:"_id,omitempty"`
-	Name        string        `json:"name"`
-	Description string        `json:"description"`
-	Processes   []ProcessJson `json:"processes"`
+type CookbookBson struct {
+	ID          bson.ObjectId `bson:"_id,omitempty"`
+	Name        string        `bson:"name"`
+	Description string        `bson:"description"`
+	Processes   []ProcessBson `bson:"processes"`
 }
 
-func (cj *CookbookJson) Get() (c lib.Cookbook, err error) {
+func (cj *CookbookBson) Get() (c lib.Cookbook, err error) {
 	for _, pj := range cj.Processes {
 		p, err := pj.Get()
 		if err != nil {
@@ -39,17 +39,13 @@ func (cj *CookbookJson) Get() (c lib.Cookbook, err error) {
 	return
 }
 
-type GeneralProcessJson struct {
-	Name    string      `json:"name"`
-	Process lib.Process `json:"params"`
+type ProcessBson struct {
+	Name    string   `bson:"name"`
+	Process bson.Raw `bson:"params"`
 }
 
-type ProcessJson bson.Raw
-
-func (pj *ProcessJson) Get() (p lib.Process, err error) {
-	gpj := new(GeneralProcessJson)
-	err = bson.Unmarshal(pj.Data, gcj)
-	switch gpj.Name {
+func (pj *ProcessBson) Get() (p lib.Process, err error) {
+	switch pj.Name {
 	case "Circle":
 		p = new(lib.Circle)
 	case "Spiral":
@@ -70,7 +66,7 @@ func (pj *ProcessJson) Get() (p lib.Process, err error) {
 		return nil, fmt.Errorf("Not support process '%s'", pj.Name)
 	}
 
-	err = bson.Unmarshal(pj.Params.Data, p)
+	err = bson.Unmarshal(pj.Process.Data, p)
 	return
 }
 
@@ -81,7 +77,7 @@ func NewCookbookModel(dbConf *MongoDBConfig) *CookbookModel {
 }
 
 func (m *CookbookModel) ListCookbooks() ([]*lib.Cookbook, error) {
-	var csj []CookbookJson
+	var csj []CookbookBson
 	var cs []*lib.Cookbook
 	if err := m.Connect(); err != nil {
 		return cs, err
@@ -97,7 +93,7 @@ func (m *CookbookModel) ListCookbooks() ([]*lib.Cookbook, error) {
 }
 
 func (m *CookbookModel) GetCookbook(id string) (*lib.Cookbook, error) {
-	var cj CookbookJson
+	var cj CookbookBson
 	if err := m.Connect(); err != nil {
 		return nil, err
 	}
@@ -109,10 +105,42 @@ func (m *CookbookModel) GetCookbook(id string) (*lib.Cookbook, error) {
 }
 
 func (m *CookbookModel) UpdateCookbook(id string, cookbook *lib.Cookbook) error {
+	var cb CookbookBson
 	if err := m.Connect(); err != nil {
 		return err
 	}
-	return m.c.UpdateId(bson.ObjectIdHex(id), cookbook)
+
+	cb.ID = cookbook.ID
+	cb.Name = cookbook.Name
+	cb.Description = cookbook.Description
+	for _, p := range cookbook.Processes {
+		var pb ProcessBson
+		var err error
+		switch p.(type) {
+		case *lib.Circle:
+			pb.Name = "Circle"
+		case *lib.Spiral:
+			pb.Name = "Spiral"
+		case *lib.Fixed:
+			pb.Name = "Fixed"
+		case *lib.Move:
+			pb.Name = "Move"
+		case *lib.Wait:
+			pb.Name = "Wait"
+		case *lib.Mix:
+			pb.Name = "Mix"
+		case *lib.Home:
+			pb.Name = "Home"
+		}
+		pb.Process.Data, err = bson.Marshal(p)
+		if err != nil {
+			return err
+		}
+
+		cb.Processes = append(cb.Processes, pb)
+	}
+
+	return m.c.UpdateId(bson.ObjectIdHex(id), cb)
 }
 
 func (m *CookbookModel) DeleteCookbook(id string) error {

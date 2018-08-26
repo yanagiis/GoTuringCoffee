@@ -18,6 +18,14 @@ type Cookbook struct {
 	Processes   []Process     `json:"processes"`
 }
 
+func (c *Cookbook) ToPoints() []Point {
+	var points []Point
+	for _, p := range c.Processes {
+		points = append(points, p.ToPoints()...)
+	}
+	return points
+}
+
 type Process interface {
 	ToPoints() []Point
 }
