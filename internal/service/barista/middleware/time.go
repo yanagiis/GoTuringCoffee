@@ -36,13 +36,13 @@ func (m *TimeMiddleware) setPos(p *lib.Point) {
 
 func (m *TimeMiddleware) Transform(p *lib.Point) {
 	if p.Time == nil {
-		return
-	}
-	if p.X == nil && p.Y == nil && p.Z == nil {
-		p.Time = p.F
-	} else {
-		distance := m.pos.CalcDistance(p)
-		*p.Time = distance * 60 / *p.F
+		if p.X == nil && p.Y == nil && p.Z == nil {
+			p.Time = p.F
+		} else {
+			distance := m.pos.CalcDistance(p)
+			p.Time = new(float64)
+			*p.Time = distance * 60 / *p.F
+		}
 	}
 	m.setPos(p)
 }

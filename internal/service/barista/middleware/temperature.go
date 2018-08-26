@@ -6,6 +6,7 @@ import (
 	"time"
 
 	nats "github.com/nats-io/go-nats"
+	"github.com/rs/zerolog/log"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/lib"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/tanktemp"
 )
@@ -39,34 +40,38 @@ func NewTempMiddleware(ctx context.Context, nc *nats.EncodedConn, pid lib.PID, m
 		accWater:       0,
 		maxAccWater:    maxAccWater,
 		idealPercent:   math.NaN(),
-		currentPercent: math.NaN(),
+		currentPercent: 0,
 		inChan:         reqInCh,
 		outChan:        reqOutCh,
 		doneChan:       reqDoneCh,
 		cancel:         cancel,
+		highTemp:       90,
+		lowTemp:        20,
 	}
 }
 
 func requestTemp(ctx context.Context, nc *nats.EncodedConn, inCh <-chan struct{}, outCh chan<- lib.TempRecord, doneCh chan<- struct{}) {
-	select {
-	case <-inCh:
-		for {
-			r, err := tanktemp.GetTemperature(ctx, nc)
-			if err != nil {
-				continue
+	for {
+		select {
+		case <-inCh:
+			for {
+				r, err := tanktemp.GetTemperature(ctx, nc)
+				if err != nil {
+					continue
+				}
+				if r.IsFailure() {
+					continue
+				}
+				outCh <- r.Payload
+				break
 			}
-			if r.IsFailure() {
-				continue
-			}
-			outCh <- r.Payload
-			break
+		case <-ctx.Done():
+			doneCh <- struct{}{}
+			close(outCh)
+			close(doneCh)
+			return
 		}
-	case <-ctx.Done():
-		break
 	}
-	doneCh <- struct{}{}
-	close(outCh)
-	close(doneCh)
 }
 
 func (m *TempMiddleware) Transform(p *lib.Point) {
@@ -74,6 +79,7 @@ func (m *TempMiddleware) Transform(p *lib.Point) {
 		m.temp = *p.T
 		m.accWater = 0
 		m.idealPercent = (m.temp - m.lowTemp) / (m.highTemp - m.lowTemp)
+		m.lastMeasure = time.Time{}
 		m.pid.SetBound(-m.idealPercent, 1-m.idealPercent)
 		m.pid.Reset()
 	}
@@ -85,7 +91,12 @@ func (m *TempMiddleware) Transform(p *lib.Point) {
 		}
 		select {
 		case record := <-m.outChan:
-			duration := record.Time.Sub(m.lastMeasure)
+			var duration time.Duration
+			if m.lastMeasure.Equal(time.Time{}) {
+				duration = record.Time.Sub(m.lastMeasure)
+			} else {
+				duration = time.Duration(0)
+			}
 			offset := m.pid.Compute(record.Temp, duration)
 			m.currentPercent = m.idealPercent + offset
 			m.lastMeasure = record.Time
@@ -94,7 +105,11 @@ func (m *TempMiddleware) Transform(p *lib.Point) {
 		}
 	}
 
-	if p.E != nil && *p.E != 0 {
+	log.Debug().Msgf("percent %+v measure %+v ideal %+v", m.currentPercent, m.lastMeasure, m.idealPercent)
+
+	if p.E != nil {
+		p.E1 = new(float64)
+		p.E2 = new(float64)
 		*p.E1 = *p.E * m.currentPercent
 		*p.E2 = *p.E - *p.E1
 		m.accWater += *p.E

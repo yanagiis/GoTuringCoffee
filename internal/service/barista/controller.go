@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/rs/zerolog/log"
 	"github.com/yanagiis/GoTuringCoffee/internal/hardware"
@@ -101,10 +100,10 @@ func pointToHCode(p *lib.Point) (string, error) {
 	var buffer bytes.Buffer
 	buffer.WriteString("H")
 	if p.E1 != nil && *p.E1 != 0 {
-		buffer.WriteString(fmt.Sprintf(" E0 %05f", *p.E1))
+		buffer.WriteString(fmt.Sprintf(" E0 %0.5f", *p.E1))
 	}
 	if p.E2 != nil && *p.E2 != 0 {
-		buffer.WriteString(fmt.Sprintf(" E1 %05f", *p.E2))
+		buffer.WriteString(fmt.Sprintf(" E1 %0.5f", *p.E2))
 	}
 	buffer.WriteString(fmt.Sprintf(" T%0.5f", *p.Time))
 	return buffer.String(), nil

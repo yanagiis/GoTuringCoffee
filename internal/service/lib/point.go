@@ -15,15 +15,15 @@ const (
 
 type Point struct {
 	Type PointType `json:"type"`
-	X    *float64  `json:"x,omitempty"`
-	Y    *float64  `json:"y,omitempty"`
-	Z    *float64  `json:"z,omitempty"`
-	E    *float64  `json:"e,omitempty"`
-	E1   *float64  `json:"e1,omitempty"`
-	E2   *float64  `json:"e2,omitempty"`
-	F    *float64  `json:"f,omitempty"`
-	T    *float64  `json:"t,omitempty"`
-	Time *float64  `json:"time,omitempty"`
+	X    *float64  `json:"x"`
+	Y    *float64  `json:"y"`
+	Z    *float64  `json:"z"`
+	E    *float64  `json:"e"`
+	E1   *float64  `json:"e1"`
+	E2   *float64  `json:"e2"`
+	F    *float64  `json:"f"`
+	T    *float64  `json:"t"`
+	Time *float64  `json:"time"`
 }
 
 func (p *Point) CalcDistance(other *Point) float64 {

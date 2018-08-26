@@ -33,13 +33,12 @@ func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 	var ln net.Listener
 	var conn net.Conn
 
+	ln, err = net.ListenTCP("tcp", &net.TCPAddr{
+		Port: s.port,
+	})
+	defer ln.Close()
+
 	for {
-
-		ln, err = net.ListenTCP("tcp", &net.TCPAddr{
-			Port: s.port,
-		})
-		defer ln.Close()
-
 		fmt.Printf("Accept uart\n")
 		conn, err = ln.Accept()
 		if err != nil {
@@ -85,6 +84,7 @@ func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 		select {
 		case <-ctx.Done():
 			defer func() { fin <- struct{}{} }()
+			return nil
 		default:
 		}
 	}
