@@ -12,19 +12,19 @@ import (
 )
 
 type TempMiddleware struct {
-	pid            lib.PID
-	lastMeasure    time.Time
-	temp           float64
-	highTemp       float64
-	lowTemp        float64
-	accWater       float64
-	maxAccWater    float64
-	idealPercent   float64
-	currentPercent float64
-	inChan         chan struct{}
-	outChan        chan lib.TempRecord
-	doneChan       chan struct{}
-	cancel         context.CancelFunc
+	pid             lib.PID
+	lastMeasureTime time.Time
+	temp            float64
+	highTemp        float64
+	lowTemp         float64
+	accWater        float64
+	maxAccWater     float64
+	idealPercent    float64
+	currentPercent  float64
+	inChan          chan struct{}
+	outChan         chan lib.TempRecord
+	doneChan        chan struct{}
+	cancel          context.CancelFunc
 }
 
 func NewTempMiddleware(ctx context.Context, nc *nats.EncodedConn, pid lib.PID, maxAccWater float64) *TempMiddleware {
@@ -34,19 +34,19 @@ func NewTempMiddleware(ctx context.Context, nc *nats.EncodedConn, pid lib.PID, m
 	reqDoneCh := make(chan struct{})
 	go requestTemp(reqCtx, nc, reqInCh, reqOutCh, reqDoneCh)
 	return &TempMiddleware{
-		pid:            pid,
-		lastMeasure:    time.Time{},
-		temp:           math.NaN(),
-		accWater:       0,
-		maxAccWater:    maxAccWater,
-		idealPercent:   math.NaN(),
-		currentPercent: 0,
-		inChan:         reqInCh,
-		outChan:        reqOutCh,
-		doneChan:       reqDoneCh,
-		cancel:         cancel,
-		highTemp:       90,
-		lowTemp:        20,
+		pid:             pid,
+		lastMeasureTime: time.Time{},
+		temp:            math.NaN(),
+		accWater:        0,
+		maxAccWater:     maxAccWater,
+		idealPercent:    math.NaN(),
+		currentPercent:  0,
+		inChan:          reqInCh,
+		outChan:         reqOutCh,
+		doneChan:        reqDoneCh,
+		cancel:          cancel,
+		highTemp:        90,
+		lowTemp:         20,
 	}
 }
 
@@ -79,7 +79,9 @@ func (m *TempMiddleware) Transform(p *lib.Point) {
 		m.temp = *p.T
 		m.accWater = 0
 		m.idealPercent = (m.temp - m.lowTemp) / (m.highTemp - m.lowTemp)
-		m.lastMeasure = time.Time{}
+		m.currentPercent = m.idealPercent
+		m.lastMeasureTime = time.Time{}
+		m.pid.SetPoint(m.temp)
 		m.pid.SetBound(-m.idealPercent, 1-m.idealPercent)
 		m.pid.Reset()
 	}
@@ -92,14 +94,14 @@ func (m *TempMiddleware) Transform(p *lib.Point) {
 		select {
 		case record := <-m.outChan:
 			var duration time.Duration
-			if m.lastMeasure.Equal(time.Time{}) {
-				duration = record.Time.Sub(m.lastMeasure)
-			} else {
+			if m.lastMeasureTime.IsZero() {
 				duration = time.Duration(0)
+			} else {
+				duration = record.Time.Sub(m.lastMeasureTime)
 			}
 			offset := m.pid.Compute(record.Temp, duration)
 			m.currentPercent = m.idealPercent + offset
-			m.lastMeasure = record.Time
+			m.lastMeasureTime = record.Time
 			m.accWater = 0
 		default:
 		}
