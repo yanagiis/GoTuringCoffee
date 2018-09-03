@@ -98,7 +98,7 @@ services:
       D: 2
     waste_water_position:
       x: 75
-      y: 35
+      i: 35 # cannot use 'y' in viper, but don't know why
       z: 180
     default_moving_speed: 5000
 

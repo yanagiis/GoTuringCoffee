@@ -13,7 +13,7 @@ import (
 
 type Position struct {
 	X float64 `mapstructure:"x"`
-	Y float64 `mapstructure:"y"`
+	Y float64 `mapstructure:"i"`
 	Z float64 `mapstructure:"z"`
 }
 
