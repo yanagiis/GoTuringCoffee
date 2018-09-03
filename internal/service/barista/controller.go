@@ -105,6 +105,13 @@ func pointToHCode(p *lib.Point) (string, error) {
 	if p.E2 != nil && *p.E2 != 0 {
 		buffer.WriteString(fmt.Sprintf(" E1 %0.5f", *p.E2))
 	}
-	buffer.WriteString(fmt.Sprintf(" T%0.5f", *p.Time))
+	buffer.WriteString(fmt.Sprintf(" T%0.2f", *p.Time))
+
+	sum := 0
+	for _, c := range buffer.String() {
+		sum += int(c)
+	}
+	sum += int(' ')
+	buffer.WriteString(fmt.Sprintf(" S %x", sum))
 	return buffer.String(), nil
 }
