@@ -37,5 +37,5 @@ func (p *Point) CalcDistance(other *Point) float64 {
 	if p.Z != nil && other.Z != nil {
 		sum += math.Pow(*p.Z-*other.Z, 2)
 	}
-	return sum
+	return math.Pow(sum, 0.5)
 }
