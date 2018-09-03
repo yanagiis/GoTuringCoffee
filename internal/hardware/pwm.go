@@ -1,8 +1,6 @@
 package hardware
 
 import (
-	"math"
-
 	"github.com/rs/zerolog/log"
 	rpio "github.com/stianeikeland/go-rpio"
 )
@@ -38,15 +36,16 @@ func (p *PWMDevice) Disconnect() error {
 }
 
 func (p *PWMDevice) PWM(duty float64, freq int64) error {
-	if math.Abs(p.conf.Duty-duty) <= 1e-6 && p.conf.Freq == freq {
-		return nil
-	}
+	// if math.Abs(p.conf.Duty-duty) <= 1e-6 && p.conf.Freq == freq {
+	// 	return nil
+	// }
 	p.conf.Duty = duty
-	p.conf.Freq = freq
-	rpio.StopPwm()
 	dutyCount := uint32(duty * 100)
-	cycleCount := uint32(100) - dutyCount
+	cycleCount := uint32(100)
 	p.pwm.DutyCycle(dutyCount, cycleCount)
-	p.pwm.Freq(int(freq))
+	if freq != 0 && p.conf.Freq != freq {
+		p.conf.Freq = freq
+		p.pwm.Freq(int(freq))
+	}
 	return nil
 }

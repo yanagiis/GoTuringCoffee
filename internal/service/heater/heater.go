@@ -125,7 +125,7 @@ func (h *Service) adjustTemperature(ctx context.Context, nc *nats.EncodedConn) e
 	}
 	duty := h.pid.Compute(resp.Payload.Temp, difftime) / 100
 	log.Debug().Msgf("Duty: %f", duty)
-	if err := h.pwm.PWM(duty, 100); err != nil {
+	if err := h.pwm.PWM(duty, 100000); err != nil {
 		log.Error().Msg(err.Error())
 		return err
 	}
