@@ -1,6 +1,8 @@
 package middleware
 
-import "github.com/yanagiis/GoTuringCoffee/internal/service/lib"
+import (
+	"github.com/yanagiis/GoTuringCoffee/internal/service/lib"
+)
 
 type TimeMiddleware struct {
 	pos lib.Point

@@ -257,7 +257,16 @@ func makeSpiral(src, dst, center *Coordinate, cylinder int64) []Point {
 
 	var points []Point
 	radius := radiusSrc
-	for theta := float64(0); theta < rotateTheta; {
+	theta := float64(0)
+	for {
+		stepTheta := (360 * PointInterval) / (2 * math.Pi * radius)
+		radius += stepTheta * radiusPerDegree
+		theta += stepTheta
+
+		if theta > rotateTheta {
+			break
+		}
+
 		base := Coordinate{X: radius, Y: 0, Z: src.Z}
 		coord := center.rotate(theta, &base)
 		coord.Z += zPerDegree * theta
@@ -267,9 +276,6 @@ func makeSpiral(src, dst, center *Coordinate, cylinder int64) []Point {
 			Y:    &coord.Y,
 			Z:    &coord.Z,
 		})
-		stepTheta := (360 * PointInterval) / (2 * math.Pi * radius)
-		radius += stepTheta * radiusPerDegree
-		theta += stepTheta
 	}
 	return points
 }
