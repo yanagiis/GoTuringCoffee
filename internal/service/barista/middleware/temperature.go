@@ -8,7 +8,7 @@ import (
 	nats "github.com/nats-io/go-nats"
 	"github.com/rs/zerolog/log"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/lib"
-	"github.com/yanagiis/GoTuringCoffee/internal/service/tanktemp"
+	"github.com/yanagiis/GoTuringCoffee/internal/service/outtemp"
 )
 
 type TempMiddleware struct {
@@ -55,7 +55,7 @@ func requestTemp(ctx context.Context, nc *nats.EncodedConn, inCh <-chan struct{}
 		select {
 		case <-inCh:
 			for {
-				r, err := tanktemp.GetTemperature(ctx, nc)
+				r, err := outtemp.GetTemperature(ctx, nc)
 				if err != nil {
 					continue
 				}

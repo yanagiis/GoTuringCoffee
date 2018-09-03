@@ -8,7 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/barista/middleware"
 	"github.com/yanagiis/GoTuringCoffee/internal/service/lib"
-	"github.com/yanagiis/GoTuringCoffee/internal/service/tanktemp"
+	"github.com/yanagiis/GoTuringCoffee/internal/service/outtemp"
 )
 
 type Position struct {
@@ -116,7 +116,7 @@ func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- 
 							Time: &time,
 						})
 					}
-					r, err := tanktemp.GetTemperature(ctx, nc)
+					r, err := outtemp.GetTemperature(ctx, nc)
 					if err != nil {
 						continue
 					}
