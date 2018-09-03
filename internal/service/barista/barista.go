@@ -129,6 +129,10 @@ func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- 
 					}
 					break
 				}
+				select {
+				case <-ctx.Done():
+				case <-time.After(1 * time.Second):
+				}
 			case lib.PointT:
 				b.handlePoint(ctx, &points[i])
 			}
