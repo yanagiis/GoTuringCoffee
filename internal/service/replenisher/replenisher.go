@@ -20,7 +20,6 @@ type Service struct {
 }
 
 func NewService(dev hardware.PWM, scanInterval time.Duration, pwmConf hardware.PWMConfig) *Service {
-	log.Info().Msgf("%v", pwmConf)
 	return &Service{
 		ScanInterval: scanInterval,
 		Dev:          dev,

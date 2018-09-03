@@ -6,8 +6,6 @@ import (
 	"errors"
 	"io"
 	"strings"
-
-	"github.com/rs/zerolog/log"
 )
 
 var initCmds = [...]string{"G28", "G21", "G90", "M83"}
@@ -82,8 +80,6 @@ func (s *Smoothie) Disconnect() error {
 func (s *Smoothie) Writeline(msg string) error {
 	var buffer bytes.Buffer
 
-	log.Info().Msg(msg)
-
 	if _, err := buffer.WriteString(msg); err != nil {
 		return err
 	}
@@ -100,8 +96,6 @@ func (s *Smoothie) Writeline(msg string) error {
 // Readline is used to read a line from extruder
 func (s *Smoothie) Readline() (string, error) {
 	line, isPrefix, err := s.io.ReadLine()
-
-	log.Info().Msg(string(line))
 
 	if err != nil {
 		return "", err

@@ -94,8 +94,6 @@ func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- 
 	for i := range points {
 		point := points[i]
 
-		log.Debug().Msgf("point %+v", point)
-
 		select {
 		case <-ctx.Done():
 			break
@@ -147,7 +145,6 @@ func (b *Barista) handlePoint(ctx context.Context, point *lib.Point) {
 	for _, middleware := range b.middles {
 		middleware.Transform(point)
 	}
-	log.Debug().Msgf("%+v", point)
 	b.controller.Do(point)
 }
 
