@@ -2,6 +2,7 @@ package uartserver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -59,27 +60,27 @@ func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 
 		go func() {
 			for {
-				err := ctxcopy(ctx, conn, s.uart)
+				err := tuctxcopy(ctx, conn, s.uart)
 				if err != nil {
 					break
 				}
 			}
+			s.uart.Close()
 			wg.Done()
 		}()
 
 		go func() {
 			for {
-				err := ctxcopy(ctx, s.uart, conn)
+				err := utctxcopy(ctx, s.uart, conn)
 				if err != nil {
 					break
 				}
 			}
+			conn.Close()
 			wg.Done()
 		}()
 
 		wg.Wait()
-		s.uart.Close()
-		conn.Close()
 
 		select {
 		case <-ctx.Done():
@@ -98,7 +99,23 @@ func (r readerFunc) Read(p []byte) (int, error) {
 	return r(p)
 }
 
-func ctxcopy(ctx context.Context, writer io.Writer, reader io.Reader) error {
+func utctxcopy(ctx context.Context, writer io.Writer, reader io.Reader) error {
+	_, err := io.Copy(writer, readerFunc(func(p []byte) (int, error) {
+		select {
+		case <-ctx.Done():
+			return 0, ctx.Err()
+		default:
+			n, e := reader.Read(p)
+			if e != nil {
+				return 0, errors.New("close")
+			}
+			return n, e
+		}
+	}))
+	return err
+}
+
+func tuctxcopy(ctx context.Context, writer io.Writer, reader io.Reader) error {
 	_, err := io.Copy(writer, readerFunc(func(p []byte) (int, error) {
 		select {
 		case <-ctx.Done():
