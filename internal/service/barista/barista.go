@@ -107,13 +107,13 @@ func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- 
 			case lib.MixT:
 				b.moveToDrainPosition(ctx)
 				e := float64(0.2)
-				time := float64(0.1)
+				pointTime := float64(0.1)
 				for j := 0; j < 100; j++ {
 					for k := 0; k < 10; k++ {
 						b.handlePoint(ctx, &lib.Point{
 							E:    &e,
 							T:    point.T,
-							Time: &time,
+							Time: &pointTime,
 						})
 					}
 					r, err := outtemp.GetTemperature(ctx, nc)

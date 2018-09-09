@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/rs/zerolog/log"
 	"github.com/yanagiis/GoTuringCoffee/internal/hardware"
