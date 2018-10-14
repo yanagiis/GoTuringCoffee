@@ -82,6 +82,10 @@ func (o *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 	}
 }
 
+func (o *Service) Stop() error {
+	return nil
+}
+
 func GetTemperature(ctx context.Context, nc *nats.EncodedConn) (resp lib.TempResponse, err error) {
 	req := lib.Request{
 		Code: lib.CodeGet,

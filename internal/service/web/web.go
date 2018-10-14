@@ -246,5 +246,9 @@ func (s *Service) GetMachineStatus(c echo.Context) error {
 	})
 }
 
+func (s *Service) Stop() error {
+	return nil
+}
+
 // func (s *Service) SetTargetTemperature(c echo.Context) error {
 // }

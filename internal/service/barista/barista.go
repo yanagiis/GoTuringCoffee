@@ -168,6 +168,10 @@ func (b *Barista) moveToDrainPosition(ctx context.Context) {
 	})
 }
 
+func (b *Barista) Stop() error {
+	return nil
+}
+
 func response(nc *nats.EncodedConn, reply string, code uint8, msg string, payload interface{}) {
 	resp := lib.Response{
 		Code: code,

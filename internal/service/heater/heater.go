@@ -136,6 +136,10 @@ func (h *Service) adjustTemperature(ctx context.Context, nc *nats.EncodedConn) e
 	return nil
 }
 
+func (h *Service) Stop() error {
+	return nil
+}
+
 func GetHeaterInfo(ctx context.Context, nc *nats.EncodedConn) (resp lib.HeaterResponse, err error) {
 	req := lib.HeaterRequest{
 		Request: lib.Request{

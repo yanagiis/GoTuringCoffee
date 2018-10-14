@@ -20,6 +20,7 @@ type Service struct {
 	service string
 	port    int
 	md      *mdns.MDNS
+	ln      net.Listener
 }
 
 func NewService(serviceName string, port int, uart uartwrap.UART, md *mdns.MDNS) *Service {
@@ -32,66 +33,69 @@ func NewService(serviceName string, port int, uart uartwrap.UART, md *mdns.MDNS)
 }
 
 func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- struct{}) (err error) {
-	var ln net.Listener
 	var conn net.Conn
 
-	ln, err = net.ListenTCP("tcp", &net.TCPAddr{
+	s.ln, err = net.ListenTCP("tcp", &net.TCPAddr{
 		Port: s.port,
 	})
-	defer ln.Close()
+	defer s.ln.Close()
 
 	for {
-		fmt.Printf("Accept uart\n")
-		conn, err = ln.Accept()
-		if err != nil {
-			log.Error().Msg(err.Error())
-			continue
-		}
-
-		fmt.Printf("Open uart\n")
-		if err = s.uart.Open(); err != nil {
-			conn.Close()
-			log.Error().Msg(err.Error())
-			continue
-		}
-
-		fmt.Printf("Start txrx\n")
-		wg := sync.WaitGroup{}
-		wg.Add(2)
-
-		go func() {
-			for {
-				err := tuctxcopy(ctx, conn, s.uart)
-				if err != nil {
-					break
-				}
-			}
-			s.uart.Close()
-			wg.Done()
-		}()
-
-		go func() {
-			for {
-				err := utctxcopy(ctx, s.uart, conn)
-				if err != nil {
-					break
-				}
-			}
-			conn.Close()
-			wg.Done()
-		}()
-
-		wg.Wait()
-
 		select {
 		case <-ctx.Done():
 			defer func() { fin <- struct{}{} }()
 			return nil
 		default:
 		}
+
+		conn, err = s.ln.Accept()
+		if err != nil {
+			log.Error().Err(err).Msg("Accept conn failed")
+			continue
+		}
+
+		if err = s.uart.Open(); err != nil {
+			log.Error().Err(err).Msg("Open uart failed")
+			conn.Close()
+			log.Error().Msg(err.Error())
+			continue
+		}
+
+		wg := sync.WaitGroup{}
+		wg.Add(2)
+
+		newctx, cancel := context.WithCancel(ctx)
+
+		go func() {
+			for {
+				err := tuctxcopy(newctx, conn, s.uart)
+				if err != nil {
+					break
+				}
+			}
+			cancel()
+			wg.Done()
+		}()
+
+		go func() {
+			for {
+				err := utctxcopy(newctx, s.uart, conn)
+				if err != nil {
+					break
+				}
+			}
+			cancel()
+			wg.Done()
+		}()
+
+		wg.Wait()
 	}
 
 	return nil
+}
+
+func (s *Service) Stop() error {
+	return s.ln.Close()
 }
 
 type readerFunc func(p []byte) (int, error)

@@ -74,6 +74,10 @@ func (t *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 	}
 }
 
+func (t *Service) Stop() error {
+	return nil
+}
+
 func GetMeterInfo(ctx context.Context, nc *nats.EncodedConn) (resp lib.FullResponse, err error) {
 	req := lib.Request{
 		Code: lib.CodeGet,

@@ -118,6 +118,10 @@ func (r *Service) scan(ctx context.Context, nc *nats.EncodedConn) {
 	}
 }
 
+func (r *Service) Stop() error {
+	return nil
+}
+
 func GetReplenishInfo(ctx context.Context, nc *nats.EncodedConn) (resp lib.ReplenisherResponse, err error) {
 	req := lib.ReplenisherRequest{
 		Request: lib.Request{

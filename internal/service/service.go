@@ -31,6 +31,7 @@ var (
 
 type services interface {
 	Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- struct{}) error
+	Stop() error
 }
 
 type ServiceError struct {
@@ -296,6 +297,9 @@ func (s *ServiceManager) RunServices(nc *nats.EncodedConn) error {
 }
 
 func (s *ServiceManager) StopServices() error {
+	for _, s := range s.services {
+		s.Stop()
+	}
 	for _, cancel := range s.cancels {
 		cancel()
 	}
