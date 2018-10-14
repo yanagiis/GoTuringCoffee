@@ -120,7 +120,7 @@ func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 	e.DELETE("/api/cookbooks/:id", s.DeleteCookbook)
 	e.GET("/api/machine", s.GetMachineStatus)
 	e.POST("/api/barista/:id/brew", s.BrewCookbook)
-	e.Static("/*", s.Web.StaticFilePath)
+	e.Static("/", s.Web.StaticFilePath)
 	// e.PUT("/api/machine/tank/temperature", s.SetTargetTemperature)
 
 	go func() {
