@@ -11,6 +11,9 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
+**/max31856_enum.go
+**/max31865_enum.go
+
 vendor/
 bin/
 
