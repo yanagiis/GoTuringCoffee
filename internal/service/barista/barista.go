@@ -110,7 +110,7 @@ func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- 
 				}
 			case lib.MixT:
 				b.moveToDrainPosition(ctx)
-				e := float64(0.2)
+				e := float64(0.4)
 				pointTime := float64(0.1)
 				for j := 0; j < 100; j++ {
 					for k := 0; k < 10; k++ {
