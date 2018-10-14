@@ -2,6 +2,7 @@ package barista
 
 import (
 	"context"
+	"runtime"
 	"time"
 
 	"GoTuringCoffee/internal/service/barista/middleware"
@@ -92,6 +93,8 @@ func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- 
 		middleware.NewTimeMiddleware(),
 	}
 
+	runtime.LockOSThread()
+
 	for i := range points {
 		point := points[i]
 
@@ -139,6 +142,9 @@ func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- 
 			}
 		}
 	}
+
+	runtime.UnlockOSThread()
+
 	for i := range b.middles {
 		b.middles[i].Free()
 	}
