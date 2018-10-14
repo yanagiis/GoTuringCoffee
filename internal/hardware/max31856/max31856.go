@@ -5,7 +5,7 @@ package max31856
 import (
 	"errors"
 
-	"github.com/yanagiis/GoTuringCoffee/internal/hardware/spiwrap"
+	"GoTuringCoffee/internal/hardware/spiwrap"
 )
 
 // TC Type

@@ -4,14 +4,15 @@ import (
 	"errors"
 	"fmt"
 
+	"GoTuringCoffee/internal/hardware/max31856"
+	"GoTuringCoffee/internal/hardware/max31865"
+	"GoTuringCoffee/internal/hardware/spiwrap"
+	"GoTuringCoffee/internal/hardware/uartwrap"
+	"GoTuringCoffee/internal/service/mdns"
+
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 	rpio "github.com/stianeikeland/go-rpio"
-	"github.com/yanagiis/GoTuringCoffee/internal/hardware/max31856"
-	"github.com/yanagiis/GoTuringCoffee/internal/hardware/max31865"
-	"github.com/yanagiis/GoTuringCoffee/internal/hardware/spiwrap"
-	"github.com/yanagiis/GoTuringCoffee/internal/hardware/uartwrap"
-	"github.com/yanagiis/GoTuringCoffee/internal/service/mdns"
 	"periph.io/x/periph/host"
 )
 

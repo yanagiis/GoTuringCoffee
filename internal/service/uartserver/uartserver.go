@@ -8,10 +8,11 @@ import (
 	"net"
 	"sync"
 
+	"GoTuringCoffee/internal/hardware/uartwrap"
+	"GoTuringCoffee/internal/service/mdns"
+
 	nats "github.com/nats-io/go-nats"
 	"github.com/rs/zerolog/log"
-	"github.com/yanagiis/GoTuringCoffee/internal/hardware/uartwrap"
-	"github.com/yanagiis/GoTuringCoffee/internal/service/mdns"
 )
 
 type Service struct {

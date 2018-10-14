@@ -5,10 +5,10 @@ import (
 	"math"
 	"time"
 
+	"GoTuringCoffee/internal/service/lib"
+	"GoTuringCoffee/internal/service/outtemp"
+
 	nats "github.com/nats-io/go-nats"
-	"github.com/rs/zerolog/log"
-	"github.com/yanagiis/GoTuringCoffee/internal/service/lib"
-	"github.com/yanagiis/GoTuringCoffee/internal/service/outtemp"
 )
 
 type TempMiddleware struct {

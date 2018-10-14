@@ -6,8 +6,9 @@ import (
 	"net"
 	"time"
 
+	"GoTuringCoffee/internal/service/mdns"
+
 	"github.com/rs/zerolog/log"
-	"github.com/yanagiis/GoTuringCoffee/internal/service/mdns"
 )
 
 type TCPUARTClient struct {

@@ -4,11 +4,12 @@ import (
 	"context"
 	"time"
 
+	"GoTuringCoffee/internal/hardware"
+	"GoTuringCoffee/internal/service/lib"
+	"GoTuringCoffee/internal/service/tankmeter"
+
 	nats "github.com/nats-io/go-nats"
 	"github.com/rs/zerolog/log"
-	"github.com/yanagiis/GoTuringCoffee/internal/hardware"
-	"github.com/yanagiis/GoTuringCoffee/internal/service/lib"
-	"github.com/yanagiis/GoTuringCoffee/internal/service/tankmeter"
 )
 
 type Service struct {

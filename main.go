@@ -8,14 +8,15 @@ import (
 	"syscall"
 	"time"
 
+	"GoTuringCoffee/internal/hardware"
+	"GoTuringCoffee/internal/service"
+	"GoTuringCoffee/internal/service/mdns"
+
 	nats "github.com/nats-io/go-nats"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	flag "github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"github.com/yanagiis/GoTuringCoffee/internal/hardware"
-	"github.com/yanagiis/GoTuringCoffee/internal/service"
-	"github.com/yanagiis/GoTuringCoffee/internal/service/mdns"
 )
 
 type NatsConfig struct {

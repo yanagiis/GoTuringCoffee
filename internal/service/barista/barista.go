@@ -4,11 +4,12 @@ import (
 	"context"
 	"time"
 
+	"GoTuringCoffee/internal/service/barista/middleware"
+	"GoTuringCoffee/internal/service/lib"
+	"GoTuringCoffee/internal/service/outtemp"
+
 	"github.com/nats-io/go-nats"
 	"github.com/rs/zerolog/log"
-	"github.com/yanagiis/GoTuringCoffee/internal/service/barista/middleware"
-	"github.com/yanagiis/GoTuringCoffee/internal/service/lib"
-	"github.com/yanagiis/GoTuringCoffee/internal/service/outtemp"
 )
 
 type Position struct {

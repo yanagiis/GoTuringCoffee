@@ -1,7 +1,8 @@
 package main
 
 import (
-	"github.com/yanagiis/GoTuringCoffee/internal/service/lib"
+	"GoTuringCoffee/internal/service/lib"
+
 	"gonum.org/v1/plot"
 	"gonum.org/v1/plot/plotter"
 	"gonum.org/v1/plot/plotutil"

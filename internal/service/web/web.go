@@ -7,12 +7,13 @@ import (
 	"net/http"
 	"time"
 
+	"GoTuringCoffee/internal/service/barista"
+	"GoTuringCoffee/internal/service/lib"
+	"GoTuringCoffee/internal/service/web/model"
+
 	"github.com/globalsign/mgo/bson"
 	"github.com/labstack/echo"
 	nats "github.com/nats-io/go-nats"
-	"github.com/yanagiis/GoTuringCoffee/internal/service/barista"
-	"github.com/yanagiis/GoTuringCoffee/internal/service/lib"
-	"github.com/yanagiis/GoTuringCoffee/internal/service/web/model"
 )
 
 type WebConfig struct {

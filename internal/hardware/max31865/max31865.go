@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/yanagiis/GoTuringCoffee/internal/hardware/spiwrap"
+	"GoTuringCoffee/internal/hardware/spiwrap"
 )
 
 // RTD wire type

@@ -3,9 +3,10 @@ package model
 import (
 	"fmt"
 
+	"GoTuringCoffee/internal/service/lib"
+
 	"github.com/globalsign/mgo"
 	"github.com/globalsign/mgo/bson"
-	"github.com/yanagiis/GoTuringCoffee/internal/service/lib"
 )
 
 type MongoDBConfig struct {

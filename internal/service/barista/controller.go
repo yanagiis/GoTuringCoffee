@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"strings"
 
+	"GoTuringCoffee/internal/hardware"
+	"GoTuringCoffee/internal/service/lib"
+
 	"github.com/rs/zerolog/log"
-	"github.com/yanagiis/GoTuringCoffee/internal/hardware"
-	"github.com/yanagiis/GoTuringCoffee/internal/service/lib"
 )
 
 type Controller interface {

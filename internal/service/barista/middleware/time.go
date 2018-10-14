@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"github.com/yanagiis/GoTuringCoffee/internal/service/lib"
+	"GoTuringCoffee/internal/service/lib"
 )
 
 type TimeMiddleware struct {

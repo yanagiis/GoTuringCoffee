@@ -4,9 +4,10 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/yanagiis/GoTuringCoffee/internal/hardware"
-	"github.com/yanagiis/GoTuringCoffee/internal/hardware/max31856"
-	"github.com/yanagiis/GoTuringCoffee/internal/hardware/spiwrap"
+	"GoTuringCoffee/internal/hardware"
+	"GoTuringCoffee/internal/hardware/max31856"
+	"GoTuringCoffee/internal/hardware/spiwrap"
+
 	"periph.io/x/periph/conn/spi"
 )
 

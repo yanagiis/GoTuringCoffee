@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/yanagiis/GoTuringCoffee/internal/service/web/model"
+	"GoTuringCoffee/internal/service/web/model"
 )
 
 func main() {
