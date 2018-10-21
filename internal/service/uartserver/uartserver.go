@@ -3,7 +3,6 @@ package uartserver
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"net"
 	"sync"
@@ -54,7 +53,7 @@ func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 			continue
 		}
 
-		if err = s.uart.Open(); err != nil {
+		if err = s.uart.Open(ctx); err != nil {
 			log.Error().Err(err).Msg("Open uart failed")
 			conn.Close()
 			log.Error().Msg(err.Error())
@@ -112,7 +111,7 @@ func utctxcopy(ctx context.Context, writer io.Writer, reader io.Reader) error {
 		default:
 			n, e := reader.Read(p)
 			if e != nil {
-				return 0, errors.New("close")
+				return 0, errors.New("closed")
 			}
 			return n, e
 		}

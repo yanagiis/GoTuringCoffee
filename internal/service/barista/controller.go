@@ -2,6 +2,7 @@ package barista
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -13,7 +14,7 @@ import (
 )
 
 type Controller interface {
-	Connect() error
+	Connect(ctx context.Context) error
 	Disconnect() error
 	Do(p *lib.Point) error
 }
@@ -23,8 +24,8 @@ type SEController struct {
 	Extruder *hardware.Extruder
 }
 
-func (se *SEController) Connect() (err error) {
-	if err = se.Extruder.Connect(); err != nil {
+func (se *SEController) Connect(ctx context.Context) (err error) {
+	if err = se.Extruder.Connect(ctx); err != nil {
 		log.Error().Msg(err.Error())
 		return err
 	}
@@ -34,7 +35,7 @@ func (se *SEController) Connect() (err error) {
 		}
 	}()
 
-	if err = se.Smoothie.Connect(); err != nil {
+	if err = se.Smoothie.Connect(ctx); err != nil {
 		log.Error().Msg(err.Error())
 		return err
 	}

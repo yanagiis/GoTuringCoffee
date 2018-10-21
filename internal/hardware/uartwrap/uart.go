@@ -1,17 +1,17 @@
 package uartwrap
 
 import (
+	"context"
 	"io"
 	"time"
 
-	"github.com/rs/zerolog/log"
 	"github.com/tarm/serial"
 )
 
 type UART interface {
 	io.ReadWriter
 	io.Closer
-	Open() error
+	Open(ctx context.Context) error
 	IsOpen() bool
 }
 
@@ -26,7 +26,7 @@ type UARTDevice struct {
 	uart *serial.Port
 }
 
-func (u *UARTDevice) Open() error {
+func (u *UARTDevice) Open(ctx context.Context) error {
 	var err error
 
 	config := &serial.Config{
@@ -35,9 +35,6 @@ func (u *UARTDevice) Open() error {
 		ReadTimeout: time.Second * u.Conf.ReadTimeout,
 	}
 	u.uart, err = serial.OpenPort(config)
-
-	log.Debug().Msgf("%v\n", config)
-
 	return err
 }
 

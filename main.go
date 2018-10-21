@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os"
@@ -36,6 +37,10 @@ func main() {
 	var natsConf NatsConfig
 	var mdnsConf mdns.Config
 	var m *mdns.MDNS
+
+	ctx, cancel := context.WithCancel(context.Background())
+	fmt.Printf("hello %v\n", &ctx)
+	defer cancel()
 
 	flag.StringVar(&configFile, "config", "config", "configuration file")
 	flag.Parse()
@@ -78,11 +83,11 @@ func main() {
 	}
 	log.Info().Msg("Load services configurations successfully")
 
-	conn := connectNats(natsConf, m)
+	conn := connectNats(ctx, natsConf, m)
 	defer conn.Close()
 
 	log.Info().Msg("Run services ...")
-	svm.RunServices(conn)
+	svm.RunServices(ctx, conn)
 	log.Info().Msg("Run services successfully")
 	defer func() {
 		log.Info().Msg("Stop services ...")
@@ -95,14 +100,14 @@ func main() {
 	<-sigs
 }
 
-func connectNats(conf NatsConfig, m *mdns.MDNS) *nats.EncodedConn {
+func connectNats(ctx context.Context, conf NatsConfig, m *mdns.MDNS) *nats.EncodedConn {
 	var addrs []net.IP
 	var port int
 	var nc *nats.Conn
 	var err error
 
 	for {
-		if addrs, port, err = m.Lookup(conf.Service, 5*time.Second); err != nil {
+		if addrs, port, err = m.Lookup(ctx, conf.Service, 5*time.Second); err != nil {
 			log.Info().Msgf(err.Error())
 			continue
 		}

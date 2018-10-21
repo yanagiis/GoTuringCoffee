@@ -24,10 +24,10 @@ func NewTCPUARTClientMDNS(service string, md *mdns.MDNS) *TCPUARTClient {
 	}
 }
 
-func (c *TCPUARTClient) Open() (err error) {
+func (c *TCPUARTClient) Open(ctx context.Context) (err error) {
 	var addrs []net.IP
 	var port int
-	if addrs, port, err = c.md.Lookup(c.service, time.Second); err != nil {
+	if addrs, port, err = c.md.Lookup(ctx, c.service, time.Second); err != nil {
 		err = fmt.Errorf("Cannot lookup %q service", c.service)
 		return
 	}
@@ -63,52 +63,4 @@ func (c *TCPUARTClient) Read(p []byte) (int, error) {
 
 func (c *TCPUARTClient) Write(p []byte) (int, error) {
 	return c.conn.Write(p)
-}
-
-type TCPUARTServer struct {
-	Service string
-	Port    int
-	md      *mdns.MDNS
-	conn    net.Conn
-	uart    UART
-	ctx     context.Context
-}
-
-func NewTCPUARTServerMDNS(service string, port int, uart UART, md *mdns.MDNS) *TCPUARTServer {
-	server := &TCPUARTServer{
-		Service: service,
-		md:      md,
-		uart:    uart,
-	}
-	if err := md.Register(service, port); err != nil {
-		return nil
-	}
-	return server
-}
-
-func (s *TCPUARTServer) Pair(timeout time.Duration) (conn *net.Conn, err error) {
-	var ln *net.TCPListener
-
-	if err = s.uart.Open(); err != nil {
-		return
-	}
-	tcpAddr := net.TCPAddr{
-		Port: s.Port,
-	}
-	if ln, err = net.ListenTCP("tcp", &tcpAddr); err != nil {
-		s.uart.Close()
-		return
-	}
-	defer ln.Close()
-	if s.conn, err = ln.Accept(); err != nil {
-		s.uart.Close()
-		return
-	}
-	return
-}
-
-func (s *TCPUARTServer) Unpair() (err error) {
-	s.uart.Close()
-	err = s.conn.Close()
-	return
 }

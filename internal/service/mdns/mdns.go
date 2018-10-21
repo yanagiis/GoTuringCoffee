@@ -55,7 +55,7 @@ func (m *MDNS) Stop() {
 	}
 }
 
-func (m *MDNS) Lookup(serviceName string, timeout time.Duration) ([]net.IP, int, error) {
+func (m *MDNS) Lookup(ctx context.Context, serviceName string, timeout time.Duration) ([]net.IP, int, error) {
 	resolver, err := zeroconf.NewResolver(nil)
 	if err != nil {
 		return nil, 0, err

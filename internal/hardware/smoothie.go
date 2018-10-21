@@ -3,6 +3,7 @@ package hardware
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"errors"
 	"io"
 	"strings"
@@ -13,7 +14,7 @@ var initCmds = [...]string{"G28", "G21", "G90", "M83"}
 type SmoothiePort interface {
 	io.ReadWriter
 	io.Closer
-	Open() error
+	Open(ctx context.Context) error
 	IsOpen() bool
 }
 
@@ -31,8 +32,8 @@ func NewSmoothie(port SmoothiePort) *Smoothie {
 	}
 }
 
-func (s *Smoothie) Connect() error {
-	if err := s.port.Open(); err != nil {
+func (s *Smoothie) Connect(ctx context.Context) error {
+	if err := s.port.Open(ctx); err != nil {
 		return err
 	}
 

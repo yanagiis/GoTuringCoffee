@@ -25,7 +25,6 @@ var hardwareFuncs = map[string]ParseHardwareFunc{
 	"spi":            ParseSPI,
 	"uart":           ParseUART,
 	"tcpuartclient":  ParseTcpUartClient,
-	"tcpuartserver":  ParseTcpUartServer,
 	"pwm":            ParsePWM,
 	"max31856":       ParseMAX31856,
 	"max31865":       ParseMAX31865,
@@ -177,22 +176,6 @@ func ParseTcpUartClient(m *HWManager, viper *viper.Viper, md *mdns.MDNS) (interf
 	service := viper.GetString("mdns_service")
 	client := uartwrap.NewTCPUARTClientMDNS(service, md)
 	return client, nil
-}
-
-func ParseTcpUartServer(m *HWManager, viper *viper.Viper, md *mdns.MDNS) (interface{}, error) {
-	var uartdev interface{}
-	var err error
-	fields := []string{"service", "port", "uartdev"}
-	if err = checkFields(viper, fields); err != nil {
-		return nil, err
-	}
-	service := viper.GetString("service")
-	port := viper.GetInt("port")
-	if uartdev, err = m.GetDevice(viper.GetString("uartdev")); err != nil {
-		return nil, NewHardwareError("tcpuarts", err.Error(), ErrDevNotFound)
-	}
-	server := uartwrap.NewTCPUARTServerMDNS(service, port, uartdev.(uartwrap.UART), md)
-	return server, nil
 }
 
 func ParsePWM(m *HWManager, viper *viper.Viper, md *mdns.MDNS) (interface{}, error) {

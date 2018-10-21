@@ -285,13 +285,13 @@ func (s *ServiceManager) parseWeb(name string, viper *viper.Viper, hwm *hardware
 	return
 }
 
-func (s *ServiceManager) RunServices(nc *nats.EncodedConn) error {
+func (s *ServiceManager) RunServices(ctx context.Context, nc *nats.EncodedConn) error {
 	for name, service := range s.services {
-		var ctx context.Context
-		ctx, s.cancels[name] = context.WithCancel(context.Background())
+		var newctx context.Context
+		newctx, s.cancels[name] = context.WithCancel(ctx)
 		s.fins[name] = make(chan struct{})
 		log.Info().Msgf("Run '%s' service", name)
-		go service.Run(ctx, nc, s.fins[name])
+		go service.Run(newctx, nc, s.fins[name])
 	}
 	return nil
 }

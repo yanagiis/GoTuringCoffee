@@ -56,7 +56,8 @@ func (b *Barista) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 		go b.cook(cookCtx, nc, doneCh, req.Points)
 	})
 
-	if err := b.controller.Connect(); err != nil {
+	if err := b.controller.Connect(ctx); err != nil {
+		fin <- struct{}{}
 		return err
 	}
 	defer b.controller.Disconnect()
