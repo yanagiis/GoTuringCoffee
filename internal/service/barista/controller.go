@@ -26,7 +26,7 @@ type SEController struct {
 
 func (se *SEController) Connect(ctx context.Context) (err error) {
 	if err = se.Extruder.Connect(ctx); err != nil {
-		log.Error().Msg(err.Error())
+		log.Error().Err(err).Msg("Connect to extruder failed")
 		return err
 	}
 	defer func() {

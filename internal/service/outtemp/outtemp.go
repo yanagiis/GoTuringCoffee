@@ -91,5 +91,8 @@ func GetTemperature(ctx context.Context, nc *nats.EncodedConn) (resp lib.TempRes
 		Code: lib.CodeGet,
 	}
 	err = nc.RequestWithContext(ctx, "output.temperature", &req, &resp)
+	if err != nil {
+		log.Error().Err(err).Msg("Get output temperature failed")
+	}
 	return
 }

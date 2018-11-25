@@ -53,6 +53,8 @@ func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 			continue
 		}
 
+		log.Info().Msg("Connected")
+
 		if err = s.uart.Open(ctx); err != nil {
 			log.Error().Err(err).Msg("Open uart failed")
 			s.conn.Close()

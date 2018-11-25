@@ -88,5 +88,8 @@ func GetTemperature(ctx context.Context, nc *nats.EncodedConn) (resp lib.TempRes
 		Code: lib.CodeGet,
 	}
 	err = nc.RequestWithContext(ctx, "tank.temperature", &req, &resp)
+	if err != nil {
+		log.Error().Err(err).Msg("Get tank temperature failed")
+	}
 	return
 }

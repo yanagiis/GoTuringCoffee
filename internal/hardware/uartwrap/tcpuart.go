@@ -29,6 +29,7 @@ func (c *TCPUARTClient) Open(ctx context.Context) (err error) {
 	var port int
 	if addrs, port, err = c.md.Lookup(ctx, c.service, time.Second); err != nil {
 		err = fmt.Errorf("Cannot lookup %q service", c.service)
+		log.Error().Msg(err.Error())
 		return
 	}
 	if len(addrs) == 0 {
