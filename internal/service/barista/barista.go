@@ -57,11 +57,18 @@ func (b *Barista) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 		cookCancel()
 	})
 
-	if err := b.controller.Connect(ctx); err != nil {
-		fin <- struct{}{}
-		return err
+CONNECT:
+	for {
+		err := b.controller.Connect(ctx)
+		if err != nil {
+			defer b.controller.Disconnect()
+			break
+		}
+		select {
+		case <-doneCh:
+			break CONNECT
+		}
 	}
-	defer b.controller.Disconnect()
 
 	timer := time.NewTimer(100 * time.Millisecond)
 
