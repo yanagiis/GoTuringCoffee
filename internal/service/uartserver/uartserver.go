@@ -20,6 +20,7 @@ type Service struct {
 	port    int
 	md      *mdns.MDNS
 	ln      net.Listener
+	conn    net.Conn
 }
 
 func NewService(serviceName string, port int, uart uartwrap.UART, md *mdns.MDNS) *Service {
@@ -32,7 +33,6 @@ func NewService(serviceName string, port int, uart uartwrap.UART, md *mdns.MDNS)
 }
 
 func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- struct{}) (err error) {
-	var conn net.Conn
 
 	s.ln, err = net.ListenTCP("tcp", &net.TCPAddr{
 		Port: s.port,
@@ -47,7 +47,7 @@ func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 		default:
 		}
 
-		conn, err = s.ln.Accept()
+		s.conn, err = s.ln.Accept()
 		if err != nil {
 			log.Error().Err(err).Msg("Accept conn failed")
 			continue
@@ -55,7 +55,7 @@ func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 
 		if err = s.uart.Open(ctx); err != nil {
 			log.Error().Err(err).Msg("Open uart failed")
-			conn.Close()
+			s.conn.Close()
 			log.Error().Msg(err.Error())
 			continue
 		}
@@ -67,7 +67,7 @@ func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 
 		go func() {
 			for {
-				err := tuctxcopy(newctx, conn, s.uart)
+				err := tuctxcopy(newctx, s.conn, s.uart)
 				if err != nil {
 					break
 				}
@@ -78,7 +78,7 @@ func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 
 		go func() {
 			for {
-				err := utctxcopy(newctx, s.uart, conn)
+				err := utctxcopy(newctx, s.uart, s.conn)
 				if err != nil {
 					break
 				}
@@ -89,12 +89,12 @@ func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 
 		wg.Wait()
 	}
-
-	return nil
 }
 
 func (s *Service) Stop() error {
-	return s.ln.Close()
+	s.conn.Close()
+	s.ln.Close()
+	return nil
 }
 
 type readerFunc func(p []byte) (int, error)
