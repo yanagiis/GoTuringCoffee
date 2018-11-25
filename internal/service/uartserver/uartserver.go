@@ -92,7 +92,9 @@ func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 }
 
 func (s *Service) Stop() error {
-	s.conn.Close()
+	if s.conn != nil {
+		s.conn.Close()
+	}
 	s.ln.Close()
 	return nil
 }
