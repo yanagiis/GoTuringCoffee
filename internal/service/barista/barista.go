@@ -60,13 +60,15 @@ func (b *Barista) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 CONNECT:
 	for {
 		err := b.controller.Connect(ctx)
-		if err != nil {
+		if err == nil {
 			defer b.controller.Disconnect()
-			break
+			break CONNECT
 		}
 		select {
-		case <-doneCh:
+		case <-ctx.Done():
 			break CONNECT
+		case <-time.After(1000 * time.Millisecond):
+			break
 		}
 	}
 
