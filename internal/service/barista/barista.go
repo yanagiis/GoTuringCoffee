@@ -54,6 +54,7 @@ func (b *Barista) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 		response(nc, reply, lib.CodeSuccess, "OK", nil)
 		cookCtx, cookCancel = context.WithCancel(context.Background())
 		go b.cook(cookCtx, nc, doneCh, req.Points)
+		cookCancel()
 	})
 
 	if err := b.controller.Connect(ctx); err != nil {
