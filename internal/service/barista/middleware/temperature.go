@@ -52,15 +52,16 @@ func NewTempMiddleware(ctx context.Context, nc *nats.EncodedConn, pid lib.PID, m
 
 func requestTemp(ctx context.Context, nc *nats.EncodedConn, inCh <-chan struct{}, outCh chan<- lib.TempRecord, doneCh chan<- struct{}) {
 	for {
+	SELECT:
 		select {
 		case <-inCh:
 			for {
 				r, err := outtemp.GetTemperature(ctx, nc)
 				if err != nil {
-					continue
+					break SELECT
 				}
 				if r.IsFailure() {
-					continue
+					break SELECT
 				}
 				outCh <- r.Payload
 				break
