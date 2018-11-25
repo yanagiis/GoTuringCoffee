@@ -105,6 +105,44 @@ func (m *CookbookModel) GetCookbook(id string) (*lib.Cookbook, error) {
 	return &c, err
 }
 
+func (m *CookbookModel) CreateCookbook(cookbook *lib.Cookbook) error {
+	var cb CookbookBson
+	if err := m.Connect(); err != nil {
+		return err
+	}
+
+	cb.Name = cookbook.Name
+	cb.Description = cookbook.Description
+	for _, p := range cookbook.Processes {
+		var pb ProcessBson
+		var err error
+		switch p.(type) {
+		case *lib.Circle:
+			pb.Name = "Circle"
+		case *lib.Spiral:
+			pb.Name = "Spiral"
+		case *lib.Fixed:
+			pb.Name = "Fixed"
+		case *lib.Move:
+			pb.Name = "Move"
+		case *lib.Wait:
+			pb.Name = "Wait"
+		case *lib.Mix:
+			pb.Name = "Mix"
+		case *lib.Home:
+			pb.Name = "Home"
+		}
+		pb.Process.Data, err = bson.Marshal(p)
+		if err != nil {
+			return err
+		}
+
+		cb.Processes = append(cb.Processes, pb)
+	}
+
+	return m.c.Insert(cb)
+}
+
 func (m *CookbookModel) UpdateCookbook(id string, cookbook *lib.Cookbook) error {
 	var cb CookbookBson
 	if err := m.Connect(); err != nil {

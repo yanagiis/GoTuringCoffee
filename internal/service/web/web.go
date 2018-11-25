@@ -115,6 +115,7 @@ func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 		}
 	})
 	e.GET("/api/cookbooks", s.ListCookbook)
+	e.POST("/api/cookbooks", s.CreateCookbook)
 	e.GET("/api/cookbooks/:id", s.GetCookbook)
 	e.PUT("/api/cookbooks/:id", s.UpdateCookbook)
 	e.DELETE("/api/cookbooks/:id", s.DeleteCookbook)
@@ -159,6 +160,28 @@ func (s *Service) ListCookbook(c echo.Context) (err error) {
 	return c.JSON(http.StatusOK, Response{
 		Status:  200,
 		Payload: cookbookJsons,
+	})
+}
+
+func (s *Service) CreateCookbook(c echo.Context) (err error) {
+	cc := c.(CustomContext)
+	cookbookJson := new(CookbookJson)
+	var cookbook lib.Cookbook
+
+	if err := cc.Bind(cookbookJson); err != nil {
+		return err
+	}
+	cookbook.Name = cookbookJson.Name
+	cookbook.Description = cookbookJson.Description
+	for _, pj := range cookbookJson.Processes {
+		cookbook.Processes = append(cookbook.Processes, DecodeProcess(&pj))
+	}
+	if err := cc.cookbookModel.CreateCookbook(&cookbook); err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, Response{
+		Status: 200,
 	})
 }
 
