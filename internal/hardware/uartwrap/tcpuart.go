@@ -50,10 +50,12 @@ func (c *TCPUARTClient) IsOpen() bool {
 }
 
 func (c *TCPUARTClient) Close() (err error) {
-	if err = c.conn.Close(); err != nil {
-		return
+	if c.conn != nil {
+		if err = c.conn.Close(); err != nil {
+			return
+		}
+		c.conn = nil
 	}
-	c.conn = nil
 	return
 }
 
