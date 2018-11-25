@@ -139,7 +139,7 @@ func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- 
 				case <-ctx.Done():
 				case <-time.After(1 * time.Second):
 				}
-			case lib.PointT:
+			default:
 				b.handlePoint(ctx, &points[i])
 			}
 		}

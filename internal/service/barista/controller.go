@@ -76,6 +76,9 @@ func (se *SEController) Do(p *lib.Point) error {
 }
 
 func pointToGCode(p *lib.Point) (string, error) {
+	if p.Type == lib.HomeT {
+		return "G28", nil
+	}
 	if p.X == nil && p.Y == nil && p.Z == nil {
 		return "", errors.New("no x, y, and z")
 	}
