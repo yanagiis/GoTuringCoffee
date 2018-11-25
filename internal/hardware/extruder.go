@@ -35,7 +35,6 @@ func NewExtruder(port ExtruderPort) *Extruder {
 func (e *Extruder) Connect(ctx context.Context) error {
 	log.Info().Msg("Connecting to Extruder")
 	if err := e.port.Open(ctx); err != nil {
-		log.Error().Msg(err.Error())
 		return err
 	}
 
@@ -46,7 +45,6 @@ func (e *Extruder) Connect(ctx context.Context) error {
 			log.Error().Msg(err.Error())
 			return err
 		}
-		log.Debug().Msg(line)
 		if strings.Compare(line, "ok") == 0 {
 			log.Info().Msg("Connect to Extruder successful")
 			return nil
