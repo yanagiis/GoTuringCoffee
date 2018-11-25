@@ -41,9 +41,9 @@ func NewBarista(conf BaristaConfig, controller Controller) *Barista {
 }
 
 func (b *Barista) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- struct{}) (err error) {
-	var cookCtx context.Context
-	var cookCancel context.CancelFunc
 	var doneCh chan struct{}
+
+	doneCh = make(chan struct{}, 0)
 
 	nc.Subscribe("barista.brewing", func(subj, reply string, req lib.BaristaRequest) {
 		if b.cooking {
@@ -52,9 +52,7 @@ func (b *Barista) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 		}
 		b.cooking = true
 		response(nc, reply, lib.CodeSuccess, "OK", nil)
-		cookCtx, cookCancel = context.WithCancel(context.Background())
-		go b.cook(cookCtx, nc, doneCh, req.Points)
-		cookCancel()
+		go b.cook(ctx, nc, doneCh, req.Points)
 	})
 
 CONNECT:
@@ -77,15 +75,9 @@ CONNECT:
 	for {
 		select {
 		case <-doneCh:
-			cookCtx = nil
-			cookCancel = nil
 			doneCh = nil
 		case <-ctx.Done():
 			log.Info().Msg("stoping barista service")
-			if cookCancel != nil {
-				cookCancel()
-				cookCancel = nil
-			}
 			fin <- struct{}{}
 			err = ctx.Err()
 			log.Info().Msg("stop barista service")
@@ -108,7 +100,6 @@ func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- 
 
 	for i := range points {
 		point := points[i]
-
 		select {
 		case <-ctx.Done():
 			break
@@ -161,6 +152,8 @@ func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- 
 	}
 	b.middles = nil
 	b.cooking = false
+
+	doneCh <- struct{}{}
 }
 
 func (b *Barista) handlePoint(ctx context.Context, point *lib.Point) {
