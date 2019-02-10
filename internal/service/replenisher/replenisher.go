@@ -147,7 +147,7 @@ func StartReplenish(ctx context.Context, nc *nats.EncodedConn) (lib.ReplenisherR
 func toggleReplenish(ctx context.Context, nc *nats.EncodedConn, stop bool) (resp lib.ReplenisherResponse, err error) {
 	req := lib.ReplenisherRequest{
 		Request: lib.Request{
-			Code: lib.CodeGet,
+			Code: lib.CodePut,
 		},
 		Stop: stop,
 	}
