@@ -160,12 +160,14 @@ func (f *Fixed) ToPoints() []Point {
 	points := makeMove(&f.Coords)
 	waterPerPoint := f.Water / (f.Time * float64(10))
 	feedrate := float64(0.1)
-	points = append(points, Point{
-		Type: PointT,
-		E:    &waterPerPoint,
-		F:    &feedrate,
-		T:    &f.Temperature,
-	})
+	for i := 0; i < int(f.Water); i++ {
+		points = append(points, Point{
+			Type: PointT,
+			E:    &waterPerPoint,
+			F:    &feedrate,
+			T:    &f.Temperature,
+		})
+	}
 	return points
 }
 

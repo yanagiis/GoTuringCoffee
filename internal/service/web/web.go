@@ -69,7 +69,7 @@ func NewProcessJson(process *lib.Process) (pj ProcessJson) {
 	case *lib.Spiral:
 		pj.Name = "Spiral"
 	case *lib.Fixed:
-		pj.Name = "Fixed"
+		pj.Name = "FixedPoint"
 	case *lib.Move:
 		pj.Name = "Move"
 	case *lib.Wait:
@@ -89,7 +89,7 @@ func DecodeProcess(pj *ProcessJson) (p lib.Process) {
 		p = new(lib.Circle)
 	case "Spiral":
 		p = new(lib.Spiral)
-	case "Fixed":
+	case "FixedPoint":
 		p = new(lib.Fixed)
 	case "Move":
 		p = new(lib.Move)
