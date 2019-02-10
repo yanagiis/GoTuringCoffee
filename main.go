@@ -39,7 +39,6 @@ func main() {
 	var m *mdns.MDNS
 
 	ctx, cancel := context.WithCancel(context.Background())
-	fmt.Printf("hello %v\n", &ctx)
 	defer cancel()
 
 	flag.StringVar(&configFile, "config", "config", "configuration file")
