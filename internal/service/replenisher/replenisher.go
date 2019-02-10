@@ -101,6 +101,7 @@ func (r *Service) scan(ctx context.Context, nc *nats.EncodedConn) {
 
 	duty := r.PWMConf.Duty
 	if r.stop {
+		log.Info().Msg("Replenisher is force stopped")
 		duty = 0
 	} else {
 		timeCtx, cancel := context.WithDeadline(ctx, time.Now().Add(5*time.Second))

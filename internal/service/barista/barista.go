@@ -10,7 +10,7 @@ import (
 	"GoTuringCoffee/internal/service/outtemp"
 	"GoTuringCoffee/internal/service/replenisher"
 
-	"github.com/nats-io/go-nats"
+	nats "github.com/nats-io/go-nats"
 	"github.com/rs/zerolog/log"
 )
 
@@ -100,8 +100,11 @@ func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- 
 	replenisher.StopReplenish(ctx, nc)
 	runtime.LockOSThread()
 
+	log.Debug().Msgf("Lock os thread")
+
 	for i := range points {
 		point := points[i]
+		log.Debug().Msgf("%v", point)
 		select {
 		case <-ctx.Done():
 			break
@@ -150,6 +153,8 @@ func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- 
 	runtime.UnlockOSThread()
 	replenisher.StartReplenish(ctx, nc)
 
+	log.Debug().Msgf("Unlock os thread")
+
 	for i := range b.middles {
 		b.middles[i].Free()
 	}
@@ -157,6 +162,7 @@ func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- 
 	b.cooking = false
 
 	doneCh <- struct{}{}
+	log.Debug().Msgf("Cook finish")
 }
 
 func (b *Barista) handlePoint(ctx context.Context, point *lib.Point) {
