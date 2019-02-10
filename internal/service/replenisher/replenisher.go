@@ -103,7 +103,8 @@ func (r *Service) scan(ctx context.Context, nc *nats.EncodedConn) {
 	if r.stop {
 		duty = 0
 	} else {
-		timeCtx, _ := context.WithDeadline(ctx, time.Now().Add(5*time.Second))
+		timeCtx, cancel := context.WithDeadline(ctx, time.Now().Add(5*time.Second))
+		defer cancel()
 		if resp, err = tankmeter.GetMeterInfo(timeCtx, nc); err != nil {
 			duty = 0
 			log.Error().Msg(err.Error())
