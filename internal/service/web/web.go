@@ -41,7 +41,7 @@ type Response struct {
 }
 
 type CookbookJson struct {
-	ID          bson.ObjectId `json:"id" bson:"_id,omitempty"`
+	ID          bson.ObjectId `json:"id,omitempty"`
 	Name        string        `json:"name"`
 	Description string        `json:"description"`
 	Processes   []ProcessJson `json:"processes"`
