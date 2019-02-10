@@ -8,6 +8,7 @@ import (
 	"GoTuringCoffee/internal/service/barista/middleware"
 	"GoTuringCoffee/internal/service/lib"
 	"GoTuringCoffee/internal/service/outtemp"
+	"GoTuringCoffee/internal/service/replenisher"
 
 	"github.com/nats-io/go-nats"
 	"github.com/rs/zerolog/log"
@@ -96,6 +97,7 @@ func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- 
 		middleware.NewTimeMiddleware(),
 	}
 
+	replenisher.StopReplenish(ctx, nc)
 	runtime.LockOSThread()
 
 	for i := range points {
@@ -146,6 +148,7 @@ func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- 
 	}
 
 	runtime.UnlockOSThread()
+	replenisher.StartReplenish(ctx, nc)
 
 	for i := range b.middles {
 		b.middles[i].Free()
