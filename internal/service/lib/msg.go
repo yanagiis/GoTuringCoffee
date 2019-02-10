@@ -30,6 +30,11 @@ type TempResponse struct {
 	Payload TempRecord
 }
 
+type DistanceResponse struct {
+	Response
+	Payload DistanceRecord
+}
+
 type ReplenisherRequest struct {
 	Request
 	Stop bool
@@ -75,6 +80,11 @@ type HeaterRecord struct {
 	Target float64
 	Period time.Duration
 	Time   time.Time
+}
+
+type DistanceRecord struct {
+	Distance int
+	Time     time.Time
 }
 
 func (r Request) IsGet() bool {

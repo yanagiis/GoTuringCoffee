@@ -4,10 +4,12 @@ import (
 	"errors"
 	"fmt"
 
+	"GoTuringCoffee/internal/hardware/i2cwrap"
 	"GoTuringCoffee/internal/hardware/max31856"
 	"GoTuringCoffee/internal/hardware/max31865"
 	"GoTuringCoffee/internal/hardware/spiwrap"
 	"GoTuringCoffee/internal/hardware/uartwrap"
+	"GoTuringCoffee/internal/hardware/vl6180x"
 	"GoTuringCoffee/internal/service/mdns"
 
 	"github.com/rs/zerolog/log"
@@ -24,10 +26,12 @@ var (
 var hardwareFuncs = map[string]ParseHardwareFunc{
 	"spi":            ParseSPI,
 	"uart":           ParseUART,
+	"i2c":            ParseI2C,
 	"tcpuartclient":  ParseTcpUartClient,
 	"pwm":            ParsePWM,
 	"max31856":       ParseMAX31856,
 	"max31865":       ParseMAX31865,
+	"vl6180x":        ParseVL6180X,
 	"smoothie":       ParseSmoothie,
 	"extruder":       ParseExtruder,
 	"water_detector": ParseWaterDetector,
@@ -168,6 +172,15 @@ func ParseUART(m *HWManager, viper *viper.Viper, md *mdns.MDNS) (interface{}, er
 	return &uart, nil
 }
 
+func ParseI2C(m *HWManager, viper *viper.Viper, md *mdns.MDNS) (interface{}, error) {
+	fields := []string{"path"}
+	if err := checkFields(viper, fields); err != nil {
+		return nil, err
+	}
+
+	return i2cwrap.NewI2C(viper.GetString("path")), nil
+}
+
 func ParseTcpUartClient(m *HWManager, viper *viper.Viper, md *mdns.MDNS) (interface{}, error) {
 	fields := []string{"mdns_service"}
 	if err := checkFields(viper, fields); err != nil {
@@ -251,6 +264,31 @@ func ParseMAX31865(m *HWManager, viper *viper.Viper, md *mdns.MDNS) (interface{}
 			Mode: mode,
 		},
 	)
+
+	return sensor, nil
+}
+
+func ParseVL6180X(m *HWManager, viper *viper.Viper, md *mdns.MDNS) (interface{}, error) {
+	var device interface{}
+	var sensor *vl6180x.Vl6180x
+	var err error
+	var address int
+	var scaling int
+
+	fields := []string{"dev", "address", "scaling"}
+	if err = checkFields(viper, fields); err != nil {
+		return nil, err
+	}
+	if device, err = m.GetDevice(viper.GetString("dev")); err != nil {
+		return nil, NewHardwareError("vl6180x", err.Error(), ErrDevNotFound)
+	}
+	address = viper.GetInt("address")
+	scaling = viper.GetInt("scaling")
+
+	sensor, err = vl6180x.New(device.(*i2cwrap.I2C), address, scaling)
+	if err != nil {
+		return nil, err
+	}
 
 	return sensor, nil
 }

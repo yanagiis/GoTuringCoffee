@@ -25,9 +25,18 @@ hardwares:
     type: "pwm"
     pwm: 0
 
+  i2c1:
+    type: "i2c"
+    path: "/dev/i2c-1"
+
   # pwm1:
   #   type: "soft-pwm"
   #   gpio: 10
+  distance_ranging_sensor:
+    type: "vl6180x"
+    dev: "i2c1"
+    address: 0x_29
+    scaling: 2
 
   output_sensor:
     type: "max31856"
@@ -70,6 +79,11 @@ services:
     enable: false
     scan_interval_ms: 1000
     dev: "water_detector"
+
+  distance_ranging_service:
+    enable: true
+    scan_interval_ms: 1000
+    dev: "distance_ranging_sensor"
 
   replenish_service:
     enable: false

@@ -9,6 +9,7 @@ import (
 	"GoTuringCoffee/internal/hardware"
 	"GoTuringCoffee/internal/hardware/uartwrap"
 	"GoTuringCoffee/internal/service/barista"
+	"GoTuringCoffee/internal/service/distance"
 	"GoTuringCoffee/internal/service/heater"
 	"GoTuringCoffee/internal/service/lib"
 	"GoTuringCoffee/internal/service/mdns"
@@ -130,6 +131,11 @@ func (s *ServiceManager) AddService(name string, viper *viper.Viper, hwm *hardwa
 		if err := s.parseUARTServer(name, viper, hwm, m); err != nil {
 			return err
 		}
+	case "distance_ranging_service":
+		if err := s.parseDistanceRangingServer(name, viper, hwm, m); err != nil {
+			return err
+		}
+
 	// case "uartclient":
 	// 	if err := s.parseUARTClient(name, viper, hwm, m); err != nil {
 	// 		return err
@@ -219,6 +225,18 @@ func (s *ServiceManager) parseTankTempService(name string, viper *viper.Viper, h
 	sensor := dev.(hardware.TemperatureSensor)
 	scanInterval := time.Duration(viper.GetInt64("scan_interval_ms")) * time.Millisecond
 	s.services[name] = tanktemp.NewService(sensor, scanInterval)
+	return nil
+}
+
+func (s *ServiceManager) parseDistanceRangingServer(name string, viper *viper.Viper, hwm *hardware.HWManager, m *mdns.MDNS) error {
+	devName := viper.GetString("dev")
+	dev, err := hwm.GetDevice(devName)
+	if err != nil {
+		return NewServiceError(name, err.Error(), ErrWrongConfig)
+	}
+	sensor := dev.(hardware.DistanceRangingSensor)
+	scanInterval := time.Duration(viper.GetInt64("scan_interval_ms")) * time.Millisecond
+	s.services[name] = distance.NewService(sensor, scanInterval)
 	return nil
 }
 
