@@ -116,7 +116,7 @@ func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- 
 				b.moveToDrainPosition(ctx)
 				e := float64(0.4)
 				pointTime := float64(0.1)
-				for j := 0; j < 100; j++ {
+				for j := 0; j < 50; j++ {
 					for k := 0; k < 10; k++ {
 						b.handlePoint(ctx, &lib.Point{
 							E:    &e,
