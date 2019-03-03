@@ -97,9 +97,9 @@ func (m *Machine) GetMachineStatus() (status MachineStatus, err error) {
 	// 	}
 
 	ctx, cancel = context.WithTimeout(m.ctx, time.Second)
-	if tankMeterResp, err = tankmeter.GetMeterInfo(ctx, m.nc); err != nil {
-		cancel()
-	}
+	defer cancel()
+
+	tankMeterResp, err = tankmeter.GetMeterInfo(ctx, m.nc)
 	if !tankMeterResp.IsFailure() {
 		log.Info().Msgf("TankMeter: %v\n", tankMeterResp)
 		status.WaterLevel = new(bool)
@@ -107,9 +107,9 @@ func (m *Machine) GetMachineStatus() (status MachineStatus, err error) {
 	}
 
 	ctx, cancel = context.WithTimeout(m.ctx, time.Second)
-	if tankTempResp, err = tanktemp.GetTemperature(ctx, m.nc); err != nil {
-		cancel()
-	}
+	tankTempResp, err = tanktemp.GetTemperature(ctx, m.nc)
+	defer cancel()
+
 	if !tankTempResp.IsFailure() {
 		log.Info().Msgf("TankTemp: %v\n", tankTempResp)
 		status.TankTemp = new(float64)
