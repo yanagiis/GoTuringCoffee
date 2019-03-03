@@ -108,7 +108,11 @@ func (m *TempMiddleware) Transform(p *lib.Point) {
 		}
 	}
 
-	// log.Debug().Msgf("percent %+v measure %+v ideal %+v", m.currentPercent, m.lastMeasureTime, m.idealPercent)
+	if m.currentPercent > 1 {
+		m.currentPercent = 1
+	} else if m.currentPercent < 0 {
+		m.currentPercent = 0
+	}
 
 	if p.E != nil {
 		p.E1 = new(float64)
