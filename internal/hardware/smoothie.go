@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"strings"
 )
@@ -46,8 +47,8 @@ func (s *Smoothie) Connect(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	if strings.Compare(line, "Ok") == 0 {
-		return nil
+	if strings.Compare(line, "ok") != 0 {
+		return fmt.Errorf("Not expected return value: %s", line)
 	}
 
 	for _, cmd := range initCmds {
