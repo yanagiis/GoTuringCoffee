@@ -3,10 +3,16 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"GoTuringCoffee/internal/hardware"
 	"GoTuringCoffee/internal/hardware/i2cwrap"
 	"GoTuringCoffee/internal/hardware/vl6180x"
+
+	"github.com/rs/zerolog"
 )
 
 func init() {
@@ -16,6 +22,8 @@ func init() {
 func main() {
 	var err error
 	var sensor *vl6180x.Vl6180x
+
+	zerolog.SetGlobalLevel(zerolog.Disabled)
 
 	pathPtr := flag.String("path", "/dev/i2c-1", "I2C device path")
 	addressPtr := flag.Int("address", 0x29, "the i2c address of vl6180x")
@@ -33,9 +41,17 @@ func main() {
 		panic(err)
 	}
 
-	distance := sensor.ReadRange()
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		sensor.Close()
+		os.Exit(1)
+	}()
 
-	fmt.Printf("Distance: %d mm\n", distance)
-
-	sensor.Close()
+	for {
+		distance := sensor.ReadRange()
+		fmt.Printf("Distance: %d mm\n", distance)
+		time.Sleep(1 * time.Second) // or runtime.Gosched() or similar per @misterbee
+	}
 }

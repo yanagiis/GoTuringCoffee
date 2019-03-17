@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"GoTuringCoffee/internal/service/distance"
 	"GoTuringCoffee/internal/service/heater"
 	"GoTuringCoffee/internal/service/lib"
 	"GoTuringCoffee/internal/service/outtemp"
@@ -37,6 +38,7 @@ type MachineStatus struct {
 	TankTemp   *float64      `json:"tank_temperature"`
 	Heater     *HeaterStatus `json:"heater_status"`
 	WaterLevel *bool         `json:"water_level"`
+	Distance   *int64        `json:"distance"`
 }
 
 // type MachineStatus struct {
@@ -62,6 +64,7 @@ func (m *Machine) GetMachineStatus() (status MachineStatus, err error) {
 	var tankTempResp lib.TempResponse
 	var ctx context.Context
 	var cancel context.CancelFunc
+	var distanceResp lib.DistanceResponse
 
 	ctx, cancel = context.WithTimeout(m.ctx, time.Second)
 	if heaterResp, err = heater.GetHeaterInfo(ctx, m.nc); err != nil {
@@ -85,6 +88,16 @@ func (m *Machine) GetMachineStatus() (status MachineStatus, err error) {
 		log.Info().Msgf("Output: %v\n", outResp)
 		status.Output = new(float64)
 		*status.Output = outResp.Payload.Temp
+	}
+
+	ctx, cancel = context.WithTimeout(m.ctx, time.Second)
+	if distanceResp, err = distance.GetDistance(ctx, m.nc); err != nil {
+		cancel()
+	}
+	if !distanceResp.IsFailure() {
+		log.Info().Msgf("Output: %v\n", distanceResp)
+		status.Distance = new(int64)
+		*status.Distance = int64(distanceResp.Payload.Distance)
 	}
 
 	// 	ctx, cancel = context.WithTimeout(m.ctx, time.Second)
