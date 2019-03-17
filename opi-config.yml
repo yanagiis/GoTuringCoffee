@@ -1,0 +1,42 @@
+hardwares:
+  uart0:
+    type: "uart"
+    path: "/dev/ttyACM0"
+    baudrate: 115200
+    read_timeout: 1
+
+  spi0:
+    type: "spi"
+    path: "/dev/spidev1.0"
+    speed: 100000
+    mode: 1
+    bits: 8
+
+  output_sensor:
+    type: "max31856"
+    dev: "spi0"
+    tc: "T"
+    mode: "Automatic"
+    sample: "Avg1" # 1, 2, 54, 8, 16
+
+services:
+
+  uartserver:
+    enable: true
+    mdns_service: "smoothie.uart"
+    port: 22222
+    uartdev: "uart0"
+
+  output_temp_service:
+    enable: true
+    scan_interval_ms: 2000
+    dev: "output_sensor"
+
+mdns:
+  instance: "TuringCoffee"
+  domain: "local."
+
+nats:
+  register: false
+  service: "nats.io"
+  port: 4222
