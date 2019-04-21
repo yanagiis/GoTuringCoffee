@@ -122,6 +122,7 @@ func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- 
 
 				e := float64(0.4)
 				pointTime := float64(0.1)
+				count := 0
 				for j := 0; j < 50; j++ {
 					for k := 0; k < 10; k++ {
 						b.handlePoint(ctx, &lib.Point{
@@ -139,6 +140,11 @@ func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- 
 					}
 					diff := r.Payload.Temp - *point.T
 					if diff > 1 || diff < -1 {
+						count = 0
+						continue
+					}
+					if count < 3 {
+						count++
 						continue
 					}
 					break
