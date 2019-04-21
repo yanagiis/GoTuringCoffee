@@ -45,7 +45,7 @@ func (c *TCPUARTClient) Open(ctx context.Context) (err error) {
 	}
 
 	log.Info().Msgf("Connect to '%s'(%v) successfully", c.service, addrs)
-	return
+	return nil
 }
 
 func (c *TCPUARTClient) IsOpen() bool {
