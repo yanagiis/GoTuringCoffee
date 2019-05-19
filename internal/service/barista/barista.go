@@ -109,52 +109,8 @@ func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- 
 		case <-ctx.Done():
 			break
 		default:
-			switch point.Type {
-			case lib.WaitT:
-				select {
-				case <-ctx.Done():
-				case <-time.After(time.Duration(*point.Time) * time.Second):
-				}
-			case lib.MixT:
-				b.moveToDrainPosition(ctx)
-
-				time.Sleep(1 * time.Second)
-
-				e := float64(0.4)
-				pointTime := float64(0.1)
-				count := 0
-				for j := 0; j < 50; j++ {
-					for k := 0; k < 10; k++ {
-						b.handlePoint(ctx, &lib.Point{
-							E:    &e,
-							T:    point.T,
-							Time: &pointTime,
-						})
-					}
-					r, err := outtemp.GetTemperature(ctx, nc)
-					if err != nil {
-						continue
-					}
-					if r.IsFailure() {
-						continue
-					}
-					diff := r.Payload.Temp - *point.T
-					if diff > 1 || diff < -1 {
-						count = 0
-						continue
-					}
-					if count < 3 {
-						count++
-						continue
-					}
-					break
-				}
-				select {
-				case <-ctx.Done():
-				case <-time.After(1 * time.Second):
-				}
-			default:
-				b.handlePoint(ctx, &points[i])
+			if err := b.handlePoint(ctx, nc, &point); err != nil {
+				log.Error().Err(err).Msgf("cook by point failed: point %v", point)
 			}
 		}
 	}
@@ -174,19 +130,90 @@ func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- 
 	log.Debug().Msgf("Cook finish")
 }
 
-func (b *Barista) handlePoint(ctx context.Context, point *lib.Point) {
+func (b *Barista) handlePoint(ctx context.Context, nc *nats.EncodedConn, point *lib.Point) error {
+	switch point.Type {
+	case lib.WaitT:
+		return b.handleWaitT(ctx, nc, point)
+	case lib.MixT:
+		return b.handleMixT(ctx, nc, point)
+	default:
+		return b.handlePointT(ctx, nc, point)
+	}
+}
+
+func (b *Barista) handlePointT(ctx context.Context, nc *nats.EncodedConn, point *lib.Point) error {
 	for _, middleware := range b.middles {
 		middleware.Transform(point)
 	}
-	b.controller.Do(point)
+	return b.controller.Do(point)
 }
 
-func (b *Barista) moveToDrainPosition(ctx context.Context) {
-	b.handlePoint(ctx, &lib.Point{
+func (b *Barista) handleWaitT(ctx context.Context, nc *nats.EncodedConn, point *lib.Point) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-time.After(time.Duration(*point.Time) * time.Second):
+	}
+	return nil
+}
+
+func (b *Barista) handleMixT(ctx context.Context, nc *nats.EncodedConn, point *lib.Point) error {
+	b.moveToDrainPosition(nc, ctx)
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-time.After(1 * time.Second):
+	}
+
+	e := float64(0.4)
+	pointTime := float64(0.1)
+	count := 0
+	for j := 0; j < 50; j++ {
+		for k := 0; k < 10; k++ {
+			err := b.handlePointT(ctx, nc, &lib.Point{
+				E:    &e,
+				T:    point.T,
+				Time: &pointTime,
+			})
+			if err != nil {
+				return err
+			}
+		}
+		r, err := outtemp.GetTemperature(ctx, nc)
+		if err != nil {
+			continue
+		}
+		if r.IsFailure() {
+			continue
+		}
+		diff := r.Payload.Temp - *point.T
+		if diff > 1 || diff < -1 {
+			count = 0
+			continue
+		}
+		if count < 3 {
+			count++
+			continue
+		}
+		break
+	}
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-time.After(1 * time.Second):
+	}
+
+	return nil
+}
+
+func (b *Barista) moveToDrainPosition(nc *nats.EncodedConn, ctx context.Context) {
+	b.handlePointT(ctx, nc, &lib.Point{
 		Z: &b.conf.DrainPosition.Z,
 		F: &b.conf.DefaultMovingSpeed,
 	})
-	b.handlePoint(ctx, &lib.Point{
+	b.handlePointT(ctx, nc, &lib.Point{
 		X: &b.conf.DrainPosition.X,
 		Y: &b.conf.DrainPosition.Y,
 		F: &b.conf.DefaultMovingSpeed,

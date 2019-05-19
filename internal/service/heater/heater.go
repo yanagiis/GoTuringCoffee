@@ -119,13 +119,11 @@ func (h *Service) adjustTemperature(ctx context.Context, nc *nats.EncodedConn) e
 		h.pwm.PWM(0, 0)
 		return errors.New("Cannot get negative temperature")
 	}
-	log.Debug().Msgf("Tank: %f Time: %v", resp.Payload.Temp, resp.Payload.Time)
 	difftime := time.Second * 0
 	if h.lastTempRecord != nil {
 		difftime = resp.Payload.Time.Sub(h.lastTempRecord.Time)
 	}
 	duty := h.pid.Compute(resp.Payload.Temp, difftime) / 100
-	log.Debug().Msgf("Duty: %f", duty)
 	if err := h.pwm.PWM(duty, 100000); err != nil {
 		log.Error().Msg(err.Error())
 		return err

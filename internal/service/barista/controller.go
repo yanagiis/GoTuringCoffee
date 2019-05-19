@@ -62,13 +62,13 @@ func (se *SEController) Do(p *lib.Point) error {
 	if gerr == nil {
 		resp, err := se.Smoothie.Readline()
 		if strings.Compare(resp, "ok") != 0 {
-			log.Error().Err(err)
+			log.Error().Err(err).Msg("")
 		}
 	}
 	if herr == nil {
 		resp, err := se.Extruder.Readline()
 		if strings.Compare(resp, "ok") != 0 {
-			log.Error().Err(err)
+			log.Error().Err(err).Msg("")
 		}
 	}
 
