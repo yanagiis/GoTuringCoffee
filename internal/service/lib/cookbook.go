@@ -253,8 +253,20 @@ type Range struct {
 
 func makeSpiral(src, dst, center *Coordinate, cylinder int64) []Point {
 	rotateTheta := float64(cylinder * 360)
-	radiusSrc := center.distance(src)
-	radiusDst := center.distance(dst)
+	srcXY := &Coordinate{
+		X: src.X,
+		Y: src.Y,
+	}
+	dstXY := &Coordinate{
+		X: dst.X,
+		Y: dst.Y,
+	}
+	centerXY := &Coordinate{
+		X: center.X,
+		Y: center.Y,
+	}
+	radiusSrc := centerXY.distance(srcXY)
+	radiusDst := centerXY.distance(dstXY)
 	radiusPerDegree := (radiusDst - radiusSrc) / rotateTheta
 	zPerDegree := (dst.Z - src.Z) / rotateTheta
 
@@ -284,6 +296,19 @@ func makeSpiral(src, dst, center *Coordinate, cylinder int64) []Point {
 			Z:    &coord.Z,
 		})
 	}
+
+	if len(points) > 0 {
+		lastPoint := points[len(points)-1]
+		if *lastPoint.X != dst.X || *lastPoint.Y != dst.Y || *lastPoint.Z != dst.Z {
+			points = append(points, Point{
+				Type: PointT,
+				X:    &dst.X,
+				Y:    &dst.Y,
+				Z:    &dst.Z,
+			})
+		}
+	}
+
 	return points
 }
 
