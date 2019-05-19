@@ -1,7 +1,9 @@
 package lib
 
 import (
+	"fmt"
 	"math"
+	"strings"
 )
 
 type PointType int
@@ -38,4 +40,37 @@ func (p *Point) CalcDistance(other *Point) float64 {
 		sum += math.Pow(*p.Z-*other.Z, 2)
 	}
 	return math.Pow(sum, 0.5)
+}
+
+func (p Point) String() string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "Type: %d", p.Type)
+	if p.X != nil {
+		fmt.Fprintf(&b, " X: %f", *p.X)
+	}
+	if p.Y != nil {
+		fmt.Fprintf(&b, " Y: %f", *p.Y)
+	}
+	if p.Z != nil {
+		fmt.Fprintf(&b, " Z: %f", *p.Z)
+	}
+	if p.E != nil {
+		fmt.Fprintf(&b, " E: %f", *p.E)
+	}
+	if p.E1 != nil {
+		fmt.Fprintf(&b, " E1: %f", *p.E1)
+	}
+	if p.E2 != nil {
+		fmt.Fprintf(&b, " E2: %f", *p.E2)
+	}
+	if p.F != nil {
+		fmt.Fprintf(&b, " F: %f", *p.F)
+	}
+	if p.T != nil {
+		fmt.Fprintf(&b, " T: %f", *p.T)
+	}
+	if p.Time != nil {
+		fmt.Fprintf(&b, " Time: %f", *p.Time)
+	}
+	return b.String()
 }
