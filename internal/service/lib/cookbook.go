@@ -56,7 +56,7 @@ func (c *Circle) ToPoints() []Point {
 	pathlen := float64(len(points)-1) * PointInterval
 	feedrate := pathlen / (c.Time / 60)
 	pointwater := c.Water / float64(len(points))
-	for i, _ := range points {
+	for i := range points {
 		points[i].T = &c.Temperature
 		points[i].F = &feedrate
 		points[i].E = &pointwater
@@ -92,7 +92,7 @@ func (s *Spiral) ToPoints() []Point {
 	pathlen := float64(len(points)-1) * PointInterval
 	feedrate := pathlen / (s.Time / 60)
 	pointwater := s.Water / float64(len(points))
-	for i, _ := range points {
+	for i := range points {
 		points[i].T = &s.Temperature
 		points[i].F = &feedrate
 		points[i].E = &pointwater
