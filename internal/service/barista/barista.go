@@ -183,9 +183,12 @@ func (b *Barista) handlePoint(ctx context.Context, point *lib.Point) {
 
 func (b *Barista) moveToDrainPosition(ctx context.Context) {
 	b.handlePoint(ctx, &lib.Point{
+		Z: &b.conf.DrainPosition.Z,
+		F: &b.conf.DefaultMovingSpeed,
+	})
+	b.handlePoint(ctx, &lib.Point{
 		X: &b.conf.DrainPosition.X,
 		Y: &b.conf.DrainPosition.Y,
-		Z: &b.conf.DrainPosition.Z,
 		F: &b.conf.DefaultMovingSpeed,
 	})
 }
