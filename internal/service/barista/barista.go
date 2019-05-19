@@ -48,7 +48,7 @@ func (b *Barista) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 
 	nc.Subscribe("barista.brewing", func(subj, reply string, req lib.BaristaRequest) {
 		if b.cooking {
-			response(nc, reply, lib.CodeFailure, "Budy", nil)
+			response(nc, reply, lib.CodeFailure, "Busy", nil)
 			return
 		}
 		b.cooking = true
