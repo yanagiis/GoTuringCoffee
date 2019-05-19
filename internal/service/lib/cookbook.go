@@ -261,6 +261,10 @@ func makeSpiral(src, dst, center *Coordinate, cylinder int64) []Point {
 	radius := radiusSrc
 	theta := float64(0)
 	for {
+		if radius == 0 {
+			radius = 0.1
+		}
+
 		stepTheta := (360 * PointInterval) / (2 * math.Pi * radius)
 		radius += stepTheta * radiusPerDegree
 		theta += stepTheta
