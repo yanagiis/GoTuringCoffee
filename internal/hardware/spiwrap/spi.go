@@ -6,6 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"time"
+
+	"github.com/brian-armstrong/gpio"
 
 	"periph.io/x/periph/conn/physic"
 	"periph.io/x/periph/conn/spi"
@@ -16,6 +19,13 @@ type SPI interface {
 	io.Closer
 	Open() error
 	Tx(w, r []byte) error
+}
+
+type SPIPins struct {
+	MISO uint `mapstructure:"miso"`
+	MOSI uint `mapstructure:"mosi"`
+	CS   uint `mapstructure:"cs"`
+	CLK  uint `mapstructure:"clk"`
 }
 
 type Config struct {
@@ -29,6 +39,16 @@ type SPIDevice struct {
 	Conf   Config
 	closer spi.PortCloser
 	conn   spi.Conn
+}
+
+type SPIGPIO struct {
+	Conf   Config
+	Pins   SPIPins
+	opened bool
+	miso   gpio.Pin
+	mosi   gpio.Pin
+	cs     gpio.Pin
+	clk    gpio.Pin
 }
 
 func (s *SPIDevice) Open() error {
@@ -67,4 +87,54 @@ func (s *SPIDevice) Tx(w, r []byte) error {
 		return errors.New("Not open")
 	}
 	return s.conn.Tx(w, r)
+}
+
+func (s *SPIGPIO) Open() error {
+	s.mosi = gpio.NewOutput(s.Pins.MOSI, false)
+	s.clk = gpio.NewOutput(s.Pins.CLK, false)
+	s.cs = gpio.NewOutput(s.Pins.CS, true)
+	s.miso = gpio.NewInput(s.Pins.MISO)
+	s.opened = true
+	return nil
+}
+
+func (s *SPIGPIO) IsOpen() bool {
+	return s.opened
+}
+
+func (s *SPIGPIO) Close() error {
+	s.mosi.Close()
+	s.clk.Close()
+	s.cs.Close()
+	s.miso.Close()
+	s.opened = false
+	return nil
+}
+
+func (s *SPIGPIO) Tx(w, r []byte) error {
+	s.cs.Low()
+	for numByte, wb := range w {
+		rb := byte(0x0)
+		for mask := byte(0x80); mask != 0; mask >>= 1 {
+			bit := wb & mask
+			s.clk.High()
+
+			if bit != 0 {
+				s.mosi.High()
+			} else {
+				s.mosi.Low()
+			}
+
+			val, _ := s.miso.Read()
+			if val != 0 {
+				rb |= mask
+			}
+
+			time.Sleep(1 * time.Millisecond)
+			s.clk.Low()
+		}
+		r[numByte] = rb
+	}
+	s.cs.High()
+	return nil
 }

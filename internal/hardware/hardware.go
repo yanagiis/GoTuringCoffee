@@ -25,6 +25,7 @@ var (
 
 var hardwareFuncs = map[string]ParseHardwareFunc{
 	"spi":            ParseSPI,
+	"spigpio":        ParseSPIGPIO,
 	"uart":           ParseUART,
 	"i2c":            ParseI2C,
 	"tcpuartclient":  ParseTcpUartClient,
@@ -160,6 +161,17 @@ func ParseSPI(m *HWManager, viper *viper.Viper, md *mdns.MDNS) (interface{}, err
 	var spi spiwrap.SPIDevice
 	if err := viper.Unmarshal(&spi.Conf); err != nil {
 		return nil, NewHardwareError("SPI", err.Error(), ErrWrongConfig)
+	}
+	return &spi, nil
+}
+
+func ParseSPIGPIO(m *HWManager, viper *viper.Viper, md *mdns.MDNS) (interface{}, error) {
+	var spi spiwrap.SPIGPIO
+	if err := viper.Unmarshal(&spi.Conf); err != nil {
+		return nil, NewHardwareError("SPIGPIO", err.Error(), ErrWrongConfig)
+	}
+	if err := viper.Unmarshal(&spi.Pins); err != nil {
+		return nil, NewHardwareError("SPIGPIO", err.Error(), ErrWrongConfig)
 	}
 	return &spi, nil
 }
