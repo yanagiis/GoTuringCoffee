@@ -12,12 +12,28 @@ hardwares:
     mode: 1
     bits: 8
 
+  spi1:
+    type: "spigpio"
+    speed: 100000
+    mode: 1
+    bits: 8
+    miso: 2
+    mosi: 1
+    cs: 3
+    clk: 0
+
   output_sensor:
     type: "max31856"
     dev: "spi0"
     tc: "T"
     mode: "Automatic"
     sample: "Avg1" # 1, 2, 54, 8, 16
+
+  thermal_block_sensor:
+    type: "max31865"
+    dev: "spi1"
+    wire: "3"
+    mode: "Automatic"
 
 services:
 
