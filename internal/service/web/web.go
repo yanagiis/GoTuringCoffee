@@ -13,6 +13,7 @@ import (
 
 	"github.com/globalsign/mgo/bson"
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 	nats "github.com/nats-io/go-nats"
 )
 
@@ -45,12 +46,16 @@ type CookbookJson struct {
 	Name        string        `json:"name"`
 	Description string        `json:"description"`
 	Processes   []ProcessJson `json:"processes"`
+	TotalTime        float64       `json:"time"`
+	TotalWater       float64       `json:"water"`
 }
 
 func NewCookbookJson(cookbook *lib.Cookbook) (cj CookbookJson) {
 	cj.ID = cookbook.ID
 	cj.Name = cookbook.Name
 	cj.Description = cookbook.Description
+	cj.TotalTime = cookbook.GetTotalTime()
+	cj.TotalWater = cookbook.GetTotalWater()
 	for _, p := range cookbook.Processes {
 		cj.Processes = append(cj.Processes, NewProcessJson(&p))
 	}
@@ -108,6 +113,10 @@ func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 	cookbookModel := model.NewCookbookModel(&s.DB)
 	machineModel := model.NewMachine(ctx, nc)
 	e := echo.New()
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+    AllowOrigins: []string{"http://localhost:1234"},
+    AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+  }))
 	e.Use(func(h echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			cc := CustomContext{c, cookbookModel, machineModel, ctx, nc}

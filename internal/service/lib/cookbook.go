@@ -26,8 +26,29 @@ func (c *Cookbook) ToPoints() []Point {
 	return points
 }
 
+func (c *Cookbook) GetTotalWater() float64 {
+  var totalWater float64
+
+	for _, p := range c.Processes {
+		totalWater += p.GetWater()
+	}
+	return totalWater
+}
+
+func (c *Cookbook) GetTotalTime() float64 {
+  var totalTime float64
+
+	for _, p := range c.Processes {
+		totalTime += p.GetTime()
+	}
+	return totalTime
+}
+
 type Process interface {
 	ToPoints() []Point
+	GetWater() float64
+	GetTime() float64
+	GetTemperature() float64
 }
 
 type Circle struct {
@@ -66,6 +87,18 @@ func (c *Circle) ToPoints() []Point {
 	return points
 }
 
+func (p *Circle) GetTime() float64 {
+  return p.Time
+}
+
+func (p *Circle) GetWater() float64 {
+  return p.Water
+}
+
+func (p *Circle) GetTemperature() float64 {
+  return p.Temperature
+}
+
 type Spiral struct {
 	Coords      Coordinate `json:"coordinate"`
 	ToZ         float64    `json:"toz"`
@@ -101,6 +134,19 @@ func (s *Spiral) ToPoints() []Point {
 	points = append(makeMove(&src), points...)
 	return points
 }
+
+func (p *Spiral) GetTime() float64 {
+  return p.Time
+}
+
+func (p *Spiral) GetWater() float64 {
+  return p.Water
+}
+
+func (p *Spiral) GetTemperature() float64 {
+  return p.Temperature
+}
+
 
 type Polygon struct {
 	Coords      Coordinate `json:"coordinate"`
@@ -149,6 +195,18 @@ func (p *Polygon) ToPoints() []Point {
 	return points
 }
 
+func (p *Polygon) GetTime() float64 {
+  return p.Time
+}
+
+func (p *Polygon) GetWater() float64 {
+  return p.Water
+}
+
+func (p *Polygon) GetTemperature() float64 {
+  return p.Temperature
+}
+
 type Fixed struct {
 	Coords      Coordinate `json:"coordinate"`
 	Time        float64    `json:"time"`
@@ -172,12 +230,36 @@ func (f *Fixed) ToPoints() []Point {
 	return points
 }
 
+func (p *Fixed) GetTime() float64 {
+  return p.Time
+}
+
+func (p *Fixed) GetWater() float64 {
+  return p.Water
+}
+
+func (p *Fixed) GetTemperature() float64 {
+  return p.Temperature
+}
+
 type Move struct {
 	Coords Coordinate `json:"coordinate"`
 }
 
 func (m *Move) ToPoints() []Point {
 	return makeMove(&m.Coords)
+}
+
+func (p *Move) GetTime() float64 {
+  return 0
+}
+
+func (p *Move) GetWater() float64 {
+  return 0
+}
+
+func (p *Move) GetTemperature() float64 {
+  return 0
 }
 
 type Wait struct {
@@ -193,6 +275,18 @@ func (w *Wait) ToPoints() []Point {
 	}
 }
 
+func (p *Wait) GetTime() float64 {
+  return 0
+}
+
+func (p *Wait) GetWater() float64 {
+  return 0
+}
+
+func (p *Wait) GetTemperature() float64 {
+  return 0
+}
+
 type Mix struct {
 	Temperature float64 `json:"temperature"`
 }
@@ -206,6 +300,18 @@ func (m *Mix) ToPoints() []Point {
 	}
 }
 
+func (p *Mix) GetTime() float64 {
+  return 0
+}
+
+func (p *Mix) GetWater() float64 {
+  return 0
+}
+
+func (p *Mix) GetTemperature() float64 {
+  return p.Temperature
+}
+
 type Home struct {
 }
 
@@ -216,6 +322,19 @@ func (h *Home) ToPoints() []Point {
 		},
 	}
 }
+
+func (p *Home) GetTime() float64 {
+  return 0
+}
+
+func (p *Home) GetWater() float64 {
+  return 0
+}
+
+func (p *Home) GetTemperature() float64 {
+  return 0
+}
+
 
 type Coordinate struct {
 	X float64 `json:"x"`
