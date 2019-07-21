@@ -67,6 +67,7 @@ func (t *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 				timer = time.NewTimer(t.ScanInterval)
 				continue
 			}
+			log.Debug().Msgf("Thermal temperature %f", temperature.Temp)
 			temperature.Time = time.Now()
 			timer = time.NewTimer(t.ScanInterval)
 		case <-ctx.Done():

@@ -17,6 +17,8 @@ import (
 	"GoTuringCoffee/internal/service/replenisher"
 	"GoTuringCoffee/internal/service/tankmeter"
 	"GoTuringCoffee/internal/service/tanktemp"
+	"GoTuringCoffee/internal/service/thermalblockheater"
+	"GoTuringCoffee/internal/service/thermalblocktemp"
 	"GoTuringCoffee/internal/service/uartserver"
 	"GoTuringCoffee/internal/service/web"
 	"GoTuringCoffee/internal/service/web/model"
@@ -142,6 +144,14 @@ func (s *ServiceManager) AddService(name string, viper *viper.Viper, hwm *hardwa
 	// 	}
 	case "web":
 		if err := s.parseWeb(name, viper, hwm, m); err != nil {
+			return err
+		}
+	case "thermal_block_heater":
+		if err := s.parseThermalBlockHeater(name, viper, hwm, m); err != nil {
+			return err
+		}
+	case "thermal_block_temp":
+		if err := s.parseThermalBlockTemp(name, viper, hwm, m); err != nil {
 			return err
 		}
 	default:
@@ -278,6 +288,33 @@ func (s *ServiceManager) parseUARTServer(name string, viper *viper.Viper, hwm *h
 	}
 
 	s.services[name] = uartserver.NewService(service, port, device.(uartwrap.UART), m)
+	return
+}
+
+func (s *ServiceManager) parseThermalBlockTemp(name string, viper *viper.Viper, hwm *hardware.HWManager, m *mdns.MDNS) (err error) {
+	devName := viper.GetString("dev")
+	dev, err := hwm.GetDevice(devName)
+	if err != nil {
+		return NewServiceError(name, err.Error(), ErrWrongConfig)
+	}
+	sensor := dev.(hardware.TemperatureSensor)
+	scanInterval := time.Duration(viper.GetInt64("scan_interval_ms")) * time.Millisecond
+	s.services[name] = thermalblocktemp.NewService(sensor, scanInterval)
+	return
+}
+
+func (s *ServiceManager) parseThermalBlockHeater(name string, viper *viper.Viper, hwm *hardware.HWManager, m *mdns.MDNS) (err error) {
+	var pid lib.NormalPID
+	viper.Sub("pid").Unmarshal(&pid)
+
+	devName := viper.GetString("dev")
+	dev, err := hwm.GetDevice(devName)
+	if err != nil {
+		return NewServiceError(name, err.Error(), ErrWrongConfig)
+	}
+	pwm := dev.(hardware.PWM)
+	scanInterval := time.Duration(viper.GetInt64("scan_interval_ms")) * time.Millisecond
+	s.services[name] = thermalblockheater.NewService(pwm, scanInterval, &pid)
 	return
 }
 

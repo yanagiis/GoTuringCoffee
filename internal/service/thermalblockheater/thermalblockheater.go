@@ -48,7 +48,7 @@ func (h *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 		return
 	}
 
-	h.record.Target = 90
+	h.record.Target = 0
 	h.pid.SetBound(0, 100)
 	h.pid.SetPoint(h.record.Target)
 
@@ -119,15 +119,19 @@ func (h *Service) adjustTemperature(ctx context.Context, nc *nats.EncodedConn) e
 		h.pwm.PWM(0, 0)
 		return errors.New("Cannot get negative temperature")
 	}
+
 	difftime := time.Second * 0
 	if h.lastTempRecord != nil {
 		difftime = resp.Payload.Time.Sub(h.lastTempRecord.Time)
 	}
 	duty := h.pid.Compute(resp.Payload.Temp, difftime) / 100
-	if err := h.pwm.PWM(duty, 100000); err != nil {
+	if err := h.pwm.PWM(duty, 1); err != nil {
 		log.Error().Msg(err.Error())
 		return err
 	}
+
+	log.Debug().Msgf("Thermal heater duty cycle %f", duty)
+
 	h.record.Duty = duty
 	h.record.Time = time.Now()
 	h.lastTempRecord = &resp.Payload

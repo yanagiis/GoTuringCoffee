@@ -1,7 +1,7 @@
 hardwares:
   uart0:
     type: "uart"
-    path: "/dev/ttyACM0"
+    path: "/dev/ttyS1"
     baudrate: 115200
     read_timeout: 1
 
@@ -14,13 +14,18 @@ hardwares:
 
   spi1:
     type: "spigpio"
+    path: ""
     speed: 100000
     mode: 1
     bits: 8
-    miso: 2
-    mosi: 1
-    cs: 3
     clk: 0
+    mosi: 1
+    miso: 2
+    cs: 3
+
+  i2c0:
+    type: "i2c"
+    path: "/dev/i2c-0"
 
   output_sensor:
     type: "max31856"
@@ -29,11 +34,22 @@ hardwares:
     mode: "Automatic"
     sample: "Avg1" # 1, 2, 54, 8, 16
 
+  distance_ranging_sensor:
+    type: "vl6180x"
+    dev: "i2c0"
+    address: 0x_29
+    scaling: 1
+
   thermal_block_sensor:
-    type: "max31865"
+    type: "max31856"
     dev: "spi1"
-    wire: "3"
+    tc: "T"
     mode: "Automatic"
+    sample: "Avg1" # 1, 2, 54, 8, 16
+
+  pwm0:
+    type: "pwm"
+    pwm: 7
 
 services:
 
@@ -47,6 +63,25 @@ services:
     enable: true
     scan_interval_ms: 2000
     dev: "output_sensor"
+
+  distance_ranging_service:
+    enable: true
+    scan_interval_ms: 1000
+    dev: "distance_ranging_sensor"
+
+  thermal_block_temp:
+    enable: true
+    scan_interval_ms: 1000
+    dev: "thermal_block_sensor"
+
+  thermal_block_heater:
+    enable: true
+    scan_interval_ms: 1000
+    dev: "pwm0"
+    pid:
+      P: 2
+      I: 0.25
+      D: 1
 
 mdns:
   instance: "TuringCoffee"

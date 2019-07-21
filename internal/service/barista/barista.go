@@ -93,6 +93,7 @@ func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- 
 
 	log.Debug().Msgf("Let's start cooking")
 	b.middles = []middleware.Middleware{
+		middleware.NewThermalMiddleware(ctx, nc),
 		middleware.NewTempMiddleware(ctx, nc, &b.conf.PID, 20),
 		middleware.NewTimeMiddleware(),
 	}
