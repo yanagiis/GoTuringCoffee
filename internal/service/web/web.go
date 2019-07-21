@@ -123,6 +123,7 @@ func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 			return h(cc)
 		}
 	})
+
 	e.GET("/api/cookbooks", s.ListCookbook)
 	e.POST("/api/cookbooks", s.CreateCookbook)
 	e.GET("/api/cookbooks/:id", s.GetCookbook)
@@ -139,7 +140,7 @@ func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 		}
 	}()
 
-	timer := time.NewTimer(1)
+	timer := time.NewTimer(1 * time.Second)
 	for {
 		select {
 		case <-ctx.Done():
@@ -149,7 +150,7 @@ func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 			e.Logger.Info("stop web service")
 			return
 		case <-timer.C:
-			timer = time.NewTimer(1)
+		  timer = time.NewTimer(1 * time.Second)
 		}
 	}
 }
