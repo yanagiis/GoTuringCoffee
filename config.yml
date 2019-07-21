@@ -11,6 +11,7 @@ hardwares:
     type: "uart"
     path: "/dev/ttyAMA0"
     baudrate: 57600
+    read_timeout: 1
 
   uart1:
     type: "uart"
@@ -108,12 +109,12 @@ services:
     extruder: "extruder"
     accumulative_water_volume: 20
     pid:
-      P: 2
-      I: 0.5
-      D: 2
+      P: 0.012
+      I: 0.001
+      D: 0.007
     drain_position:
-      x: -5
-      i: -75 # cannot use 'y' in viper, but don't know why
+      x: -2
+      i: -70 # cannot use 'y' in viper, but don't know why
       z: 230
     default_moving_speed: 5000
 
