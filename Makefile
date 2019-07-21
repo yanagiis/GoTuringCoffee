@@ -1,10 +1,10 @@
-DEST_IP = 192.168.1.77
+DEST_IP = 192.168.2.22
 
 GENERATE = internal/hardware/max31856/max31856.go\
 		   internal/hardware/max31865/max31865.go\
 		   internal/hardware/hardware.go
 
-UTILS = max31856 max31865 db process vl6180x max31865gpio
+UTILS = max31856 max31865 db process vl6180x max31865gpio max31856gpio
 
 ARCH ?= arm 
 
