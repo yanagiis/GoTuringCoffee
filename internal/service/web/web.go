@@ -46,8 +46,8 @@ type CookbookJson struct {
 	Name        string        `json:"name"`
 	Description string        `json:"description"`
 	Processes   []ProcessJson `json:"processes"`
-	TotalTime        float64       `json:"time"`
-	TotalWater       float64       `json:"water"`
+	TotalTime   float64       `json:"time"`
+	TotalWater  float64       `json:"water"`
 }
 
 func NewCookbookJson(cookbook *lib.Cookbook) (cj CookbookJson) {
@@ -114,9 +114,9 @@ func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 	machineModel := model.NewMachine(ctx, nc)
 	e := echo.New()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-    AllowOrigins: []string{"http://localhost:1234"},
-    AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
-  }))
+		AllowOrigins: []string{"http://localhost:1234"},
+		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+	}))
 	e.Use(func(h echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			cc := CustomContext{c, cookbookModel, machineModel, ctx, nc}
@@ -127,6 +127,7 @@ func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 	e.GET("/api/cookbooks", s.ListCookbook)
 	e.POST("/api/cookbooks", s.CreateCookbook)
 	e.GET("/api/cookbooks/:id", s.GetCookbook)
+	e.GET("/api/cookbooks/:id/points", s.GetCookbookPoints)
 	e.PUT("/api/cookbooks/:id", s.UpdateCookbook)
 	e.DELETE("/api/cookbooks/:id", s.DeleteCookbook)
 	e.GET("/api/machine", s.GetMachineStatus)
@@ -150,7 +151,7 @@ func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 			e.Logger.Info("stop web service")
 			return
 		case <-timer.C:
-		  timer = time.NewTimer(1 * time.Second)
+			timer = time.NewTimer(1 * time.Second)
 		}
 	}
 }
@@ -242,6 +243,24 @@ func (s *Service) DeleteCookbook(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, Response{
 		Status: 200,
+	})
+}
+
+func (s *Service) GetCookbookPoints(c echo.Context) error {
+	var cookbook *lib.Cookbook
+	var err error
+
+	cc := c.(CustomContext)
+	id := cc.Param("id")
+	if cookbook, err = cc.cookbookModel.GetCookbook(id); err != nil {
+		return err
+	}
+
+	points := cookbook.ToPoints()
+
+	return c.JSON(http.StatusOK, Response{
+		Status:  200,
+		Payload: points,
 	})
 }
 
