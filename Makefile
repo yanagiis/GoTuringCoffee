@@ -14,6 +14,7 @@ all: generate app utils
 
 dep:
 	dep ensure
+	go get github.com/abice/go-enum
 
 app: generate
 	GOOS=linux GOARCH=$(ARCH) go build -o GoTuringCoffee_$(ARCH)
