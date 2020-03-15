@@ -132,6 +132,10 @@ func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 	e.DELETE("/api/cookbooks/:id", s.DeleteCookbook)
 	e.GET("/api/machine", s.GetMachineStatus)
 	e.POST("/api/barista/:id/brew", s.BrewCookbook)
+	e.GET("/api/processes", s.ListProcesses)
+	e.GET("/api/processes/:name", s.GetDefaultProcess)
+	e.GET("/api/processes/all", s.GetAllDefaultProcesses)
+	e.GET("/api/processes/units", s.GetAllFieldUnits)
 	e.Static("/", s.Web.StaticFilePath)
 	// e.PUT("/api/machine/tank/temperature", s.SetTargetTemperature)
 
@@ -300,6 +304,49 @@ func (s *Service) GetMachineStatus(c echo.Context) error {
 
 func (s *Service) Stop() error {
 	return nil
+}
+
+func (s *Service) ListProcesses(c echo.Context) error {
+	cc := c.(CustomContext)
+
+	return c.JSON(http.StatusOK, Response{
+		Status:  200,
+		Payload: cc.cookbookModel.GetProcessNameList(),
+	})
+}
+
+func (s *Service) GetDefaultProcess(c echo.Context) error {
+	cc := c.(CustomContext)
+	name := cc.Param("name")
+  process := cc.cookbookModel.GetDefaultProcess(name)
+	return c.JSON(http.StatusOK, Response{
+		Status:  200,
+		Payload: NewProcessJson(&process),
+	})
+}
+
+func (s *Service) GetAllDefaultProcesses(c echo.Context) error {
+	cc := c.(CustomContext)
+  processes := cc.cookbookModel.GetAllDefaultProcesses()
+
+  result := map[string]ProcessJson{}
+  for name, process := range processes {
+    result[name] = NewProcessJson(&process)
+  }
+
+	return c.JSON(http.StatusOK, Response{
+		Status:  200,
+		Payload: result,
+	})
+}
+
+func (s *Service) GetAllFieldUnits(c echo.Context) error {
+	cc := c.(CustomContext)
+
+	return c.JSON(http.StatusOK, Response{
+		Status:  200,
+		Payload: cc.cookbookModel.GetAllFieldUnits(),
+	})
 }
 
 // func (s *Service) SetTargetTemperature(c echo.Context) error {

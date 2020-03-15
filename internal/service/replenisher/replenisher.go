@@ -3,6 +3,7 @@ package replenisher
 import (
 	"context"
 	"time"
+	"fmt"
 
 	"GoTuringCoffee/internal/hardware"
 	"GoTuringCoffee/internal/service/lib"
@@ -107,14 +108,17 @@ func (r *Service) scan(ctx context.Context, nc *nats.EncodedConn) {
 		timeCtx, cancel := context.WithDeadline(ctx, time.Now().Add(5*time.Second))
 		defer cancel()
 		if resp, err = tankmeter.GetMeterInfo(timeCtx, nc); err != nil {
-			duty = 0
+      log.Info().Msg("Can't get meter info, set the duty to 0 to stop replenisher")
 			log.Error().Msg(err.Error())
+			duty = 0
 		}
 		if resp.Payload.IsFull {
+      log.Info().Msg("Tank water is full")
 			duty = 0
 		}
 	}
 
+  log.Info().Msg(fmt.Sprintf("Set duty %lf to replenisher", duty))
 	if err := r.Dev.PWM(duty, r.PWMConf.Freq); err != nil {
 		log.Error().Msg(err.Error())
 	}

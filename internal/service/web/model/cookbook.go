@@ -86,6 +86,7 @@ func (m *CookbookModel) ListCookbooks() ([]*lib.Cookbook, error) {
 	if err := m.c.Find(nil).All(&csj); err != nil {
 		return nil, err
 	}
+	fmt.Printf("Get %d cookbooks from db", len(csj))
 	for _, cj := range csj {
 		c, _ := cj.Get()
 		cs = append(cs, &c)
@@ -206,4 +207,173 @@ func (m *CookbookModel) Disconnect() {
 		m.session.Close()
 		m.session = nil
 	}
+}
+
+func defaultCircle() lib.Process {
+	return &lib.Circle{
+		Coords: lib.Coordinate{
+			X: 0,
+			Y: 0,
+			Z: 200,
+		},
+		ToZ: 0,
+		Radius: lib.Range{
+			From: 0,
+			To:   2,
+		},
+		Cylinder:    5,
+		Time:        10,
+		Water:       150,
+		Temperature: 80,
+	}
+}
+
+func defaultSpiral() lib.Process {
+	return &lib.Spiral{
+		Coords: lib.Coordinate{
+			X: 0,
+			Y: 0,
+			Z: 200,
+		},
+		ToZ: 0,
+		Radius: lib.Range{
+			From: 0,
+			To:   2,
+		},
+		Cylinder:    1,
+		Time:        10,
+		Water:       150,
+		Temperature: 80,
+	}
+}
+
+func defaultPolygon() lib.Process {
+	return &lib.Polygon{
+		Coords: lib.Coordinate{
+			X: 0,
+			Y: 0,
+			Z: 200,
+		},
+		ToZ: 0,
+		Radius: lib.Range{
+			From: 0,
+			To:   2,
+		},
+		Polygon:     2,
+		Cylinder:    5,
+		Time:        10,
+		Water:       150,
+		Temperature: 80,
+	}
+}
+
+func defaultFixed() lib.Process {
+	return &lib.Fixed{
+		Coords: lib.Coordinate{
+			X: 0,
+			Y: 0,
+			Z: 200,
+		},
+		Time:        10,
+		Water:       150,
+		Temperature: 80,
+	}
+}
+
+func defaultHome() lib.Process {
+	return &lib.Home{}
+}
+
+func defaultMove() lib.Process {
+	return &lib.Move{
+		Coords: lib.Coordinate{
+			X: 0,
+			Y: 0,
+			Z: 200,
+		},
+	}
+}
+
+func defaultWait() lib.Process {
+	return &lib.Wait{
+		Time: 10,
+	}
+}
+
+func defaultMix() lib.Process {
+	return &lib.Mix{
+		Temperature: 80,
+	}
+}
+
+func getDefaultProcesses() map[string](func() lib.Process) {
+	return map[string](func() lib.Process){
+		"Circle":  defaultCircle,
+		"Spiral":  defaultSpiral,
+		"Polygon": defaultPolygon,
+		"Fixed":   defaultFixed,
+		"Move":    defaultMove,
+		"Wait":    defaultWait,
+		"Mix":     defaultMix,
+		"Home":    defaultHome,
+	}
+}
+
+func getAllDefaultProcesses() map[string](lib.Process){
+  return map[string](lib.Process) {
+		"Circle":  defaultCircle(),
+		"Spiral":  defaultSpiral(),
+		"Polygon": defaultPolygon(),
+		"Fixed":   defaultFixed(),
+		"Move":    defaultMove(),
+		"Wait":    defaultWait(),
+		"Mix":     defaultMix(),
+		"Home":    defaultHome(),
+  }
+}
+
+func (m *CookbookModel) GetAllFieldUnits() map[string](interface{}) {
+
+  return map[string](interface{}) {
+    "coordinate": map[string]string{
+      "x": "mm",
+      "y": "mm",
+      "z": "mm",
+    },
+    "toz": "mm",
+    "radius": map[string]string{
+      "from": "mm",
+      "to": "mm",
+    },
+    "cylinder": "",
+    "time": "s",
+    "water": "ml",
+    "temperature": "°C",
+  }
+}
+
+func (m *CookbookModel) GetDefaultProcess(name string) lib.Process {
+  defaultProcesses := getDefaultProcesses()
+  if val, ok := defaultProcesses[name]; ok {
+    return val()
+  } else {
+    return nil 
+  }
+}
+
+// GetAllDefaultProcesses return all default processes
+func (m *CookbookModel) GetAllDefaultProcesses() map[string](lib.Process) {
+  return getAllDefaultProcesses()
+}
+
+func (m *CookbookModel) GetProcessNameList() []string {
+	defaultProcesses := getDefaultProcesses()
+	nameList := make([]string, len(defaultProcesses))
+
+	index := 0
+	for key := range defaultProcesses {
+		nameList[index] = key
+		index++
+	}
+	return nameList
 }

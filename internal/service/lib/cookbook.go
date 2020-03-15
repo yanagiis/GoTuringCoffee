@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"github.com/globalsign/mgo/bson"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -20,14 +21,15 @@ type Cookbook struct {
 
 func (c *Cookbook) ToPoints() []Point {
 	var points []Point
-	for _, p := range c.Processes {
+	for index, p := range c.Processes {
+    log.Info().Msgf("Process %d ToPoints", index)
 		points = append(points, p.ToPoints()...)
 	}
 	return points
 }
 
 func (c *Cookbook) GetTotalWater() float64 {
-  var totalWater float64
+	var totalWater float64
 
 	for _, p := range c.Processes {
 		totalWater += p.GetWater()
@@ -36,7 +38,7 @@ func (c *Cookbook) GetTotalWater() float64 {
 }
 
 func (c *Cookbook) GetTotalTime() float64 {
-  var totalTime float64
+	var totalTime float64
 
 	for _, p := range c.Processes {
 		totalTime += p.GetTime()
@@ -53,12 +55,12 @@ type Process interface {
 
 type Circle struct {
 	Coords      Coordinate `json:"coordinate"`
-	ToZ         float64    `json:"toz"`
-	Radius      Range      `json:"radius"`
+	ToZ         float64    `json:"toz" unit:"mm"`
+	Radius      Range      `json:"radius" unit:"mm"`
 	Cylinder    int64      `json:"cylinder"`
-	Time        float64    `json:"time"`
-	Water       float64    `json:"water"`
-	Temperature float64    `json:"temperature"`
+	Time        float64    `json:"time" unit:"s"`
+	Water       float64    `json:"water" unit:"ml"`
+	Temperature float64    `json:"temperature" unit:"celsius"`
 }
 
 func (c *Circle) ToPoints() []Point {
@@ -88,25 +90,25 @@ func (c *Circle) ToPoints() []Point {
 }
 
 func (p *Circle) GetTime() float64 {
-  return p.Time
+	return p.Time
 }
 
 func (p *Circle) GetWater() float64 {
-  return p.Water
+	return p.Water
 }
 
 func (p *Circle) GetTemperature() float64 {
-  return p.Temperature
+	return p.Temperature
 }
 
 type Spiral struct {
 	Coords      Coordinate `json:"coordinate"`
-	ToZ         float64    `json:"toz"`
-	Radius      Range      `json:"radius"`
+	ToZ         float64    `json:"toz" unit:"mm"`
+	Radius      Range      `json:"radius" unit:"mm"`
 	Cylinder    int64      `json:"cylinder"`
-	Time        float64    `json:"time"`
-	Water       float64    `json:"water"`
-	Temperature float64    `json:"temperature"`
+	Time        float64    `json:"time" unit:"s"`
+	Water       float64    `json:"water" unit:"ml"`
+	Temperature float64    `json:"temperature" unit:"celsius"`
 }
 
 func (s *Spiral) ToPoints() []Point {
@@ -121,6 +123,7 @@ func (s *Spiral) ToPoints() []Point {
 		Z: s.ToZ,
 	}
 
+  log.Info().Msgf("Spiral: Src %f -> Dst %f", s.Radius.From, s.Radius.To)
 	points := makeSpiral(&src, &dst, &s.Coords, s.Cylinder)
 	pathlen := float64(len(points)-1) * PointInterval
 	feedrate := pathlen / (s.Time / 60)
@@ -136,27 +139,26 @@ func (s *Spiral) ToPoints() []Point {
 }
 
 func (p *Spiral) GetTime() float64 {
-  return p.Time
+	return p.Time
 }
 
 func (p *Spiral) GetWater() float64 {
-  return p.Water
+	return p.Water
 }
 
 func (p *Spiral) GetTemperature() float64 {
-  return p.Temperature
+	return p.Temperature
 }
-
 
 type Polygon struct {
 	Coords      Coordinate `json:"coordinate"`
-	ToZ         float64    `json:"toz"`
-	Radius      Range      `json:"radius"`
-	Polygon     int64      `json:"polygon"`
+	ToZ         float64    `json:"toz" unit:"mm"`
+	Radius      Range      `json:"radius" unit:"mm"`
+	Polygon     int64      `json:"polygon" unit:"mm"`
 	Cylinder    int64      `json:"cylinder"`
-	Time        float64    `json:"time"`
-	Water       float64    `json:"water"`
-	Temperature float64    `json:"temperature"`
+	Time        float64    `json:"time" unit:"s"`
+	Water       float64    `json:"water" unit:"ml"`
+	Temperature float64    `json:"temperature" unit:"celsius"`
 }
 
 func (p *Polygon) ToPoints() []Point {
@@ -196,22 +198,22 @@ func (p *Polygon) ToPoints() []Point {
 }
 
 func (p *Polygon) GetTime() float64 {
-  return p.Time
+	return p.Time
 }
 
 func (p *Polygon) GetWater() float64 {
-  return p.Water
+	return p.Water
 }
 
 func (p *Polygon) GetTemperature() float64 {
-  return p.Temperature
+	return p.Temperature
 }
 
 type Fixed struct {
 	Coords      Coordinate `json:"coordinate"`
-	Time        float64    `json:"time"`
-	Water       float64    `json:"water"`
-	Temperature float64    `json:"temperature"`
+	Time        float64    `json:"time" unit:"mm"`
+	Water       float64    `json:"water" unit:"ml"`
+	Temperature float64    `json:"temperature" unit:"celsius"`
 }
 
 func (f *Fixed) ToPoints() []Point {
@@ -231,15 +233,15 @@ func (f *Fixed) ToPoints() []Point {
 }
 
 func (p *Fixed) GetTime() float64 {
-  return p.Time
+	return p.Time
 }
 
 func (p *Fixed) GetWater() float64 {
-  return p.Water
+	return p.Water
 }
 
 func (p *Fixed) GetTemperature() float64 {
-  return p.Temperature
+	return p.Temperature
 }
 
 type Move struct {
@@ -251,19 +253,19 @@ func (m *Move) ToPoints() []Point {
 }
 
 func (p *Move) GetTime() float64 {
-  return 0
+	return 0
 }
 
 func (p *Move) GetWater() float64 {
-  return 0
+	return 0
 }
 
 func (p *Move) GetTemperature() float64 {
-  return 0
+	return 0
 }
 
 type Wait struct {
-	Time float64 `json:"time"`
+	Time float64 `json:"time" unit:"s"`
 }
 
 func (w *Wait) ToPoints() []Point {
@@ -276,19 +278,19 @@ func (w *Wait) ToPoints() []Point {
 }
 
 func (p *Wait) GetTime() float64 {
-  return 0
+	return 0
 }
 
 func (p *Wait) GetWater() float64 {
-  return 0
+	return 0
 }
 
 func (p *Wait) GetTemperature() float64 {
-  return 0
+	return 0
 }
 
 type Mix struct {
-	Temperature float64 `json:"temperature"`
+	Temperature float64 `json:"temperature" unit:"celsius"`
 }
 
 func (m *Mix) ToPoints() []Point {
@@ -301,15 +303,15 @@ func (m *Mix) ToPoints() []Point {
 }
 
 func (p *Mix) GetTime() float64 {
-  return 0
+	return 0
 }
 
 func (p *Mix) GetWater() float64 {
-  return 0
+	return 0
 }
 
 func (p *Mix) GetTemperature() float64 {
-  return p.Temperature
+	return p.Temperature
 }
 
 type Home struct {
@@ -324,22 +326,21 @@ func (h *Home) ToPoints() []Point {
 }
 
 func (p *Home) GetTime() float64 {
-  return 0
+	return 0
 }
 
 func (p *Home) GetWater() float64 {
-  return 0
+	return 0
 }
 
 func (p *Home) GetTemperature() float64 {
-  return 0
+	return 0
 }
 
-
 type Coordinate struct {
-	X float64 `json:"x"`
-	Y float64 `json:"y"`
-	Z float64 `json:"z"`
+	X float64 `json:"x" unit:"mm"`
+	Y float64 `json:"y" unit:"mm"`
+	Z float64 `json:"z" unit:"mm"`
 }
 
 func (c *Coordinate) delta(other *Coordinate) (float64, float64, float64) {
@@ -366,8 +367,8 @@ func (c *Coordinate) rotate(theta float64, p *Coordinate) Coordinate {
 }
 
 type Range struct {
-	From float64 `json:"from"`
-	To   float64 `json:"to"`
+	From float64 `json:"from" unit:"mm"`
+	To   float64 `json:"to" unit:"mm"`
 }
 
 func makeSpiral(src, dst, center *Coordinate, cylinder int64) []Point {
@@ -387,6 +388,8 @@ func makeSpiral(src, dst, center *Coordinate, cylinder int64) []Point {
 	radiusSrc := centerXY.distance(srcXY)
 	radiusDst := centerXY.distance(dstXY)
 	radiusPerDegree := (radiusDst - radiusSrc) / rotateTheta
+  log.Info().Msgf("Center XY: %f, %f", center.X, center.Y)
+  log.Info().Msgf("Cylinder %d, radiusSrc: %f radiusDst: %f radiusPerDegree: %f", cylinder, radiusSrc, radiusDst, radiusPerDegree)
 	zPerDegree := (dst.Z - src.Z) / rotateTheta
 
 	var points []Point
@@ -397,11 +400,26 @@ func makeSpiral(src, dst, center *Coordinate, cylinder int64) []Point {
 			radius = 0.1
 		}
 
-		stepTheta := (360 * PointInterval) / (2 * math.Pi * radius)
+    /*
+     |INFO| Process 14 ToPoints
+      2020-01-05T20:53:16+08:00 |INFO| Spiral: Src 0.000000 -> Dst 15.000000
+      2020-01-05T20:53:16+08:00 |INFO| Center XY: 0.000000, 0.000000
+      2020-01-05T20:53:16+08:00 |INFO| Cylinder 3, radiusSrc: 0.000000 radiusDst: 15.000000 radiusPerDegree: 0.013889
+      2020-01-05T20:53:16+08:00 |INFO| 360*PointInterval=(720.000000) / 2 * math.Pi * radius=(0.628319) => 1145.915590
+      2020-01-05T20:53:16+08:00 |INFO| stepTheta:1145.915590, PointInterval:2.000000, radius:16.015494
+      2020-01-05T20:53:16+08:00 |WARN| 0.000000 15.000000 - points: 0 => theta 1145.915590 > rotateTheta 1080.000000
+      2020-01-05T20:53:16+08:00 |WARN| Points size is zero
+
+    */
+		stepTheta := float64(360 * PointInterval) / float64(2 * math.Pi * radius)
+    log.Info().Msgf("360*PointInterval=(%f) / 2 * math.Pi * radius=(%f) => %f", 360*PointInterval, 2 * math.Pi * radius, (360*PointInterval)/(2 * math.Pi * radius))
+
 		radius += stepTheta * radiusPerDegree
 		theta += stepTheta
 
 		if theta > rotateTheta {
+      log.Info().Msgf("stepTheta:%f, PointInterval:%f, radius:%f", stepTheta, PointInterval, radius)
+      log.Warn().Msgf("%f %f - points: %d => theta %f > rotateTheta %f", src.X, dst.X, len(points), theta, rotateTheta)
 			break
 		}
 
@@ -426,6 +444,8 @@ func makeSpiral(src, dst, center *Coordinate, cylinder int64) []Point {
 				Z:    &dst.Z,
 			})
 		}
+	} else {
+		log.Warn().Msg("Points size is zero")
 	}
 
 	return points
