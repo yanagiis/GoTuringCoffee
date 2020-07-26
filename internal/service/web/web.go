@@ -73,6 +73,8 @@ func NewProcessJson(process *lib.Process) (pj ProcessJson) {
 		pj.Name = "Circle"
 	case *lib.Spiral:
 		pj.Name = "Spiral"
+	case *lib.Polygon:
+	  pj.Name = "Polygon"
 	case *lib.Fixed:
 		pj.Name = "FixedPoint"
 	case *lib.Move:

@@ -319,8 +319,8 @@ func getDefaultProcesses() map[string](func() lib.Process) {
 	}
 }
 
-func getAllDefaultProcesses() map[string](lib.Process){
-  return map[string](lib.Process) {
+func getAllDefaultProcesses() map[string](lib.Process) {
+	return map[string](lib.Process){
 		"Circle":  defaultCircle(),
 		"Spiral":  defaultSpiral(),
 		"Polygon": defaultPolygon(),
@@ -329,41 +329,41 @@ func getAllDefaultProcesses() map[string](lib.Process){
 		"Wait":    defaultWait(),
 		"Mix":     defaultMix(),
 		"Home":    defaultHome(),
-  }
+	}
 }
 
 func (m *CookbookModel) GetAllFieldUnits() map[string](interface{}) {
 
-  return map[string](interface{}) {
-    "coordinate": map[string]string{
-      "x": "mm",
-      "y": "mm",
-      "z": "mm",
-    },
-    "toz": "mm",
-    "radius": map[string]string{
-      "from": "mm",
-      "to": "mm",
-    },
-    "cylinder": "",
-    "time": "s",
-    "water": "ml",
-    "temperature": "°C",
-  }
+	return map[string](interface{}){
+		"coordinate": map[string]string{
+			"x": "mm",
+			"y": "mm",
+			"z": "mm",
+		},
+		"toz": "mm",
+		"radius": map[string]string{
+			"from": "mm",
+			"to":   "mm",
+		},
+		"cylinder":    "",
+		"time":        "s",
+		"water":       "ml",
+		"temperature": "°C",
+	}
 }
 
 func (m *CookbookModel) GetDefaultProcess(name string) lib.Process {
-  defaultProcesses := getDefaultProcesses()
-  if val, ok := defaultProcesses[name]; ok {
-    return val()
-  } else {
-    return nil 
-  }
+	defaultProcesses := getDefaultProcesses()
+	if val, ok := defaultProcesses[name]; ok {
+		return val()
+	} else {
+		return nil
+	}
 }
 
 // GetAllDefaultProcesses return all default processes
 func (m *CookbookModel) GetAllDefaultProcesses() map[string](lib.Process) {
-  return getAllDefaultProcesses()
+	return getAllDefaultProcesses()
 }
 
 func (m *CookbookModel) GetProcessNameList() []string {
