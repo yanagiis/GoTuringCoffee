@@ -139,7 +139,7 @@ func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 	e.GET("/api/processes/all", s.GetAllDefaultProcesses)
 	e.GET("/api/processes/units", s.GetAllFieldUnits)
 	e.Static("/", s.Web.StaticFilePath)
-	// e.PUT("/api/machine/tank/temperature", s.SetTargetTemperature)
+	e.PUT("/api/machine/tank/temperature", s.SetTargetTemperature)
 
 	go func() {
 		if err = e.Start(fmt.Sprintf(":%d", s.Web.Port)); err != nil {
@@ -351,5 +351,23 @@ func (s *Service) GetAllFieldUnits(c echo.Context) error {
 	})
 }
 
-// func (s *Service) SetTargetTemperature(c echo.Context) error {
-// }
+type SetTemperaturePayload struct {
+	Temperature float64 `json:"temperature"`
+}
+
+func (s *Service) SetTargetTemperature(c echo.Context) error {
+	cc := c.(CustomContext)
+
+	var payload SetTemperaturePayload
+	if err := cc.Bind(&payload); err != nil {
+		return err
+	}
+
+	if err := cc.machineModel.SetTargetTemperature(payload.Temperature); err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, Response{
+		Status: 200,
+	})
+}

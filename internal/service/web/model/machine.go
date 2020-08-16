@@ -130,3 +130,11 @@ func (m *Machine) GetMachineStatus() (status MachineStatus, err error) {
 	}
 	return
 }
+
+func (m *Machine) SetTargetTemperature(temp float64) error {
+	ctx, cancel := context.WithTimeout(m.ctx, time.Second)
+	defer cancel()
+
+	_, err := heater.SetTemperature(ctx, m.nc, temp)
+	return err
+}
