@@ -1,0 +1,52 @@
+module GoTuringCoffee
+
+go 1.12
+
+require (
+	github.com/ajstarks/svgo v0.0.0-20181006003313-6ce6a3bcf6cd
+	github.com/brian-armstrong/gpio v0.0.0-20171230005827-3846dfc1984f
+	github.com/cenkalti/backoff v2.0.0+incompatible
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
+	github.com/fsnotify/fsnotify v1.4.7
+	github.com/globalsign/mgo v0.0.0-20180424091348-efe0945164a7
+	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
+	github.com/grandcat/zeroconf v0.0.0-20180329153754-df75bb3ccae1
+	github.com/hashicorp/hcl v0.0.0-20180320202055-f40e974e75af
+	github.com/json-iterator/go v0.0.0-20180315132816-ca39e5af3ece
+	github.com/jung-kurt/gofpdf v1.0.0
+	github.com/labstack/echo v3.3.5+incompatible
+	github.com/labstack/gommon v0.0.0-20180426014445-588f4e8bddc6
+	github.com/llgcode/draw2d v0.0.0-20180825133448-f52c8a71aff0
+	github.com/magiconair/properties v1.7.6
+	github.com/mattn/go-colorable v0.0.9
+	github.com/mattn/go-isatty v0.0.3
+	github.com/miekg/dns v1.0.5
+	github.com/mitchellh/mapstructure v0.0.0-20180220230111-00c29f56e238
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
+	github.com/modern-go/reflect2 v0.0.0-20180228065516-1df9eeb2bb81
+	github.com/nats-io/go-nats v1.5.0
+	github.com/nats-io/nuid v1.0.0
+	github.com/pelletier/go-toml v1.4.0
+	github.com/rs/zerolog v1.6.0
+	github.com/spf13/afero v1.0.2
+	github.com/spf13/cast v1.2.0
+	github.com/spf13/jwalterweatherman v0.0.0-20180109140146-7c0cea34c8ec
+	github.com/spf13/pflag v1.0.3
+	github.com/spf13/viper v1.0.2
+	github.com/stianeikeland/go-rpio v4.2.0+incompatible
+	github.com/stretchr/testify v1.4.0
+	github.com/tarm/serial v0.0.0-20180114052751-eaafced92e96
+	github.com/valyala/bytebufferpool v1.0.0
+	github.com/valyala/fasttemplate v0.0.0-20170224212429-dcecefd839c4
+	go.mongodb.org/mongo-driver v1.4.0
+	golang.org/x/crypto v0.0.0-20190530122614-20be4c3c3ed5
+	golang.org/x/exp v0.0.0-20190125153040-c74c464bbbf2
+	golang.org/x/image v0.0.0-20190209060608-ef4a1470e0dc
+	golang.org/x/net v0.0.0-20200202094626-16171245cfb2
+	golang.org/x/sys v0.0.0-20190531175056-4c3a928424d2
+	golang.org/x/text v0.3.3
+	gonum.org/v1/gonum v0.0.0-20190210073933-db78fa557997
+	gonum.org/v1/plot v0.0.0-20190204103247-97beaddfcba2
+	gopkg.in/yaml.v2 v2.2.2
+	periph.io/x/periph v3.4.0+incompatible
+)

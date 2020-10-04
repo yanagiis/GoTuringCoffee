@@ -71,18 +71,21 @@ services:
     port: 8080
     static_files: "static"
     mongodb:
-      # For testing
+      # Production
       #url: "mongodb://turingcoffee:turingcoffeepassword@ds021000.mlab.com:21000/turing-coffee"
       #collection: "cookbooknew"
-      # Production
-      url: "mongodb://turingcoffee:test12345@ds117816.mlab.com:17816/turing-coffee"
-      collection: "cookbooknew"
+      # For testing
+      url: "mongodb+srv://turingcoffee:test12345@cluster0.m5idb.gcp.mongodb.net/testturingcoffee?retryWrites=true&w=majority"
+      database: "turing-coffee"
+      collections:
+        cookbook: "cookbook"
+        process: "process"
 
 mdns:
   instance: "TuringCoffee"
   domain: "local."
 
 nats:
-  register: true 
+  register: true
   service: "nats.io"
   port: 4222

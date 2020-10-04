@@ -4,14 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"GoTuringCoffee/internal/service/barista"
 	"GoTuringCoffee/internal/service/lib"
 	"GoTuringCoffee/internal/service/web/model"
+	dbmodel "GoTuringCoffee/internal/service/web/model"
 
-	"github.com/globalsign/mgo/bson"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	nats "github.com/nats-io/go-nats"
@@ -24,14 +27,14 @@ type WebConfig struct {
 
 type CustomContext struct {
 	echo.Context
-	cookbookModel *model.CookbookModel
-	machineModel  *model.Machine
+	cookbookModel *dbmodel.CookbookModel
+	machineModel  *dbmodel.Machine
 	context       context.Context
 	nc            *nats.EncodedConn
 }
 
 type Service struct {
-	DB  model.MongoDBConfig
+	DB  dbmodel.MongoDBConfig
 	Web WebConfig
 }
 
@@ -42,7 +45,7 @@ type Response struct {
 }
 
 type CookbookJson struct {
-	ID          bson.ObjectId `json:"id,omitempty"`
+	ID          string        `json:"id,omitempty"`
 	Name        string        `json:"name"`
 	Description string        `json:"description"`
 	Processes   []ProcessJson `json:"processes"`
@@ -74,7 +77,7 @@ func NewProcessJson(process *lib.Process) (pj ProcessJson) {
 	case *lib.Spiral:
 		pj.Name = "Spiral"
 	case *lib.Polygon:
-	  pj.Name = "Polygon"
+		pj.Name = "Polygon"
 	case *lib.Fixed:
 		pj.Name = "FixedPoint"
 	case *lib.Move:
@@ -112,8 +115,14 @@ func DecodeProcess(pj *ProcessJson) (p lib.Process) {
 }
 
 func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- struct{}) (err error) {
-	cookbookModel := model.NewCookbookModel(&s.DB)
+	cookbookModel, err := dbmodel.NewCookbookModel(ctx, &s.DB)
+	if err != nil {
+		log.Fatal(err)
+		return nil
+	}
+
 	machineModel := model.NewMachine(ctx, nc)
+
 	e := echo.New()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"http://localhost:1234"},
@@ -131,6 +140,7 @@ func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 	e.GET("/api/cookbooks/:id", s.GetCookbook)
 	e.GET("/api/cookbooks/:id/points", s.GetCookbookPoints)
 	e.PUT("/api/cookbooks/:id", s.UpdateCookbook)
+	e.POST("/api/cookbooks/:id/cover", s.UploadCookbookCover)
 	e.DELETE("/api/cookbooks/:id", s.DeleteCookbook)
 	e.GET("/api/machine", s.GetMachineStatus)
 	e.POST("/api/barista/:id/brew", s.BrewCookbook)
@@ -320,7 +330,7 @@ func (s *Service) ListProcesses(c echo.Context) error {
 func (s *Service) GetDefaultProcess(c echo.Context) error {
 	cc := c.(CustomContext)
 	name := cc.Param("name")
-  process := cc.cookbookModel.GetDefaultProcess(name)
+	process := cc.cookbookModel.GetDefaultProcess(name)
 	return c.JSON(http.StatusOK, Response{
 		Status:  200,
 		Payload: NewProcessJson(&process),
@@ -329,12 +339,12 @@ func (s *Service) GetDefaultProcess(c echo.Context) error {
 
 func (s *Service) GetAllDefaultProcesses(c echo.Context) error {
 	cc := c.(CustomContext)
-  processes := cc.cookbookModel.GetAllDefaultProcesses()
+	processes := cc.cookbookModel.GetAllDefaultProcesses()
 
-  result := map[string]ProcessJson{}
-  for name, process := range processes {
-    result[name] = NewProcessJson(&process)
-  }
+	result := map[string]ProcessJson{}
+	for name, process := range processes {
+		result[name] = NewProcessJson(&process)
+	}
 
 	return c.JSON(http.StatusOK, Response{
 		Status:  200,
@@ -364,6 +374,38 @@ func (s *Service) SetTargetTemperature(c echo.Context) error {
 	}
 
 	if err := cc.machineModel.SetTargetTemperature(payload.Temperature); err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, Response{
+		Status: 200,
+	})
+}
+
+func (s *Service) UploadCookbookCover(c echo.Context) error {
+	fmt.Printf("Uploading cookbook cover")
+	id := c.Param("id")
+	file, err := c.FormFile("file")
+	if err != nil {
+		return err
+	}
+
+	src, err := file.Open()
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+
+	// Description
+	dst, err := os.Create(id + "_" + file.Filename)
+	if err != nil {
+		return err
+	}
+	defer dst.Close()
+
+	// Copy
+	_, err = io.Copy(dst, src)
+	if err != nil {
 		return err
 	}
 

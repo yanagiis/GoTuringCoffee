@@ -2,8 +2,8 @@ package lib
 
 import (
 	"math"
+	"time"
 
-	"github.com/globalsign/mgo/bson"
 	"github.com/rs/zerolog/log"
 )
 
@@ -12,22 +12,29 @@ const (
 	DefaultF      = float64(5000)
 )
 
+// Cookbook Coffee cookbook
 type Cookbook struct {
-	ID          bson.ObjectId `json:"id" bson:"_id,omitempty"`
-	Name        string        `json:"name"`
-	Description string        `json:"description"`
-	Processes   []Process     `json:"processes"`
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Tags        []string  `json:"tags"`
+	Notes       []string  `json:"notes"`
+	Processes   []Process `json:"processes"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
+// ToPoints Generate points for all processes
 func (c *Cookbook) ToPoints() []Point {
 	var points []Point
 	for index, p := range c.Processes {
-    log.Info().Msgf("Process %d ToPoints", index)
+		log.Info().Msgf("Process %d ToPoints", index)
 		points = append(points, p.ToPoints()...)
 	}
 	return points
 }
 
+// GetTotalWater Total water
 func (c *Cookbook) GetTotalWater() float64 {
 	var totalWater float64
 
@@ -37,6 +44,7 @@ func (c *Cookbook) GetTotalWater() float64 {
 	return totalWater
 }
 
+// GetTotalTime Total time
 func (c *Cookbook) GetTotalTime() float64 {
 	var totalTime float64
 
@@ -46,11 +54,48 @@ func (c *Cookbook) GetTotalTime() float64 {
 	return totalTime
 }
 
-type Process interface {
+// ProcessImpl Process implementation
+type ProcessImpl interface {
 	ToPoints() []Point
 	GetWater() float64
 	GetTime() float64
 	GetTemperature() float64
+}
+
+// Process Cookbook process
+type Process struct {
+	ID        string      `json:"id"`
+	Name      string      `json:"name"`
+	CreatedAt time.Time   `json:"created_at"`
+	UpdatedAt time.Time   `json:"updated_at"`
+	Impl      ProcessImpl `json:"impl"`
+}
+
+// GetImpl Get the process implementation class
+func (p *Process) GetImpl() ProcessImpl {
+	return p.Impl
+}
+
+// ToPoints Generate points from process implementation
+func (p *Process) ToPoints() []Point {
+	return p.GetImpl().ToPoints()
+}
+
+// GetWater Calcuate water usage
+func (p *Process) GetWater() float64 {
+	return p.GetImpl().GetWater()
+}
+
+// GetTime Calcuate required time of process
+func (p *Process) GetTime() float64 {
+
+	return p.GetImpl().GetTime()
+}
+
+// GetTemperature Get the water temperature in process
+func (p *Process) GetTemperature() float64 {
+
+	return p.GetImpl().GetTemperature()
 }
 
 type Circle struct {
@@ -63,6 +108,7 @@ type Circle struct {
 	Temperature float64    `json:"temperature" unit:"celsius"`
 }
 
+// ToPoints Use process params to generate points
 func (c *Circle) ToPoints() []Point {
 	src := Coordinate{
 		X: c.Coords.X + c.Radius.From,
@@ -123,7 +169,7 @@ func (s *Spiral) ToPoints() []Point {
 		Z: s.ToZ,
 	}
 
-  log.Info().Msgf("Spiral: Src %f -> Dst %f", s.Radius.From, s.Radius.To)
+	log.Info().Msgf("Spiral: Src %f -> Dst %f", s.Radius.From, s.Radius.To)
 	points := makeSpiral(&src, &dst, &s.Coords, s.Cylinder)
 	pathlen := float64(len(points)-1) * PointInterval
 	feedrate := pathlen / (s.Time / 60)
@@ -173,10 +219,10 @@ func (p *Polygon) ToPoints() []Point {
 		Z: p.Coords.Z,
 	}
 
-	for i := int64(0); i < p.Cylinder; i += 1 {
+	for i := int64(0); i < p.Cylinder; i++ {
 		src := p.Coords.rotate(theta*float64(i), &base)
 		points = append(points, makeMove(&src)...)
-		for j := int64(0); j < p.Polygon; j += 1 {
+		for j := int64(0); j < p.Polygon; j++ {
 			dst := p.Coords.rotate(angel, &src)
 			points = append(points, makeLine(&src, &dst)...)
 			src = dst
@@ -186,7 +232,7 @@ func (p *Polygon) ToPoints() []Point {
 	pathlen := float64(int64(len(points))-p.Cylinder) * PointInterval
 	feedrate := pathlen / (p.Time / 60)
 	pointwater := p.Water / float64(int64(len(points))-p.Cylinder)
-	for i, _ := range points {
+	for i := range points {
 		if points[i].F != nil {
 			points[i].T = &p.Temperature
 			points[i].F = &feedrate
@@ -388,8 +434,8 @@ func makeSpiral(src, dst, center *Coordinate, cylinder int64) []Point {
 	radiusSrc := centerXY.distance(srcXY)
 	radiusDst := centerXY.distance(dstXY)
 	radiusPerDegree := (radiusDst - radiusSrc) / rotateTheta
-  log.Info().Msgf("Center XY: %f, %f", center.X, center.Y)
-  log.Info().Msgf("Cylinder %d, radiusSrc: %f radiusDst: %f radiusPerDegree: %f", cylinder, radiusSrc, radiusDst, radiusPerDegree)
+	log.Info().Msgf("Center XY: %f, %f", center.X, center.Y)
+	log.Info().Msgf("Cylinder %d, radiusSrc: %f radiusDst: %f radiusPerDegree: %f", cylinder, radiusSrc, radiusDst, radiusPerDegree)
 	zPerDegree := (dst.Z - src.Z) / rotateTheta
 
 	var points []Point
@@ -400,26 +446,26 @@ func makeSpiral(src, dst, center *Coordinate, cylinder int64) []Point {
 			radius = 0.1
 		}
 
-    /*
-     |INFO| Process 14 ToPoints
-      2020-01-05T20:53:16+08:00 |INFO| Spiral: Src 0.000000 -> Dst 15.000000
-      2020-01-05T20:53:16+08:00 |INFO| Center XY: 0.000000, 0.000000
-      2020-01-05T20:53:16+08:00 |INFO| Cylinder 3, radiusSrc: 0.000000 radiusDst: 15.000000 radiusPerDegree: 0.013889
-      2020-01-05T20:53:16+08:00 |INFO| 360*PointInterval=(720.000000) / 2 * math.Pi * radius=(0.628319) => 1145.915590
-      2020-01-05T20:53:16+08:00 |INFO| stepTheta:1145.915590, PointInterval:2.000000, radius:16.015494
-      2020-01-05T20:53:16+08:00 |WARN| 0.000000 15.000000 - points: 0 => theta 1145.915590 > rotateTheta 1080.000000
-      2020-01-05T20:53:16+08:00 |WARN| Points size is zero
+		/*
+		   |INFO| Process 14 ToPoints
+		    2020-01-05T20:53:16+08:00 |INFO| Spiral: Src 0.000000 -> Dst 15.000000
+		    2020-01-05T20:53:16+08:00 |INFO| Center XY: 0.000000, 0.000000
+		    2020-01-05T20:53:16+08:00 |INFO| Cylinder 3, radiusSrc: 0.000000 radiusDst: 15.000000 radiusPerDegree: 0.013889
+		    2020-01-05T20:53:16+08:00 |INFO| 360*PointInterval=(720.000000) / 2 * math.Pi * radius=(0.628319) => 1145.915590
+		    2020-01-05T20:53:16+08:00 |INFO| stepTheta:1145.915590, PointInterval:2.000000, radius:16.015494
+		    2020-01-05T20:53:16+08:00 |WARN| 0.000000 15.000000 - points: 0 => theta 1145.915590 > rotateTheta 1080.000000
+		    2020-01-05T20:53:16+08:00 |WARN| Points size is zero
 
-    */
-		stepTheta := float64(360 * PointInterval) / float64(2 * math.Pi * radius)
-    log.Info().Msgf("360*PointInterval=(%f) / 2 * math.Pi * radius=(%f) => %f", 360*PointInterval, 2 * math.Pi * radius, (360*PointInterval)/(2 * math.Pi * radius))
+		*/
+		stepTheta := float64(360*PointInterval) / float64(2*math.Pi*radius)
+		log.Info().Msgf("360*PointInterval=(%f) / 2 * math.Pi * radius=(%f) => %f", 360*PointInterval, 2*math.Pi*radius, (360*PointInterval)/(2*math.Pi*radius))
 
 		radius += stepTheta * radiusPerDegree
 		theta += stepTheta
 
 		if theta > rotateTheta {
-      log.Info().Msgf("stepTheta:%f, PointInterval:%f, radius:%f", stepTheta, PointInterval, radius)
-      log.Warn().Msgf("%f %f - points: %d => theta %f > rotateTheta %f", src.X, dst.X, len(points), theta, rotateTheta)
+			log.Info().Msgf("stepTheta:%f, PointInterval:%f, radius:%f", stepTheta, PointInterval, radius)
+			log.Warn().Msgf("%f %f - points: %d => theta %f > rotateTheta %f", src.X, dst.X, len(points), theta, rotateTheta)
 			break
 		}
 
