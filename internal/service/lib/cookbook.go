@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"fmt"
 	"math"
 	"time"
 
@@ -96,6 +97,33 @@ func (p *Process) GetTime() float64 {
 func (p *Process) GetTemperature() float64 {
 
 	return p.GetImpl().GetTemperature()
+}
+
+func NewProcessImpl(processName string) (ProcessImpl, error) {
+	var processImpl ProcessImpl
+
+	switch processName {
+	case "Circle":
+		processImpl = new(Circle)
+	case "Spiral":
+		processImpl = new(Spiral)
+	case "Polygon":
+		processImpl = new(Polygon)
+	case "Fixed":
+		processImpl = new(Fixed)
+	case "Move":
+		processImpl = new(Move)
+	case "Wait":
+		processImpl = new(Wait)
+	case "Mix":
+		processImpl = new(Mix)
+	case "Home":
+		processImpl = new(Home)
+	default:
+		return processImpl, fmt.Errorf("Not support process '%s'", processName)
+	}
+
+	return processImpl, nil
 }
 
 type Circle struct {
