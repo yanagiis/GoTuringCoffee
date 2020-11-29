@@ -47,7 +47,7 @@ func TestCookbooksCRUD(t *testing.T) {
 		Processes: []lib.Process{
 			lib.Process{
 				ID:        "1",
-				Name:      "Go Home",
+				Name:      "Home",
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 				Impl:      &lib.Circle{},
@@ -82,7 +82,7 @@ func TestCookbooksCRUD(t *testing.T) {
 	assert.Equal(t, createdCookbook.Name, "new-cookbook-2")
 
 	// Delete the cookbook
-	err = repoManager.Cookbook.Delete(ctx, result)
+	err = repoManager.Cookbook.Delete(ctx, result.ID)
 	assert.NoError(t, err)
 
 	// List all cookbooks

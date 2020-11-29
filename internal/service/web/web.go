@@ -113,15 +113,7 @@ func JsonProcessToLib(pj ProcessJson) (p lib.Process) {
 	return
 }
 
-func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- struct{}) (err error) {
-	repoManager, err := repository.NewRepositoryManager(ctx, &s.DBConfig)
-	if err != nil {
-		log.Fatal(err)
-		return nil
-	}
-
-	machineModel := model.NewMachine(ctx, nc)
-
+func (s *Service) InitWebServer(ctx context.Context, repoManager *repository.RepositoryManager, machineModel *model.Machine, nc *nats.EncodedConn) *echo.Echo {
 	e := echo.New()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"http://localhost:1234"},
@@ -149,6 +141,20 @@ func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 	e.Static("/", s.WebConfig.StaticFilePath)
 	e.PUT("/api/machine/tank/temperature", s.SetTargetTemperature)
 
+	return e
+}
+
+func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- struct{}) (err error) {
+	repoManager, err := repository.NewRepositoryManager(ctx, &s.DBConfig)
+	if err != nil {
+		log.Fatal(err)
+		return nil
+	}
+
+	machineModel := model.NewMachine(ctx, nc)
+
+	e := s.InitWebServer(ctx, repoManager, machineModel, nc)
+
 	go func() {
 		if err = e.Start(fmt.Sprintf(":%d", s.WebConfig.Port)); err != nil {
 			e.Logger.Info(err)
@@ -168,6 +174,7 @@ func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 			timer = time.NewTimer(1 * time.Second)
 		}
 	}
+
 }
 
 func (s *Service) ListCookbook(c echo.Context) (err error) {
