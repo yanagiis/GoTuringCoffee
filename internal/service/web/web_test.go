@@ -102,7 +102,7 @@ func setup(t *testing.T) *echo.Echo {
 }
 
 func sendRequest(t *testing.T, e *echo.Echo, url string, method string, params interface{}) *httptest.ResponseRecorder {
-	t.Log(fmt.Sprintf("Sending request to %s", url))
+	t.Log(fmt.Sprintf("Sending request(%s) to %s", method, url))
 
 	var req *http.Request
 	if params != nil {
@@ -178,25 +178,55 @@ func TestCreateCookbook(t *testing.T) {
 }
 
 func TestUpdateCookbook(t *testing.T) {
+	var mapResult map[string]interface{}
+
 	t.Log("Starting update existing cookbook")
+	e := setup(t)
+
+	// Get a cookbook
+	rec := sendRequest(t, e, "/api/cookbooks", http.MethodGet, nil)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	json.Unmarshal(rec.Body.Bytes(), &mapResult)
+
+	payload := mapResult["payload"].([]interface{})
+	cookbookJson := payload[0].(map[string]interface{})
+
+	assert.Equal(t, float64(200), mapResult["status"])
+	assert.Equal(t, "new-cookbook", cookbookJson["name"])
+
+	// Update the cookbook
+	cookbookJson["name"] = "new-cookbook updated"
+	rec = sendRequest(t, e, fmt.Sprintf("/api/cookbooks/%s", cookbookJson["id"]), http.MethodPut, cookbookJson)
+
+	// Get the cookbook again
+	rec = sendRequest(t, e, fmt.Sprintf("/api/cookbooks/%s", cookbookJson["id"]), http.MethodGet, nil)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	json.Unmarshal(rec.Body.Bytes(), &mapResult)
+	updatedCookbookJson := mapResult["payload"].(map[string]interface{})
+	assert.Equal(t, "new-cookbook updated", updatedCookbookJson["name"])
+}
+
+func TestDeleteCookbook(t *testing.T) {
+	t.Log("Starting delete existing cookbook")
 	e := setup(t)
 
 	rec := sendRequest(t, e, "/api/cookbooks", http.MethodGet, nil)
 	assert.Equal(t, http.StatusOK, rec.Code)
 
+	// Get cookbook
 	var mapResult map[string]interface{}
 	json.Unmarshal(rec.Body.Bytes(), &mapResult)
 	assert.Equal(t, float64(200), mapResult["status"])
-
 	payload := mapResult["payload"].([]interface{})
 	cookbookJson := payload[0].(map[string]interface{})
 	assert.Equal(t, "new-cookbook", cookbookJson["name"])
 
-	cookbookJson["name"] = "new-cookbook updated"
-}
+	// Delete cookbook
+	rec = sendRequest(t, e, fmt.Sprintf("/api/cookbooks/%s", cookbookJson["id"]), http.MethodDelete, nil)
 
-func TestDeleteCookbook(t *testing.T) {
-
+	// Get the cookbook again
+	rec = sendRequest(t, e, fmt.Sprintf("/api/cookbooks/%s", cookbookJson["id"]), http.MethodGet, nil)
+	assert.Equal(t, http.StatusNotFound, rec.Code)
 }
 
 func TestGetDefaultProcesses(t *testing.T) {

@@ -223,8 +223,12 @@ func (s *Service) GetCookbook(c echo.Context) (err error) {
 	cc := c.(CustomContext)
 	id := cc.Param("id")
 	if cookbook, err = cc.repoManager.Cookbook.Get(cc.context, id); err != nil {
-		return err
+		return c.JSON(http.StatusNotFound, Response{
+			Status:  404,
+			Payload: err.Error(),
+		})
 	}
+
 	return c.JSON(http.StatusOK, Response{
 		Status:  200,
 		Payload: LibCookbookToJson(cookbook),

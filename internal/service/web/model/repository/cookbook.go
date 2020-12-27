@@ -2,8 +2,8 @@ package repository
 
 import (
 	"GoTuringCoffee/internal/service/lib"
+	"GoTuringCoffee/internal/service/web/model/entity"
 	"context"
-	"log"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -43,7 +43,7 @@ func (m *CookbookRepository) List(ctx context.Context) ([]lib.Cookbook, error) {
 		return nil, err
 	}
 
-	cookbooksBson := []CookbookBson{}
+	cookbooksBson := []entity.CookbookBson{}
 	err = cookbooksResult.All(ctx, &cookbooksBson)
 	if err != nil {
 		return nil, err
@@ -65,102 +65,6 @@ func (m *CookbookRepository) List(ctx context.Context) ([]lib.Cookbook, error) {
 	return cookbooks, nil
 }
 
-// ProcessBson Process data structure
-type ProcessBson struct {
-	ID        string   `bson:"id, omitempty"`
-	Name      string   `bson:"name"`
-	Impl      bson.Raw `bson:"process_impl"`
-	CreatedAt int64    `bson:"created_at"`
-	UpdatedAt int64    `bson:"updated_at"`
-}
-
-// CookbookBson Cookbook data structure
-type CookbookBson struct {
-	ID          primitive.ObjectID `bson:"_id,omitempty"`
-	Name        string             `bson:"name"`
-	Description string             `bson:"description"`
-	Tags        []string           `bson:"tags,omitempty"`
-	Notes       []string           `bson:"notes,omitempty"`
-	Processes   []ProcessBson      `bson:"processes,omitempty"`
-	CreatedAt   int64              `bson:"created_at"`
-	UpdatedAt   int64              `bson:"updated_at"`
-}
-
-// SetID Convert the hex string to ObjectID
-func (cb CookbookBson) SetID(id string) {
-	oid, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-
-	cb.ID = oid
-}
-
-// ToLibModel Convert db model(CookbookBson) to lib.Cookbook(Cookbook)
-func (cb CookbookBson) ToLibModel() (c lib.Cookbook, err error) {
-	for _, pj := range cb.Processes {
-		p, err := pj.ToLibModel()
-		if err != nil {
-			continue
-		}
-		c.Processes = append(c.Processes, p)
-	}
-	c.ID = cb.ID.Hex()
-	c.Name = cb.Name
-	c.Description = cb.Description
-	return
-}
-
-// ToLibModel Convert process db model(ProcessBson) to lib.process(Process)
-func (pb *ProcessBson) ToLibModel() (p lib.Process, err error) {
-	processImpl, err := lib.NewProcessImpl(pb.Name)
-	if err != nil {
-		return lib.Process{}, err
-	}
-
-	// Convert Bson.Raw to binary
-	bson.Unmarshal(pb.Impl, processImpl)
-	return lib.Process{
-		ID:        pb.ID,
-		Name:      pb.Name,
-		CreatedAt: time.Unix(pb.CreatedAt, 0),
-		UpdatedAt: time.Unix(pb.UpdatedAt, 0),
-		Impl:      processImpl,
-	}, nil
-}
-
-// ConvertToBson Convert cookbook model to bson for mongodb
-func (m *CookbookRepository) ConvertToBson(cookbook lib.Cookbook) (CookbookBson, error) {
-	var cb CookbookBson
-
-	cb.Name = cookbook.Name
-	cb.Description = cookbook.Description
-	cb.CreatedAt = cookbook.CreatedAt.Unix()
-	cb.UpdatedAt = cookbook.UpdatedAt.Unix()
-	cb.Tags = cookbook.Tags
-	cb.Notes = cookbook.Notes
-
-	for _, p := range cookbook.Processes {
-		var pb ProcessBson
-		var err error
-
-		pb.ID = p.ID
-		pb.Name = p.Name
-		pb.CreatedAt = p.CreatedAt.Unix()
-		pb.UpdatedAt = p.UpdatedAt.Unix()
-
-		pb.Impl, err = bson.Marshal(p.Impl)
-		if err != nil {
-			return CookbookBson{}, err
-		}
-
-		cb.Processes = append(cb.Processes, pb)
-	}
-
-	return cb, nil
-}
-
 // CreateDefault Create default cookbook
 func (m *CookbookRepository) CreateDefault(ctx context.Context) (lib.Cookbook, error) {
 	// convert default cookbook to bson
@@ -171,7 +75,7 @@ func (m *CookbookRepository) CreateDefault(ctx context.Context) (lib.Cookbook, e
 // Create Create cookbook and save it to mongodb
 func (m *CookbookRepository) Create(ctx context.Context, cookbook lib.Cookbook) (lib.Cookbook, error) {
 	// Convert lib model to bson model
-	cb, err := m.ConvertToBson(cookbook)
+	cb, err := entity.CreateBsonFromLibModel(cookbook)
 	if err != nil {
 		return lib.Cookbook{}, err
 	}
@@ -199,14 +103,17 @@ func (m *CookbookRepository) Update(ctx context.Context, cookbook lib.Cookbook) 
 		return cookbook, err
 	}
 
-	cb, err := m.ConvertToBson(cookbook)
+	cb, err := entity.CreateBsonFromLibModel(cookbook)
 	if err != nil {
 		return cookbook, err
 	}
 	cb.UpdatedAt = time.Now().UTC().Unix()
 
 	filter := bson.M{"_id": objectID}
-	m.collection.UpdateOne(ctx, filter, cb)
+	_, err = m.collection.ReplaceOne(ctx, filter, cb)
+	if err != nil {
+		return cookbook, err
+	}
 
 	return cookbook, nil
 }
@@ -228,7 +135,7 @@ func (m *CookbookRepository) Get(ctx context.Context, id string) (lib.Cookbook, 
 		return lib.Cookbook{}, err
 	}
 
-	var cb CookbookBson
+	var cb entity.CookbookBson
 	filter := bson.M{"_id": objectID}
 	err = m.collection.FindOne(ctx, filter).Decode(&cb)
 	if err != nil {

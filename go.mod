@@ -47,6 +47,7 @@ require (
 	golang.org/x/text v0.3.3
 	gonum.org/v1/gonum v0.0.0-20190210073933-db78fa557997
 	gonum.org/v1/plot v0.0.0-20190204103247-97beaddfcba2
+	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
 	gopkg.in/yaml.v2 v2.2.2
 	periph.io/x/periph v3.4.0+incompatible
 )
