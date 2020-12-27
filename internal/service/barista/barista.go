@@ -53,7 +53,7 @@ func (b *Barista) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 		}
 		b.cooking = true
 		response(nc, reply, lib.CodeSuccess, "OK", nil)
-		go b.cook(ctx, nc, doneCh, req.Points)
+		go b.cook(ctx, nc, doneCh, req.Cookbook)
 	})
 
 CONNECT:
@@ -89,7 +89,8 @@ CONNECT:
 	}
 }
 
-func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- struct{}, points []lib.Point) {
+func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- struct{}, cookbook lib.Cookbook) {
+	points := cookbook.ToPoints()
 
 	log.Debug().Msgf("Let's start cooking")
 	b.middles = []middleware.Middleware{
@@ -206,12 +207,12 @@ func response(nc *nats.EncodedConn, reply string, code uint8, msg string, payloa
 	nc.Publish(reply, resp)
 }
 
-func Brew(ctx context.Context, nc *nats.EncodedConn, points []lib.Point) (resp lib.Response, err error) {
+func Brew(ctx context.Context, nc *nats.EncodedConn, cookbook lib.Cookbook) (resp lib.Response, err error) {
 	req := lib.BaristaRequest{
 		Request: lib.Request{
 			Code: lib.CodePut,
 		},
-		Points: points,
+		Cookbook: cookbook,
 	}
 	err = nc.RequestWithContext(ctx, "barista.brewing", &req, &resp)
 	return

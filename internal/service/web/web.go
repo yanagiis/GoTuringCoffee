@@ -296,7 +296,7 @@ func (s *Service) BrewCookbook(c echo.Context) error {
 		return err
 	}
 	ctx, _ := context.WithTimeout(cc.context, 2*time.Second)
-	resp, err := barista.Brew(ctx, cc.nc, cookbook.ToPoints())
+	resp, err := barista.Brew(ctx, cc.nc, cookbook)
 	if resp.IsFailure() {
 		return c.JSON(http.StatusInternalServerError, Response{
 			Status: 500,

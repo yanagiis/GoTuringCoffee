@@ -20,7 +20,9 @@ type Cookbook struct {
 	Description string    `json:"description"`
 	Tags        []string  `json:"tags"`
 	Notes       []string  `json:"notes"`
+	Setup       []Process `json:"setup"`
 	Processes   []Process `json:"processes"`
+	Teardown    []Process `json:"teardown"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }

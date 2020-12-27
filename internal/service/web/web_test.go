@@ -193,7 +193,6 @@ func TestUpdateCookbook(t *testing.T) {
 	assert.Equal(t, "new-cookbook", cookbookJson["name"])
 
 	cookbookJson["name"] = "new-cookbook updated"
-	
 }
 
 func TestDeleteCookbook(t *testing.T) {

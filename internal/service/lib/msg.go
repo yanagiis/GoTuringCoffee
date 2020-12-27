@@ -22,7 +22,7 @@ type Response struct {
 
 type BaristaRequest struct {
 	Request
-	Points []Point
+	Cookbook Cookbook
 }
 
 type TempResponse struct {
