@@ -30,6 +30,7 @@ var hardwareFuncs = map[string]ParseHardwareFunc{
 	"i2c":            ParseI2C,
 	"tcpuartclient":  ParseTcpUartClient,
 	"pwm":            ParsePWM,
+	"pwmsoft":        ParsePWMSoftware,
 	"max31856":       ParseMAX31856,
 	"max31865":       ParseMAX31865,
 	"vl6180x":        ParseVL6180X,
@@ -205,6 +206,14 @@ func ParseTcpUartClient(m *HWManager, viper *viper.Viper, md *mdns.MDNS) (interf
 
 func ParsePWM(m *HWManager, viper *viper.Viper, md *mdns.MDNS) (interface{}, error) {
 	var pwm PWMDevice
+	if err := viper.Unmarshal(&pwm); err != nil {
+		return nil, err
+	}
+	return &pwm, nil
+}
+
+func ParsePWMSoftware(m *HWManager, viper *viper.Viper, md *mdns.MDNS) (interface{}, error) {
+	var pwm PWMSoftware
 	if err := viper.Unmarshal(&pwm); err != nil {
 		return nil, err
 	}
