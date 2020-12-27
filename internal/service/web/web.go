@@ -11,7 +11,6 @@ import (
 	"GoTuringCoffee/internal/service/lib"
 	"GoTuringCoffee/internal/service/web/model"
 
-	"github.com/globalsign/mgo/bson"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	nats "github.com/nats-io/go-nats"
@@ -42,7 +41,7 @@ type Response struct {
 }
 
 type CookbookJson struct {
-	ID          bson.ObjectId `json:"id,omitempty"`
+	ID          string        `json:"id,omitempty"`
 	Name        string        `json:"name"`
 	Description string        `json:"description"`
 	Processes   []ProcessJson `json:"processes"`
@@ -50,7 +49,7 @@ type CookbookJson struct {
 	TotalWater  float64       `json:"water"`
 }
 
-func NewCookbookJson(cookbook *lib.Cookbook) (cj CookbookJson) {
+func NewCookbookJson(cookbook lib.Cookbook) (cj CookbookJson) {
 	cj.ID = cookbook.ID
 	cj.Name = cookbook.Name
 	cj.Description = cookbook.Description
@@ -74,7 +73,7 @@ func NewProcessJson(process *lib.Process) (pj ProcessJson) {
 	case *lib.Spiral:
 		pj.Name = "Spiral"
 	case *lib.Polygon:
-	  pj.Name = "Polygon"
+		pj.Name = "Polygon"
 	case *lib.Fixed:
 		pj.Name = "FixedPoint"
 	case *lib.Move:
@@ -164,12 +163,12 @@ func (s *Service) Run(ctx context.Context, nc *nats.EncodedConn, fin chan<- stru
 
 func (s *Service) ListCookbook(c echo.Context) (err error) {
 	var cookbookJsons []CookbookJson
-	var cookbooks []*lib.Cookbook
+	var cookbooks []lib.Cookbook
 
 	cc := c.(CustomContext)
 	cookbooks, err = cc.cookbookModel.ListCookbooks()
 	if err != nil {
-		return
+		return err
 	}
 	for _, c := range cookbooks {
 		cookbookJsons = append(cookbookJsons, NewCookbookJson(c))
@@ -203,11 +202,10 @@ func (s *Service) CreateCookbook(c echo.Context) (err error) {
 }
 
 func (s *Service) GetCookbook(c echo.Context) (err error) {
-	var cookbook *lib.Cookbook
-
 	cc := c.(CustomContext)
 	id := cc.Param("id")
-	if cookbook, err = cc.cookbookModel.GetCookbook(id); err != nil {
+	cookbook, err := cc.cookbookModel.GetCookbook(id)
+	if err != nil {
 		return err
 	}
 	return c.JSON(http.StatusOK, Response{
@@ -253,7 +251,7 @@ func (s *Service) DeleteCookbook(c echo.Context) error {
 }
 
 func (s *Service) GetCookbookPoints(c echo.Context) error {
-	var cookbook *lib.Cookbook
+	var cookbook lib.Cookbook
 	var err error
 
 	cc := c.(CustomContext)
@@ -271,7 +269,7 @@ func (s *Service) GetCookbookPoints(c echo.Context) error {
 }
 
 func (s *Service) BrewCookbook(c echo.Context) error {
-	var cookbook *lib.Cookbook
+	var cookbook lib.Cookbook
 	var err error
 
 	cc := c.(CustomContext)
@@ -320,7 +318,7 @@ func (s *Service) ListProcesses(c echo.Context) error {
 func (s *Service) GetDefaultProcess(c echo.Context) error {
 	cc := c.(CustomContext)
 	name := cc.Param("name")
-  process := cc.cookbookModel.GetDefaultProcess(name)
+	process := cc.cookbookModel.GetDefaultProcess(name)
 	return c.JSON(http.StatusOK, Response{
 		Status:  200,
 		Payload: NewProcessJson(&process),
@@ -329,12 +327,12 @@ func (s *Service) GetDefaultProcess(c echo.Context) error {
 
 func (s *Service) GetAllDefaultProcesses(c echo.Context) error {
 	cc := c.(CustomContext)
-  processes := cc.cookbookModel.GetAllDefaultProcesses()
+	processes := cc.cookbookModel.GetAllDefaultProcesses()
 
-  result := map[string]ProcessJson{}
-  for name, process := range processes {
-    result[name] = NewProcessJson(&process)
-  }
+	result := map[string]ProcessJson{}
+	for name, process := range processes {
+		result[name] = NewProcessJson(&process)
+	}
 
 	return c.JSON(http.StatusOK, Response{
 		Status:  200,

@@ -1,29 +1,35 @@
 package model
 
 import (
+	"context"
 	"fmt"
 
 	"GoTuringCoffee/internal/service/lib"
 
-	"github.com/globalsign/mgo"
-	"github.com/globalsign/mgo/bson"
+	"github.com/rs/zerolog/log"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type MongoDBConfig struct {
-	Url string
+	Url        string
+	Database   string
+	Collection string
 }
 
 type CookbookModel struct {
-	dbConf  *MongoDBConfig
-	session *mgo.Session
-	c       *mgo.Collection
+	dbConf     *MongoDBConfig
+	client     *mongo.Client
+	collection *mongo.Collection
 }
 
 type CookbookBson struct {
-	ID          bson.ObjectId `bson:"_id,omitempty"`
-	Name        string        `bson:"name"`
-	Description string        `bson:"description"`
-	Processes   []ProcessBson `bson:"processes"`
+	ID          primitive.ObjectID `bson:"_id,omitempty"`
+	Name        string             `bson:"name"`
+	Description string             `bson:"description"`
+	Processes   []ProcessBson      `bson:"processes"`
 }
 
 func (cj *CookbookBson) Get() (c lib.Cookbook, err error) {
@@ -34,7 +40,7 @@ func (cj *CookbookBson) Get() (c lib.Cookbook, err error) {
 		}
 		c.Processes = append(c.Processes, p)
 	}
-	c.ID = cj.ID
+	c.ID = cj.ID.String()
 	c.Name = cj.Name
 	c.Description = cj.Description
 	return
@@ -67,7 +73,7 @@ func (pj *ProcessBson) Get() (p lib.Process, err error) {
 		return nil, fmt.Errorf("Not support process '%s'", pj.Name)
 	}
 
-	err = bson.Unmarshal(pj.Process.Data, p)
+	err = bson.Unmarshal(pj.Process, p)
 	return
 }
 
@@ -77,135 +83,150 @@ func NewCookbookModel(dbConf *MongoDBConfig) *CookbookModel {
 	}
 }
 
-func (m *CookbookModel) ListCookbooks() ([]*lib.Cookbook, error) {
-	var csj []CookbookBson
-	var cs []*lib.Cookbook
+func (m *CookbookModel) ListCookbooks() ([]lib.Cookbook, error) {
+	ctx := context.Background()
 	if err := m.Connect(); err != nil {
-		return cs, err
-	}
-	if err := m.c.Find(nil).All(&csj); err != nil {
 		return nil, err
 	}
-	fmt.Printf("Get %d cookbooks from db", len(csj))
-	for _, cj := range csj {
-		c, _ := cj.Get()
-		cs = append(cs, &c)
+
+	fmt.Printf("1\n")
+
+	n, err := m.collection.CountDocuments(ctx, bson.D{})
+	if err != nil {
+		return nil, err
 	}
-	return cs, nil
+	fmt.Printf("2\n")
+	if n == 0 {
+		return nil, nil
+	}
+
+	cookbookBsons := make([]CookbookBson, n)
+	cursor, err := m.collection.Find(ctx, bson.D{})
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("3\n")
+	for i := 0; cursor.Next(ctx); i++ {
+		cursor.Decode(&cookbookBsons[i])
+	}
+
+	fmt.Printf("4\n")
+	cookbooks := make([]lib.Cookbook, 0, len(cookbookBsons))
+	for i := range cookbookBsons {
+		var cookbook lib.Cookbook
+		if err := bsonToCookbook(&cookbook, &cookbookBsons[i]); err != nil {
+			log.Error().Err(err).Msgf("bsonToCookbook")
+			continue
+		}
+		cookbooks = append(cookbooks, cookbook)
+	}
+
+	fmt.Printf("5\n")
+	fmt.Printf("%v\n", cookbooks)
+	return cookbooks, nil
 }
 
-func (m *CookbookModel) GetCookbook(id string) (*lib.Cookbook, error) {
-	var cj CookbookBson
+func (m *CookbookModel) GetCookbook(id string) (cookbook lib.Cookbook, err error) {
+
+	ctx := context.Background()
+
 	if err := m.Connect(); err != nil {
-		return nil, err
+		return cookbook, err
 	}
-	if err := m.c.FindId(bson.ObjectIdHex(id)).One(&cj); err != nil {
-		return nil, err
+	bsonID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return cookbook, err
 	}
-	c, err := cj.Get()
-	return &c, err
+
+	var cookbookBson CookbookBson
+	if err := m.collection.FindOne(ctx, bson.M{"_id": bsonID}).Decode(&cookbookBson); err != nil {
+		return cookbook, err
+	}
+
+	if err := bsonToCookbook(&cookbook, &cookbookBson); err != nil {
+		return cookbook, err
+	}
+	return cookbook, nil
 }
 
 func (m *CookbookModel) CreateCookbook(cookbook *lib.Cookbook) error {
-	var cb CookbookBson
+	ctx := context.Background()
 	if err := m.Connect(); err != nil {
 		return err
 	}
 
-	cb.Name = cookbook.Name
-	cb.Description = cookbook.Description
-	for _, p := range cookbook.Processes {
-		var pb ProcessBson
-		var err error
-		switch p.(type) {
-		case *lib.Circle:
-			pb.Name = "Circle"
-		case *lib.Spiral:
-			pb.Name = "Spiral"
-		case *lib.Fixed:
-			pb.Name = "Fixed"
-		case *lib.Move:
-			pb.Name = "Move"
-		case *lib.Wait:
-			pb.Name = "Wait"
-		case *lib.Mix:
-			pb.Name = "Mix"
-		case *lib.Home:
-			pb.Name = "Home"
-		}
-		pb.Process.Data, err = bson.Marshal(p)
-		if err != nil {
-			return err
-		}
-
-		cb.Processes = append(cb.Processes, pb)
+	var cookbookBson CookbookBson
+	if err := cookbookToBson(&cookbookBson, cookbook); err != nil {
+		return err
 	}
-
-	return m.c.Insert(cb)
+	if _, err := m.collection.InsertOne(ctx, &cookbookBson); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (m *CookbookModel) UpdateCookbook(id string, cookbook *lib.Cookbook) error {
-	var cb CookbookBson
+	ctx := context.Background()
 	if err := m.Connect(); err != nil {
 		return err
 	}
 
-	cb.ID = cookbook.ID
-	cb.Name = cookbook.Name
-	cb.Description = cookbook.Description
-	for _, p := range cookbook.Processes {
-		var pb ProcessBson
-		var err error
-		switch p.(type) {
-		case *lib.Circle:
-			pb.Name = "Circle"
-		case *lib.Spiral:
-			pb.Name = "Spiral"
-		case *lib.Fixed:
-			pb.Name = "Fixed"
-		case *lib.Move:
-			pb.Name = "Move"
-		case *lib.Wait:
-			pb.Name = "Wait"
-		case *lib.Mix:
-			pb.Name = "Mix"
-		case *lib.Home:
-			pb.Name = "Home"
-		}
-		pb.Process.Data, err = bson.Marshal(p)
-		if err != nil {
-			return err
-		}
-
-		cb.Processes = append(cb.Processes, pb)
+	var err error
+	var bsonID primitive.ObjectID
+	var cookbookBson CookbookBson
+	if err = cookbookToBson(&cookbookBson, cookbook); err != nil {
+		return err
 	}
 
-	return m.c.UpdateId(bson.ObjectIdHex(id), cb)
+	if bsonID, err = primitive.ObjectIDFromHex(id); err != nil {
+		return err
+	}
+
+	if _, err = m.collection.UpdateOne(ctx, bson.M{"_id": bsonID}, &cookbookBson); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (m *CookbookModel) DeleteCookbook(id string) error {
 	if err := m.Connect(); err != nil {
 		return err
 	}
-	return m.c.RemoveId(bson.ObjectIdHex(id))
+
+	bsonID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+	if _, err = m.collection.DeleteOne(context.Background(), bson.M{"_id": bsonID}); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (m *CookbookModel) Connect() (err error) {
-	if m.session == nil {
-		if m.session, err = mgo.Dial(m.dbConf.Url); err != nil {
-			return
-		}
+	client, err := mongo.NewClient(options.Client().ApplyURI(m.dbConf.Url))
+	if err != nil {
+		return err
 	}
-	if m.c == nil {
-		m.c = m.session.DB("turing-coffee").C("cookbooknew")
+	if err := client.Connect(context.Background()); err != nil {
+		return err
 	}
+
+	db := client.Database(m.dbConf.Database)
+	collection := db.Collection(m.dbConf.Collection)
+
+	m.client = client
+	m.collection = collection
 	return
 }
 
 func (m *CookbookModel) Disconnect() {
-	if m.session != nil {
-		m.session.Close()
-		m.session = nil
+	if m.collection != nil {
+		m.client.Disconnect(context.Background())
+		m.client = nil
+		m.collection = nil
 	}
 }
 
@@ -333,7 +354,6 @@ func getAllDefaultProcesses() map[string](lib.Process) {
 }
 
 func (m *CookbookModel) GetAllFieldUnits() map[string](interface{}) {
-
 	return map[string](interface{}){
 		"coordinate": map[string]string{
 			"x": "mm",
@@ -376,4 +396,80 @@ func (m *CookbookModel) GetProcessNameList() []string {
 		index++
 	}
 	return nameList
+}
+
+func bsonToCookbook(dst *lib.Cookbook, src *CookbookBson) error {
+	dst.ID = src.ID.Hex()
+	dst.Name = src.Name
+	dst.Description = src.Description
+	dst.Processes = make([]lib.Process, len(src.Processes))
+	for i, pbson := range src.Processes {
+		p := dst.Processes[i]
+		switch pbson.Name {
+		case "Circle":
+			p = new(lib.Circle)
+		case "Spiral":
+			p = new(lib.Spiral)
+		case "Polygon":
+			p = new(lib.Polygon)
+		case "Fixed":
+			p = new(lib.Fixed)
+		case "Move":
+			p = new(lib.Move)
+		case "Wait":
+			p = new(lib.Wait)
+		case "Mix":
+			p = new(lib.Mix)
+		case "Home":
+			p = new(lib.Home)
+		default:
+			break
+		}
+
+		if err := bson.Unmarshal(pbson.Process, p); err != nil {
+			return fmt.Errorf("bson to cookbook: %w", err)
+		}
+		dst.Processes[i] = p
+	}
+	return nil
+}
+
+func cookbookToBson(dst *CookbookBson, src *lib.Cookbook) error {
+	var err error
+	if dst.ID, err = primitive.ObjectIDFromHex(src.ID); err != nil {
+		return err
+	}
+	dst.Name = src.Name
+	dst.Description = src.Description
+	dst.Processes = make([]ProcessBson, len(src.Processes))
+	for i, p := range src.Processes {
+		pbson := &dst.Processes[i]
+		switch p.(type) {
+		case *lib.Circle:
+			pbson.Name = "Circle"
+		case *lib.Spiral:
+			pbson.Name = "Spiral"
+		case *lib.Polygon:
+			pbson.Name = "Polygon"
+		case *lib.Fixed:
+			pbson.Name = "Fixed"
+		case *lib.Move:
+			pbson.Name = "Move"
+		case *lib.Wait:
+			pbson.Name = "Wait"
+		case *lib.Mix:
+			pbson.Name = "Mix"
+		case *lib.Home:
+			pbson.Name = "Home"
+		default:
+			break
+		}
+
+		var err error
+		pbson.Process, err = bson.Marshal(p)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

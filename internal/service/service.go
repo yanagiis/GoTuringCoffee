@@ -328,7 +328,9 @@ func (s *ServiceManager) parseWeb(name string, viper *viper.Viper, hwm *hardware
 
 	service := &web.Service{
 		DB: model.MongoDBConfig{
-			Url: mongodbMap["url"],
+			Url:        mongodbMap["address"],
+			Database:   mongodbMap["database"],
+			Collection: mongodbMap["collection"],
 		},
 		Web: web.WebConfig{
 			StaticFilePath: staticFiles,

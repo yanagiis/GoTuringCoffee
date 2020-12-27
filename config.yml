@@ -71,11 +71,8 @@ services:
     port: 8080
     static_files: "static"
     mongodb:
-      # For testing
-      #url: "mongodb://turingcoffee:turingcoffeepassword@ds021000.mlab.com:21000/turing-coffee"
-      #collection: "cookbooknew"
-      # Production
-      url: "mongodb://turingcoffee:test12345@ds117816.mlab.com:17816/turing-coffee"
+      address: "mongodb+srv://turingcoffee:test12345@turing-coffee.8wnkm.mongodb.net/turing-coffee?retryWrites=true&w=majority"
+      database: "turing-coffee"
       collection: "cookbooknew"
 
 mdns:
