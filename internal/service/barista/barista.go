@@ -20,10 +20,16 @@ type Position struct {
 	Z float64 `mapstructure:"z"`
 }
 
+type WaterPerPulse struct {
+	Hot  float64 `mapstructure:"hot"`
+	Cold float64 `mapstructure:"cold"`
+}
+
 type BaristaConfig struct {
 	PID                lib.NormalPID `mapstructure:"pid"`
 	DrainPosition      Position      `mapstructure:"drain_position" validate:"nonzero"`
 	DefaultMovingSpeed float64       `mapstructure:"default_moving_speed" validate:"nonzero"`
+	WaterPerPulse      WaterPerPulse `mapstructure:"water_per_pulse"`
 }
 
 type Barista struct {
@@ -102,6 +108,15 @@ func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- 
 	runtime.LockOSThread()
 
 	log.Debug().Msgf("Lock os thread")
+
+	ps := []lib.Point{
+		lib.Point{
+			Type: lib.SettingT,
+			E1:   &b.conf.WaterPerPulse.Hot,
+			E2:   &b.conf.WaterPerPulse.Cold,
+		},
+	}
+	points = append(ps, points...)
 
 	for i := range points {
 		point := points[i]

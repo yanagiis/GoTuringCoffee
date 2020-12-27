@@ -79,6 +79,9 @@ func pointToGCode(p *lib.Point) (string, error) {
 	if p.Type == lib.HomeT {
 		return "G28", nil
 	}
+	if p.Type == lib.SettingT {
+		return "", nil
+	}
 	if p.X == nil && p.Y == nil && p.Z == nil {
 		return "", errors.New("no x, y, and z")
 	}
@@ -99,19 +102,26 @@ func pointToGCode(p *lib.Point) (string, error) {
 }
 
 func pointToHCode(p *lib.Point) (string, error) {
-	if p.Time == nil {
-		return "", errors.New("no time")
+	var buffer bytes.Buffer
+
+	if p.Type == lib.SettingT {
+		buffer.WriteString("M")
+	} else {
+		buffer.WriteString("H")
+		if p.Time == nil {
+			return "", errors.New("no time")
+		}
 	}
 
-	var buffer bytes.Buffer
-	buffer.WriteString("H")
 	if p.E1 != nil && *p.E1 != 0 {
 		buffer.WriteString(fmt.Sprintf(" E0 %0.5f", *p.E1))
 	}
 	if p.E2 != nil && *p.E2 != 0 {
 		buffer.WriteString(fmt.Sprintf(" E1 %0.5f", *p.E2))
 	}
-	buffer.WriteString(fmt.Sprintf(" T%0.2f", *p.Time))
+	if p.Time != nil {
+		buffer.WriteString(fmt.Sprintf(" T%0.2f", *p.Time))
+	}
 
 	sum := 0
 	for _, c := range buffer.String() {
