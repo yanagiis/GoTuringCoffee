@@ -89,21 +89,7 @@ CONNECT:
 	}
 }
 
-func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- struct{}, cookbook lib.Cookbook) {
-	points := cookbook.ToPoints()
-
-	log.Debug().Msgf("Let's start cooking")
-	b.middles = []middleware.Middleware{
-		middleware.NewThermalMiddleware(ctx, nc),
-		middleware.NewTempMiddleware(ctx, nc, &b.conf.PID, 20),
-		middleware.NewTimeMiddleware(),
-	}
-
-	replenisher.StopReplenish(ctx, nc)
-	runtime.LockOSThread()
-
-	log.Debug().Msgf("Lock os thread")
-
+func (b *Barista) handleProcessPoints(ctx context.Context, points []lib.Point, nc *nats.EncodedConn) {
 	for i := range points {
 		point := points[i]
 		log.Debug().Msgf("%v", point)
@@ -159,6 +145,31 @@ func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- 
 				b.handlePoint(ctx, &points[i])
 			}
 		}
+	}
+}
+
+func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- struct{}, cookbook lib.Cookbook) {
+	log.Debug().Msgf("Let's start cooking")
+	b.middles = []middleware.Middleware{
+		middleware.NewThermalMiddleware(ctx, nc),
+		middleware.NewTempMiddleware(ctx, nc, &b.conf.PID, 20),
+		middleware.NewTimeMiddleware(),
+	}
+
+	replenisher.StopReplenish(ctx, nc)
+	runtime.LockOSThread()
+
+	log.Debug().Msgf("Lock os thread")
+
+	for _, process := range cookbook.Processes {
+		cookStatus := lib.CookStatus{
+			CurrentProcess: process,
+		}
+		err := nc.Publish("barista.cook_status", &cookStatus)
+		if err != nil {
+			log.Error().Msgf("Can't publish cook status to nats server")
+		}
+		b.handleProcessPoints(ctx, process.ToPoints(), nc)
 	}
 
 	runtime.UnlockOSThread()

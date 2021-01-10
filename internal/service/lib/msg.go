@@ -70,6 +70,15 @@ type ReplenisherRecord struct {
 	Time           time.Time
 }
 
+type CookStatus struct {
+	CurrentProcess Process
+}
+
+type ProcessRecord struct {
+	ID   string
+	Name string
+}
+
 type FullRecord struct {
 	IsFull bool
 	Time   time.Time
