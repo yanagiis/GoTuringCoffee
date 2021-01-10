@@ -210,10 +210,10 @@ func TestDeleteCookbook(t *testing.T) {
 	t.Log("Starting delete existing cookbook")
 	e := setup(t)
 
+	// Get cookbook
 	rec := sendRequest(t, e, "/api/cookbooks", http.MethodGet, nil)
 	assert.Equal(t, http.StatusOK, rec.Code)
 
-	// Get cookbook
 	var mapResult map[string]interface{}
 	json.Unmarshal(rec.Body.Bytes(), &mapResult)
 	assert.Equal(t, float64(200), mapResult["status"])
@@ -230,5 +230,33 @@ func TestDeleteCookbook(t *testing.T) {
 }
 
 func TestGetDefaultProcesses(t *testing.T) {
+	t.Log("Starting getting all default processes")
+	e := setup(t)
+
+	rec := sendRequest(t, e, "/api/default/processes", http.MethodGet, nil)
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	var mapResult map[string]interface{}
+	json.Unmarshal(rec.Body.Bytes(), &mapResult)
+	assert.Equal(t, float64(200), mapResult["status"])
+
+	libDefaultCookbook := lib.GenerateDefaultCookbook()
+	defaultProcesses := mapResult["payload"].(map[string]interface{})
+	assert.Equal(t, len(libDefaultCookbook.Processes), len(defaultProcesses))
+}
+
+func TestGetDefaultProcess(t *testing.T) {
+	t.Log("Starting getting default processes by name")
+	e := setup(t)
+
+	rec := sendRequest(t, e, "/api/default/processes/Circle", http.MethodGet, nil)
+	assert.Equal(t, http.StatusOK, rec.Code)
+
+	var mapResult map[string]interface{}
+	json.Unmarshal(rec.Body.Bytes(), &mapResult)
+	assert.Equal(t, float64(200), mapResult["status"])
+
+	defaultProcesses := mapResult["payload"].(map[string]interface{})
+	assert.Equal(t, "Circle", defaultProcesses["name"])
 
 }

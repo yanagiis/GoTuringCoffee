@@ -138,6 +138,9 @@ func (s *Service) InitWebServer(ctx context.Context, repoManager *repository.Rep
 	e.GET("/api/processes", s.ListProcesses)
 	e.GET("/api/processes/all", s.GetAllDefaultProcesses)
 	e.GET("/api/processes/units", s.GetAllFieldUnits)
+	e.GET("/api/default/cookbook", s.GetDefaultCookbook)
+	e.GET("/api/default/processes", s.GetAllDefaultProcesses)
+	e.GET("/api/default/processes/:name", s.GetDefaultProcess)
 	e.Static("/", s.WebConfig.StaticFilePath)
 	e.PUT("/api/machine/tank/temperature", s.SetTargetTemperature)
 
@@ -382,6 +385,48 @@ func (s *Service) SetTargetTemperature(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, Response{
 		Status: 200,
+	})
+}
+
+func (s *Service) GetDefaultCookbook(c echo.Context) error {
+	cc := c.(CustomContext)
+	cookbook, err := cc.repoManager.Cookbook.GetDefault(cc.context)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, Response{
+			Status:  404,
+			Payload: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, Response{
+		Status:  200,
+		Payload: LibCookbookToJson(cookbook),
+	})
+}
+
+func (s *Service) GetDefaultProcess(c echo.Context) error {
+	cc := c.(CustomContext)
+	cookbook, err := cc.repoManager.Cookbook.GetDefault(cc.context)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, Response{
+			Status:  404,
+			Payload: err.Error(),
+		})
+	}
+	processName := cc.Param("name")
+
+	for _, process := range cookbook.Processes {
+		if process.Name == processName {
+			return c.JSON(http.StatusOK, Response{
+				Status:  200,
+				Payload: LibProcessToJson(process),
+			})
+		}
+	}
+
+	return c.JSON(http.StatusNotFound, Response{
+		Status:  404,
+		Payload: fmt.Sprintf("Can't find process with name %s", processName),
 	})
 }
 
