@@ -18,13 +18,7 @@ import (
 	"net/http/httptest"
 )
 
-func initRepositoryManager() (*repo.RepositoryManager, error) {
-	dbConf := repo.MongoDBConfig{
-		URL:      "mongodb+srv://turingcoffee:D56pNXo9bKlosH8W@cluster0.m5idb.gcp.mongodb.net/testturingcoffee?retryWrites=true&w=majority",
-		Database: "testturingcoffee",
-	}
-	dbConf.Collections.Cookbook = "cookbooks"
-
+func initRepositoryManager(dbConf repo.MongoDBConfig) (*repo.RepositoryManager, error) {
 	ctx := context.TODO()
 	repoManager, err := repo.NewRepositoryManager(ctx, &dbConf)
 	if err != nil {
@@ -60,7 +54,7 @@ func initRepositoryManager() (*repo.RepositoryManager, error) {
 func initWebService() (*echo.Echo, *Service, error) {
 	dbConf := repo.MongoDBConfig{
 		URL:      "mongodb+srv://turingcoffee:D56pNXo9bKlosH8W@cluster0.m5idb.gcp.mongodb.net/testturingcoffee?retryWrites=true&w=majority",
-		Database: "testturingcoffee",
+		Database: "turingcoffee",
 	}
 	dbConf.Collections.Cookbook = "cookbooks"
 
@@ -76,7 +70,7 @@ func initWebService() (*echo.Echo, *Service, error) {
 
 	ctx := context.TODO()
 
-	repoManager, err := initRepositoryManager()
+	repoManager, err := initRepositoryManager(dbConf)
 	if err != nil {
 		return nil, nil, err
 	}

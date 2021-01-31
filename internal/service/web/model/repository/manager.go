@@ -9,13 +9,15 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+type Collections struct {
+	Cookbook string
+}
+
 // MongoDBConfig mongodb configuration
 type MongoDBConfig struct {
 	URL         string
 	Database    string
-	Collections struct {
-		Cookbook string
-	}
+	Collections Collections
 }
 
 // RepositoryManager Repository manager

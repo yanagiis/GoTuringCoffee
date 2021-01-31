@@ -21,7 +21,7 @@ import (
 	"GoTuringCoffee/internal/service/thermalblocktemp"
 	"GoTuringCoffee/internal/service/uartserver"
 	"GoTuringCoffee/internal/service/web"
-	"GoTuringCoffee/internal/service/web/model"
+	"GoTuringCoffee/internal/service/web/model/repository"
 
 	nats "github.com/nats-io/go-nats"
 	"github.com/rs/zerolog/log"
@@ -325,12 +325,16 @@ func (s *ServiceManager) parseWeb(name string, viper *viper.Viper, hwm *hardware
 	port := viper.GetInt("port")
 	staticFiles := viper.GetString("static_files")
 	mongodbMap := viper.GetStringMapString("mongodb")
-
+	collections := viper.GetStringMapString("mongodb.collections")
 	service := &web.Service{
-		DB: model.MongoDBConfig{
-			Url: mongodbMap["url"],
+		DBConfig: repository.MongoDBConfig{
+			URL:      mongodbMap["url"],
+			Database: mongodbMap["database"],
+			Collections: repository.Collections{
+				Cookbook: collections["cookbook"],
+			},
 		},
-		Web: web.WebConfig{
+		WebConfig: web.WebConfig{
 			StaticFilePath: staticFiles,
 			Port:           port,
 		},
