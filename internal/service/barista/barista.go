@@ -10,7 +10,7 @@ import (
 	"GoTuringCoffee/internal/service/outtemp"
 	"GoTuringCoffee/internal/service/replenisher"
 
-	nats "github.com/nats-io/go-nats"
+	nats "github.com/nats-io/nats.go"
 	"github.com/rs/zerolog/log"
 )
 

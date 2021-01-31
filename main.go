@@ -13,7 +13,7 @@ import (
 	"GoTuringCoffee/internal/service"
 	"GoTuringCoffee/internal/service/mdns"
 
-	nats "github.com/nats-io/go-nats"
+	nats "github.com/nats-io/nats.go"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	flag "github.com/spf13/pflag"

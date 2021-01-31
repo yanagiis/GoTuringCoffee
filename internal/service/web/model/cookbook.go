@@ -436,8 +436,11 @@ func bsonToCookbook(dst *lib.Cookbook, src *CookbookBson) error {
 
 func cookbookToBson(dst *CookbookBson, src *lib.Cookbook) error {
 	var err error
-	if dst.ID, err = primitive.ObjectIDFromHex(src.ID); err != nil {
-		return err
+	if src.ID != "" {
+		if dst.ID, err = primitive.ObjectIDFromHex(src.ID); err != nil {
+			fmt.Printf(fmt.Sprintf("cookbookToBson: %s %e", src.ID, err))
+			return err
+		}
 	}
 	dst.Name = src.Name
 	dst.Description = src.Description

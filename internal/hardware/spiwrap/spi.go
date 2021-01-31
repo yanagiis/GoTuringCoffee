@@ -1,4 +1,4 @@
-//go:generate go-enum -fspi.go
+//go:generate go-enum -f spi.go
 
 package spiwrap
 

@@ -11,7 +11,7 @@ import (
 	"GoTuringCoffee/internal/service/tankmeter"
 	"GoTuringCoffee/internal/service/tanktemp"
 
-	nats "github.com/nats-io/go-nats"
+	nats "github.com/nats-io/nats.go"
 	"github.com/rs/zerolog/log"
 )
 

@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	jsoniter "github.com/json-iterator/go"
-	nats "github.com/nats-io/go-nats"
+	nats "github.com/nats-io/nats.go"
 )
 
 // JsonEncoder is a JSON Encoder implementation for EncodedConn.
