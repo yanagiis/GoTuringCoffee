@@ -327,19 +327,12 @@ func (s *ServiceManager) parseWeb(name string, viper *viper.Viper, hwm *hardware
 	mongodbMap := viper.GetStringMapString("mongodb")
 	collections := viper.GetStringMapString("mongodb.collections")
 	service := &web.Service{
-<<<<<<< HEAD
 		DBConfig: repository.MongoDBConfig{
 			URL:      mongodbMap["url"],
 			Database: mongodbMap["database"],
 			Collections: repository.Collections{
 				Cookbook: collections["cookbook"],
 			},
-=======
-		DB: model.MongoDBConfig{
-			Url:        mongodbMap["address"],
-			Database:   mongodbMap["database"],
-			Collection: mongodbMap["collection"],
->>>>>>> master
 		},
 		WebConfig: web.WebConfig{
 			StaticFilePath: staticFiles,

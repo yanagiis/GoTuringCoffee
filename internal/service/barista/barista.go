@@ -95,19 +95,7 @@ CONNECT:
 	}
 }
 
-func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- struct{}, points []lib.Point) {
-
-	log.Debug().Msgf("Let's start cooking")
-	b.middles = []middleware.Middleware{
-		middleware.NewThermalMiddleware(ctx, nc),
-		middleware.NewTempMiddleware(ctx, nc, &b.conf.PID, 20),
-		middleware.NewTimeMiddleware(),
-	}
-
-	replenisher.StopReplenish(ctx, nc)
-	runtime.LockOSThread()
-
-	log.Debug().Msgf("Lock os thread")
+func (b *Barista) handleProcessPoints(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- struct{}, points []lib.Point) {
 
 	ps := []lib.Point{
 		lib.Point{
@@ -197,7 +185,7 @@ func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- 
 		if err != nil {
 			log.Error().Msgf("Can't publish cook status to nats server")
 		}
-		b.handleProcessPoints(ctx, process.ToPoints(), nc)
+		b.handleProcessPoints(ctx, nc, doneCh, process.ToPoints())
 	}
 
 	runtime.UnlockOSThread()
