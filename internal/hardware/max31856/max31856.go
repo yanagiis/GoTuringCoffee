@@ -1,4 +1,4 @@
-//go:generate go-enum -fmax31856.go
+//go:generate go-enum -f max31856.go
 
 package max31856
 

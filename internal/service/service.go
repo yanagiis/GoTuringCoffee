@@ -23,7 +23,7 @@ import (
 	"GoTuringCoffee/internal/service/web"
 	"GoTuringCoffee/internal/service/web/model"
 
-	nats "github.com/nats-io/go-nats"
+	nats "github.com/nats-io/nats.go"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )

@@ -6,14 +6,14 @@ GENERATE = internal/hardware/max31856/max31856.go\
 
 UTILS = max31856 max31865 db process vl6180x max31865gpio max31856gpio
 
-ARCH ?= arm 
+ARCH ?= arm
 
 .PHONY: generate clean
 
 all: generate app utils
 
 dep:
-	dep ensure
+	go mod download
 	go get github.com/abice/go-enum
 
 app: generate

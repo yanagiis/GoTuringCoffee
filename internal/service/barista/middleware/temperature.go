@@ -8,7 +8,7 @@ import (
 	"GoTuringCoffee/internal/service/lib"
 	"GoTuringCoffee/internal/service/outtemp"
 
-	nats "github.com/nats-io/go-nats"
+	nats "github.com/nats-io/nats.go"
 )
 
 type TempMiddleware struct {
