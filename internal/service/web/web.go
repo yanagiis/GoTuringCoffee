@@ -58,7 +58,11 @@ type CookbookJson struct {
 	TotalWater  float64       `json:"water"`
 }
 
+<<<<<<< HEAD
 func LibCookbookToJson(cookbook lib.Cookbook) (cj CookbookJson) {
+=======
+func NewCookbookJson(cookbook lib.Cookbook) (cj CookbookJson) {
+>>>>>>> master
 	cj.ID = cookbook.ID
 	cj.Name = cookbook.Name
 	cj.Description = cookbook.Description
@@ -86,6 +90,7 @@ type ProcessJson struct {
 	Impl      json.RawMessage `json:"impl"`
 }
 
+<<<<<<< HEAD
 // LibProcessToJson Convert lib.Process to json
 func LibProcessToJson(process lib.Process) (pj ProcessJson) {
 	pj.ID = process.ID
@@ -93,6 +98,28 @@ func LibProcessToJson(process lib.Process) (pj ProcessJson) {
 	pj.CreatedAt = process.CreatedAt.Unix()
 	pj.UpdatedAt = process.UpdatedAt.Unix()
 	pj.Impl, _ = json.Marshal(process.Impl)
+=======
+func NewProcessJson(process *lib.Process) (pj ProcessJson) {
+	switch (*process).(type) {
+	case *lib.Circle:
+		pj.Name = "Circle"
+	case *lib.Spiral:
+		pj.Name = "Spiral"
+	case *lib.Polygon:
+		pj.Name = "Polygon"
+	case *lib.Fixed:
+		pj.Name = "FixedPoint"
+	case *lib.Move:
+		pj.Name = "Move"
+	case *lib.Wait:
+		pj.Name = "Wait"
+	case *lib.Mix:
+		pj.Name = "Mix"
+	case *lib.Home:
+		pj.Name = "Home"
+	}
+	pj.Params, _ = json.Marshal(*process)
+>>>>>>> master
 	return
 }
 
@@ -187,7 +214,7 @@ func (s *Service) ListCookbook(c echo.Context) (err error) {
 	cc := c.(CustomContext)
 	cookbooks, err = cc.repoManager.Cookbook.List(cc.context)
 	if err != nil {
-		return
+		return err
 	}
 	for _, c := range cookbooks {
 		cookbookJsons = append(cookbookJsons, LibCookbookToJson(c))
@@ -221,6 +248,7 @@ func (s *Service) CreateCookbook(c echo.Context) (err error) {
 }
 
 func (s *Service) GetCookbook(c echo.Context) (err error) {
+<<<<<<< HEAD
 	var cookbook lib.Cookbook
 
 	cc := c.(CustomContext)
@@ -230,6 +258,13 @@ func (s *Service) GetCookbook(c echo.Context) (err error) {
 			Status:  404,
 			Payload: err.Error(),
 		})
+=======
+	cc := c.(CustomContext)
+	id := cc.Param("id")
+	cookbook, err := cc.cookbookModel.GetCookbook(id)
+	if err != nil {
+		return err
+>>>>>>> master
 	}
 
 	return c.JSON(http.StatusOK, Response{
@@ -336,12 +371,27 @@ func (s *Service) ListProcesses(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, Response{
 		Status:  200,
+<<<<<<< HEAD
 		Payload: cc.repoManager.Cookbook.GetProcessNameList(),
+=======
+		Payload: cc.cookbookModel.GetProcessNameList(),
+	})
+}
+
+func (s *Service) GetDefaultProcess(c echo.Context) error {
+	cc := c.(CustomContext)
+	name := cc.Param("name")
+	process := cc.cookbookModel.GetDefaultProcess(name)
+	return c.JSON(http.StatusOK, Response{
+		Status:  200,
+		Payload: NewProcessJson(&process),
+>>>>>>> master
 	})
 }
 
 func (s *Service) GetAllDefaultProcesses(c echo.Context) error {
 	cc := c.(CustomContext)
+<<<<<<< HEAD
 	processes, err := cc.repoManager.Cookbook.GetAllDefaultProcesses(cc.context)
 	if err != nil {
 		return err
@@ -350,6 +400,13 @@ func (s *Service) GetAllDefaultProcesses(c echo.Context) error {
 	result := map[string]ProcessJson{}
 	for _, process := range processes {
 		result[process.Name] = LibProcessToJson(process)
+=======
+	processes := cc.cookbookModel.GetAllDefaultProcesses()
+
+	result := map[string]ProcessJson{}
+	for name, process := range processes {
+		result[name] = NewProcessJson(&process)
+>>>>>>> master
 	}
 
 	return c.JSON(http.StatusOK, Response{

@@ -18,6 +18,12 @@ hardwares:
     path: "/dev/ttyUSB0"
     baudrate: 115200
 
+  uart2:
+    type: "uart"
+    path: "/dev/ttyUSB0"
+    baudrate: 57600
+    read_timeout: 1
+
   tcpuartc:
     type: "tcpuartclient"
     mdns_service: "smoothie.uart"
@@ -66,11 +72,73 @@ hardwares:
     gpio: 16
 
 services:
+
+  output_temp_service:
+    enable: false
+    scan_interval_ms: 1000
+    dev: "output_sensor"
+
+  tank_temp_service:
+    enable: true
+    scan_interval_ms: 1000
+    dev: "tank_sensor"
+
+  tank_meter_service:
+    enable: true
+    scan_interval_ms: 1000
+    dev: "water_detector"
+
+  distance_ranging_service:
+    enable: false 
+    scan_interval_ms: 1000
+    dev: "distance_ranging_sensor"
+
+  replenish_service:
+    enable: true
+    scan_interval_ms: 1000
+    dev: "pwm0"
+    duty_cycle: 0.5
+    frequency: 120000
+
+  heater:
+    enable: true
+    scan_interval_ms: 1000
+    pwm_dev: "pwm1"
+    pid:
+      P: 2
+      I: 0.25
+      D: 1
+
+  barista:
+    enable: true
+    smoothie: "smoothie"
+    extruder: "extruder"
+    accumulative_water_volume: 20
+    pid:
+      P: 0.006
+      I: 0.0005
+      D: 0.007
+    drain_position:
+      x: -3
+      i: -72 # cannot use 'y' in viper, but don't know why
+      z: 230
+    default_moving_speed: 5000
+    water_per_pulse:
+      hot: 0.0025
+      cold: 0.0023
+
+  uartserver:
+    enable: false
+    mdns_service: "smoothie.uart"
+    port: 22222
+    uartdev: "uart1"
+
   web:
     enable: true
     port: 8080
     static_files: "static"
     mongodb:
+<<<<<<< HEAD
       # Production
       #url: "mongodb://turingcoffee:turingcoffeepassword@ds021000.mlab.com:21000/turing-coffee"
       #collection: "cookbooknew"
@@ -80,6 +148,11 @@ services:
       collections:
         cookbook: "cookbook"
         process: "process"
+=======
+      address: "mongodb+srv://turingcoffee:test12345@turing-coffee.8wnkm.mongodb.net/turing-coffee?retryWrites=true&w=majority"
+      database: "turing-coffee"
+      collection: "cookbooknew"
+>>>>>>> master
 
 mdns:
   instance: "TuringCoffee"

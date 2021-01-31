@@ -13,6 +13,7 @@ const (
 	WaitT
 	MixT
 	HomeT
+	SettingT
 )
 
 type Point struct {

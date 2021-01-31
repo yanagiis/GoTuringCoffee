@@ -20,10 +20,16 @@ type Position struct {
 	Z float64 `mapstructure:"z"`
 }
 
+type WaterPerPulse struct {
+	Hot  float64 `mapstructure:"hot"`
+	Cold float64 `mapstructure:"cold"`
+}
+
 type BaristaConfig struct {
 	PID                lib.NormalPID `mapstructure:"pid"`
 	DrainPosition      Position      `mapstructure:"drain_position" validate:"nonzero"`
 	DefaultMovingSpeed float64       `mapstructure:"default_moving_speed" validate:"nonzero"`
+	WaterPerPulse      WaterPerPulse `mapstructure:"water_per_pulse"`
 }
 
 type Barista struct {
@@ -89,7 +95,29 @@ CONNECT:
 	}
 }
 
-func (b *Barista) handleProcessPoints(ctx context.Context, points []lib.Point, nc *nats.EncodedConn) {
+func (b *Barista) cook(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- struct{}, points []lib.Point) {
+
+	log.Debug().Msgf("Let's start cooking")
+	b.middles = []middleware.Middleware{
+		middleware.NewThermalMiddleware(ctx, nc),
+		middleware.NewTempMiddleware(ctx, nc, &b.conf.PID, 20),
+		middleware.NewTimeMiddleware(),
+	}
+
+	replenisher.StopReplenish(ctx, nc)
+	runtime.LockOSThread()
+
+	log.Debug().Msgf("Lock os thread")
+
+	ps := []lib.Point{
+		lib.Point{
+			Type: lib.SettingT,
+			E1:   &b.conf.WaterPerPulse.Hot,
+			E2:   &b.conf.WaterPerPulse.Cold,
+		},
+	}
+	points = append(ps, points...)
+
 	for i := range points {
 		point := points[i]
 		log.Debug().Msgf("%v", point)
@@ -106,7 +134,7 @@ func (b *Barista) handleProcessPoints(ctx context.Context, points []lib.Point, n
 			case lib.MixT:
 				b.moveToDrainPosition(ctx)
 
-				time.Sleep(1 * time.Second)
+				time.Sleep(3 * time.Second)
 
 				e := float64(0.4)
 				pointTime := float64(0.1)

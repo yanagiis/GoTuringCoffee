@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 )
 
 var initCmds = [...]string{"G28", "G21", "G90", "M83"}
@@ -38,29 +40,41 @@ func (s *Smoothie) Connect(ctx context.Context) error {
 		return err
 	}
 
-	s.io.Flush()
+	log.Debug().Msg("Connect to smoothie, send test comamnd")
+
 	if err := s.Writeline("G"); err != nil {
+		log.Error().Err(err).Msg("write test command failed")
 		return err
 	}
 
 	line, err := s.Readline()
 	if err != nil {
+		log.Error().Err(err).Msg("read test command failed")
 		return err
 	}
 	if strings.Compare(line, "ok") != 0 {
-		return fmt.Errorf("Not expected return value: %s", line)
+		err = fmt.Errorf("Not expected return value: %s", line)
+		log.Error().Err(err).Msg("test command response failed")
+		return err
 	}
+
+	log.Debug().Msg("Smoothie test success, do init commands")
 
 	for _, cmd := range initCmds {
 		var line string
 		var err error
 
 		if err := s.Writeline(cmd); err != nil {
+			log.Error().Err(err).Msg("write init command failed")
 			return err
 		}
 		if line, err = s.Readline(); err != nil {
+			log.Error().Err(err).Msg("read init command response failed")
 			return err
 		}
+
+		log.Info().Msgf("smoothie: cmd %s resp %s", cmd, line)
+
 		if strings.Compare(line, "ok") != 0 {
 			return errors.New("initial failed")
 		}
