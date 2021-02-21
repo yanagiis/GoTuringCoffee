@@ -45,7 +45,7 @@ func TestCookbooksCRUD(t *testing.T) {
 		Tags:        []string{},
 		Notes:       []string{},
 		Processes: []lib.Process{
-			lib.Process{
+			{
 				ID:        "1",
 				Name:      "Home",
 				CreatedAt: time.Now(),

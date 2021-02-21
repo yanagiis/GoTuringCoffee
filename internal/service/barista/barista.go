@@ -98,7 +98,7 @@ CONNECT:
 func (b *Barista) handleProcessPoints(ctx context.Context, nc *nats.EncodedConn, doneCh chan<- struct{}, points []lib.Point) {
 
 	ps := []lib.Point{
-		lib.Point{
+		{
 			Type: lib.SettingT,
 			E1:   &b.conf.WaterPerPulse.Hot,
 			E2:   &b.conf.WaterPerPulse.Cold,

@@ -1,20 +1,32 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
-	"GoTuringCoffee/internal/service/web/model"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func main() {
-	conf := model.MongoDBConfig{
-		Url: "mongodb://turingcoffee:turingcoffeepassword@ds021000.mlab.com:21000/turing-coffee",
+	url := "mongodb+srv://turingcoffee:test12345@cluster0.m5idb.gcp.mongodb.net/testturingcoffee?retryWrites=true&w=majority"
+	ctx := context.TODO()
+	options := options.Client()
+	options.SetMaxPoolSize(2)
+	options.ApplyURI(url)
+
+	fmt.Printf("Connecting to database %s\n", url)
+	client, err := mongo.Connect(ctx, options)
+	if err != nil {
+		fmt.Errorf("mongo.Connect() failed: %v", err.Error())
 	}
 
-	cModel := model.NewCookbookModel(&conf)
-	cookbooks, err := cModel.ListCookbooks()
+	fmt.Printf("Ping...\n")
+	err = client.Ping(ctx, nil)
 	if err != nil {
-		panic(err)
+		fmt.Errorf("Ping mongodb failed: %v", err.Error())
 	}
-	fmt.Println(cookbooks)
+
+	fmt.Printf("Disconnect...\n")
+	client.Disconnect(ctx)
 }
