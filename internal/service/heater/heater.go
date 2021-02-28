@@ -102,7 +102,10 @@ func (h *Service) handleSetTemperature(temp float64) lib.HeaterResponse {
 }
 
 func (h *Service) adjustTemperature(ctx context.Context, nc *nats.EncodedConn) error {
-	resp, err := tanktemp.GetTemperature(ctx, nc)
+	reqCtx, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+
+	resp, err := tanktemp.GetTemperature(reqCtx, nc)
 	if err != nil {
 	  log.Info().Msg("Get error when reading the tank temperature, set the pwd to 0")
 		h.pwm.PWM(0, 0)
