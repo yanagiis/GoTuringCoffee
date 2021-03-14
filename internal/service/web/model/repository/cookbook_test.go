@@ -40,21 +40,27 @@ func TestCookbooksCRUD(t *testing.T) {
 
 	// Create cookbook
 	newCookbook := lib.Cookbook{
-		Name:        "new-cookbook",
-		Description: "new cookbook",
-		Tags:        []string{},
-		Notes:       []string{},
+		BaseItem: lib.BaseItem{
+			Name:        "new-cookbook",
+			Description: "new cookbook",
+			Tags:        []string{},
+			Notes:       []string{},
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+		},
 		Processes: []lib.Process{
 			{
-				ID:        "1",
-				Name:      "Home",
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
-				Impl:      &lib.Circle{},
+				BaseItem: lib.BaseItem{
+					Name:        "new-cookbook",
+					Description: "new cookbook",
+					Tags:        []string{},
+					Notes:       []string{},
+					CreatedAt:   time.Now(),
+					UpdatedAt:   time.Now(),
+				},
+				Impl: &lib.Circle{},
 			},
 		},
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
 	}
 	createdCookbook, err := repoManager.Cookbook.Create(ctx, newCookbook)
 	assert.NoError(t, err)

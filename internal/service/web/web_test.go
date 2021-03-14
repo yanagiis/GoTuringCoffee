@@ -30,21 +30,27 @@ func initRepositoryManager(dbConf repo.MongoDBConfig) (*repo.RepositoryManager, 
 
 	// Create a cookbook
 	newCookbook := lib.Cookbook{
-		Name:        "new-cookbook",
-		Description: "new cookbook",
-		Tags:        []string{},
-		Notes:       []string{},
+		BaseItem: lib.BaseItem{
+			Name:        "new-cookbook",
+			Description: "new cookbook",
+			Tags:        []string{},
+			Notes:       []string{},
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+		},
 		Processes: []lib.Process{
-			lib.Process{
-				ID:        "1",
-				Name:      "Circle",
-				CreatedAt: time.Now(),
-				UpdatedAt: time.Now(),
-				Impl:      &lib.Circle{},
+			{
+				BaseItem: lib.BaseItem{
+					Name:        "Circle",
+					Description: "new cookbook",
+					Tags:        []string{},
+					Notes:       []string{},
+					CreatedAt:   time.Now(),
+					UpdatedAt:   time.Now(),
+				},
+				Impl: &lib.Circle{},
 			},
 		},
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
 	}
 	repoManager.Cookbook.Create(ctx, newCookbook)
 
@@ -140,7 +146,6 @@ func generateSampleCookbook() map[string]interface{} {
 		"notes":       []string{},
 		"processes": []map[string]interface{}{
 			{
-				"id":         "1",
 				"name":       "Home",
 				"created_at": time.Now().UTC().Unix(),
 				"updated_at": time.Now().UTC().Unix(),

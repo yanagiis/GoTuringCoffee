@@ -9,7 +9,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // CookbookRepository cookbook repository
@@ -32,19 +31,8 @@ func NewCookbookRepository(dbConf *MongoDBConfig, db *mongo.Database, client *mo
 
 // List List all cookbooks in the database
 func (m *CookbookRepository) List(ctx context.Context) ([]lib.Cookbook, error) {
-	query := bson.M{}
-	findOptions := options.Find()
-	findOptions.Sort = bson.M{
-		"created_at": -1,
-	}
-
-	cookbooksResult, err := m.collection.Find(ctx, query, findOptions)
-	if err != nil {
-		return nil, err
-	}
-
 	cookbooksBson := []entity.CookbookBson{}
-	err = cookbooksResult.All(ctx, &cookbooksBson)
+	err := List(ctx, m.collection, &cookbooksBson)
 	if err != nil {
 		return nil, err
 	}
@@ -59,6 +47,7 @@ func (m *CookbookRepository) List(ctx context.Context) ([]lib.Cookbook, error) {
 		if libCookbook.ID == lib.DefaultCookbookID {
 			continue
 		}
+
 		cookbooks = append(cookbooks, libCookbook)
 	}
 
@@ -75,7 +64,7 @@ func (m *CookbookRepository) CreateDefault(ctx context.Context) (lib.Cookbook, e
 // Create Create cookbook and save it to mongodb
 func (m *CookbookRepository) Create(ctx context.Context, cookbook lib.Cookbook) (lib.Cookbook, error) {
 	// Convert lib model to bson model
-	cb, err := entity.CreateBsonFromLibModel(cookbook)
+	cb, err := entity.CreateBsonFromCookbookLibModel(cookbook)
 	if err != nil {
 		return lib.Cookbook{}, err
 	}
@@ -103,7 +92,7 @@ func (m *CookbookRepository) Update(ctx context.Context, cookbook lib.Cookbook) 
 		return cookbook, err
 	}
 
-	cb, err := entity.CreateBsonFromLibModel(cookbook)
+	cb, err := entity.CreateBsonFromCookbookLibModel(cookbook)
 	if err != nil {
 		return cookbook, err
 	}

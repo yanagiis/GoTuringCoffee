@@ -5,45 +5,38 @@ import (
 	"log"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"gopkg.in/mgo.v2/bson"
 )
 
 // CookbookBson Cookbook data structure
 type CookbookBson struct {
-	ID          primitive.ObjectID `bson:"_id,omitempty"`
-	Name        string             `bson:"name"`
-	Description string             `bson:"description"`
-	Tags        []string           `bson:"tags,omitempty"`
-	Notes       []string           `bson:"notes,omitempty"`
-	Processes   []ProcessBson      `bson:"processes,omitempty"`
-	CreatedAt   int64              `bson:"created_at"`
-	UpdatedAt   int64              `bson:"updated_at"`
+	BaseItemBson
+	ID        primitive.ObjectID `bson:"_id,omitempty"`
+	Processes []ProcessBson      `bson:"processes,omitempty"`
 }
 
-// CreateBsonFromLibModel create bson from lib model
-func CreateBsonFromLibModel(cookbook lib.Cookbook) (CookbookBson, error) {
-	var cb CookbookBson
+// CreateBsonFromCookbookLibModel create bson from lib model
+func CreateBsonFromCookbookLibModel(cookbook lib.Cookbook) (cb CookbookBson, err error) {
+	bb, err := CreateBaseItemFromLibModel(cookbook.BaseItem)
+	if err != nil {
+		log.Fatalf("Failed to convert cookbook %s to bson model", cookbook.Name)
+		return
+	}
 
-	cb.Name = cookbook.Name
-	cb.Description = cookbook.Description
-	cb.CreatedAt = cookbook.CreatedAt.Unix()
-	cb.UpdatedAt = cookbook.UpdatedAt.Unix()
-	cb.Tags = cookbook.Tags
-	cb.Notes = cookbook.Notes
+	cb.ID, err = StringIDToObjectID(cookbook.BaseItem.ID)
+	if err != nil {
+		log.Fatalf("Failed to convert string id %s to object id", cookbook.ID)
+		return
+	}
+	cb.BaseItemBson = bb
 
+	var pb ProcessBson
 	for _, p := range cookbook.Processes {
-		var pb ProcessBson
-		var err error
 
-		pb.ID = p.ID
-		pb.Name = p.Name
-		pb.CreatedAt = p.CreatedAt.Unix()
-		pb.UpdatedAt = p.UpdatedAt.Unix()
-
-		pb.Impl, err = bson.Marshal(p.Impl)
+		pb, err = CreateBsonFromProcessLibModel(p)
 		if err != nil {
-			return CookbookBson{}, err
+			return
 		}
+		pb.ID, err = StringIDToObjectID(cookbook.ID)
 
 		cb.Processes = append(cb.Processes, pb)
 	}
@@ -51,19 +44,16 @@ func CreateBsonFromLibModel(cookbook lib.Cookbook) (CookbookBson, error) {
 	return cb, nil
 }
 
-// SetID Convert the hex string to ObjectID
-func (cb CookbookBson) SetID(id string) {
-	oid, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-
-	cb.ID = oid
-}
-
 // ToLibModel Convert db model(CookbookBson) to lib.Cookbook(Cookbook)
 func (cb CookbookBson) ToLibModel() (c lib.Cookbook, err error) {
+	b, err := cb.BaseItemBson.ToLibModel()
+	if err != nil {
+		log.Fatalf("Failed to convert cookbook bson %s to lib cookbook", cb.Name)
+		return
+	}
+	b.ID = ObjectIDToStringID(cb.ID)
+	c.BaseItem = b
+
 	for _, pj := range cb.Processes {
 		p, err := pj.ToLibModel()
 		if err != nil {
@@ -71,8 +61,5 @@ func (cb CookbookBson) ToLibModel() (c lib.Cookbook, err error) {
 		}
 		c.Processes = append(c.Processes, p)
 	}
-	c.ID = cb.ID.Hex()
-	c.Name = cb.Name
-	c.Description = cb.Description
 	return
 }

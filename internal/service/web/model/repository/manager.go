@@ -42,6 +42,7 @@ func NewRepositoryManager(parentContext context.Context, dbConf *MongoDBConfig) 
 		return nil, fmt.Errorf("mongo.Connect() failed: %v", err.Error())
 	}
 
+	fmt.Println(dbConf.URL)
 	err = client.Ping(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("Ping mongodb failed: %v", err.Error())

@@ -3,7 +3,6 @@ package lib
 import (
 	"fmt"
 	"math"
-	"time"
 
 	"github.com/rs/zerolog/log"
 )
@@ -15,16 +14,10 @@ const (
 
 // Cookbook Coffee cookbook
 type Cookbook struct {
-	ID          string    `json:"id"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	Tags        []string  `json:"tags"`
-	Notes       []string  `json:"notes"`
-	Setup       []Process `json:"setup"`
-	Processes   []Process `json:"processes"`
-	Teardown    []Process `json:"teardown"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	BaseItem
+	Setup     []Process `json:"setup"`
+	Processes []Process `json:"processes"`
+	Teardown  []Process `json:"teardown"`
 }
 
 // ToPoints Generate points for all processes
@@ -67,11 +60,8 @@ type ProcessImpl interface {
 
 // Process Cookbook process
 type Process struct {
-	ID        string      `json:"id"`
-	Name      string      `json:"name"`
-	CreatedAt time.Time   `json:"created_at"`
-	UpdatedAt time.Time   `json:"updated_at"`
-	Impl      ProcessImpl `json:"impl"`
+	BaseItem
+	Impl ProcessImpl `json:"impl"`
 }
 
 // GetImpl Get the process implementation class

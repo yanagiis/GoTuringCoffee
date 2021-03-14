@@ -15,7 +15,7 @@ func main() {
 	options.SetMaxPoolSize(2)
 	options.ApplyURI(url)
 
-	fmt.Printf("Connecting to database %s\n", url)
+	fmt.Printf("Connecting to databa-se %s\n", url)
 	client, err := mongo.Connect(ctx, options)
 	if err != nil {
 		fmt.Errorf("mongo.Connect() failed: %v", err.Error())

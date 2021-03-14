@@ -23,11 +23,16 @@ const (
 )
 
 func defaultCircle() Process {
-	return Process{
-		ID:        "DefaultProcessCircle",
-		Name:      "Circle",
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
+	circle := Process{
+		BaseItem: BaseItem{
+			ID:          "DefaultProcessCircle",
+			Name:        "Circle",
+			Description: "Default Circle",
+			CreatedAt:   time.Now().UTC(),
+			UpdatedAt:   time.Now().UTC(),
+			Tags:        []string{},
+			Notes:       []string{},
+		},
 		Impl: &Circle{
 			Coords: Coordinate{
 				X: 0,
@@ -45,14 +50,21 @@ func defaultCircle() Process {
 			Temperature: 80,
 		},
 	}
+
+	return circle
 }
 
 func defaultSpiral() Process {
 	return Process{
-		ID:        "DefaultProcessSpiral",
-		Name:      "Spiral",
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
+		BaseItem: BaseItem{
+			ID:          "DefaultProcessSpiral",
+			Name:        "Spiral",
+			Description: "Default Spiral",
+			CreatedAt:   time.Now().UTC(),
+			UpdatedAt:   time.Now().UTC(),
+			Tags:        []string{},
+			Notes:       []string{},
+		},
 		Impl: &Spiral{
 			Coords: Coordinate{
 				X: 0,
@@ -74,10 +86,15 @@ func defaultSpiral() Process {
 
 func defaultPolygon() Process {
 	return Process{
-		ID:        "DefaultProcessPolygon",
-		Name:      "Polygon",
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
+		BaseItem: BaseItem{
+			ID:          "DefaultProcessPolygon",
+			Name:        "Polygon",
+			Description: "Default Polygon",
+			CreatedAt:   time.Now().UTC(),
+			UpdatedAt:   time.Now().UTC(),
+			Tags:        []string{},
+			Notes:       []string{},
+		},
 		Impl: &Polygon{
 			Coords: Coordinate{
 				X: 0,
@@ -100,10 +117,15 @@ func defaultPolygon() Process {
 
 func defaultFixed() Process {
 	return Process{
-		ID:        "DefaultProcessFixed",
-		Name:      "Fixed",
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
+		BaseItem: BaseItem{
+			ID:          "DefaultProcessFixed",
+			Name:        "Fixed",
+			Description: "Default Fixed",
+			CreatedAt:   time.Now().UTC(),
+			UpdatedAt:   time.Now().UTC(),
+			Tags:        []string{},
+			Notes:       []string{},
+		},
 		Impl: &Fixed{
 			Coords: Coordinate{
 				X: 0,
@@ -119,20 +141,30 @@ func defaultFixed() Process {
 
 func defaultHome() Process {
 	return Process{
-		ID:        "DefaultProcessHome",
-		Name:      "Home",
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
-		Impl:      &Home{},
+		BaseItem: BaseItem{
+			ID:          "DefaultProcessHome",
+			Name:        "Home",
+			Description: "Default Home",
+			CreatedAt:   time.Now().UTC(),
+			UpdatedAt:   time.Now().UTC(),
+			Tags:        []string{},
+			Notes:       []string{},
+		},
+		Impl: &Home{},
 	}
 }
 
 func defaultMove() Process {
 	return Process{
-		ID:        "DefaultProcessMove",
-		Name:      "Move",
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
+		BaseItem: BaseItem{
+			ID:          "DefaultProcessMove",
+			Name:        "Move",
+			Description: "Default Move",
+			CreatedAt:   time.Now().UTC(),
+			UpdatedAt:   time.Now().UTC(),
+			Tags:        []string{},
+			Notes:       []string{},
+		},
 		Impl: &Move{
 			Coords: Coordinate{
 				X: 0,
@@ -145,10 +177,15 @@ func defaultMove() Process {
 
 func defaultWait() Process {
 	return Process{
-		ID:        "DefaultProcessWait",
-		Name:      "Wait",
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
+		BaseItem: BaseItem{
+			ID:          "DefaultProcessWait",
+			Name:        "Wait",
+			Description: "Default Wait",
+			CreatedAt:   time.Now().UTC(),
+			UpdatedAt:   time.Now().UTC(),
+			Tags:        []string{},
+			Notes:       []string{},
+		},
 		Impl: &Wait{
 			Time: 10,
 		},
@@ -157,10 +194,15 @@ func defaultWait() Process {
 
 func defaultMix() Process {
 	return Process{
-		ID:        "DefaultProcessMix",
-		Name:      "Mix",
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
+		BaseItem: BaseItem{
+			ID:          "DefaultProcessMix",
+			Name:        "Mix",
+			Description: "Default Mix",
+			CreatedAt:   time.Now().UTC(),
+			UpdatedAt:   time.Now().UTC(),
+			Tags:        []string{},
+			Notes:       []string{},
+		},
 		Impl: &Mix{
 			Temperature: 80,
 		},
@@ -170,14 +212,16 @@ func defaultMix() Process {
 // GenerateDefaultCookbook Generate a cookbook with default processes
 func GenerateDefaultCookbook() Cookbook {
 	return Cookbook{
-		ID:          DefaultCookbookID,
-		Name:        "Default Cookbook",
-		Description: "Cookbook",
-		Tags:        []string{},
-		Notes:       []string{},
-		Processes:   GetDefaultProcesses(),
-		CreatedAt:   time.Now().UTC(),
-		UpdatedAt:   time.Now().UTC(),
+		BaseItem: BaseItem{
+			ID:          DefaultCookbookID,
+			Name:        "Default Cookbook",
+			Description: "Cookbook",
+			CreatedAt:   time.Now().UTC(),
+			UpdatedAt:   time.Now().UTC(),
+			Tags:        []string{},
+			Notes:       []string{},
+		},
+		Processes: GetDefaultProcesses(),
 	}
 }
 
